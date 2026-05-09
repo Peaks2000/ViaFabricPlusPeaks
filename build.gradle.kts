@@ -45,8 +45,12 @@ val jij = configureApiJij()
 configureVVDependencies("jij")
 
 dependencies {
-    jij(project(":viafabricplus-api"))
-    jij(project(":viafabricplus-visuals"))
+    jij(project(":viafabricplus-api")) {
+        exclude("net.fabricmc", "fabric-loader")
+    }
+    jij(project(":viafabricplus-visuals")) {
+        exclude("net.fabricmc", "fabric-loader")
+    }
 
     jij(fabricApi.module("fabric-api-base", fabricApiVersion))
     jij(fabricApi.module("fabric-resource-loader-v1", fabricApiVersion))
