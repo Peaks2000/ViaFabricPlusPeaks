@@ -22,7 +22,7 @@
 package com.viaversion.viafabricplus.protocoltranslator.protocol;
 
 import com.google.common.collect.Lists;
-import com.viaversion.viafabricplus.features.entity.metadata_handling.WolfHealthTracker1_14_4;
+import com.viaversion.viafabricplus.features.entity.metadata.WolfHealthTracker1_14_4;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.item.Item;
 import com.viaversion.viaversion.api.protocol.AbstractProtocol;

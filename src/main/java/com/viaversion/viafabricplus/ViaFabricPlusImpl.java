@@ -26,14 +26,13 @@ import com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusLoadEntrypoint;
 import com.viaversion.viafabricplus.api.events.ChangeProtocolVersionCallback;
 import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
 import com.viaversion.viafabricplus.api.settings.SettingGroup;
-import com.viaversion.viafabricplus.base.Events;
-import com.viaversion.viafabricplus.base.sync_tasks.SyncTasks;
+import com.viaversion.viafabricplus.util.network.SyncTasks;
 import com.viaversion.viafabricplus.features.FeaturesLoading;
 import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
 import com.viaversion.viafabricplus.features.item.negative_item_count.NegativeItemUtil;
 import com.viaversion.viafabricplus.features.limitation.max_chat_length.MaxChatLength;
-import com.viaversion.viafabricplus.injection.access.base.IConnection;
-import com.viaversion.viafabricplus.injection.access.base.IServerData;
+import com.viaversion.viafabricplus.injection.access.core.IConnection;
+import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.translator.ItemTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
@@ -52,6 +51,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.EventFactory;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
@@ -72,6 +73,18 @@ import static com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusLoadEntry
 
 public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
 
+    public static final Event<LoadingCycleCallback> LOADING_CYCLE = EventFactory.createArrayBacked(LoadingCycleCallback.class, listeners -> state -> {
+        for (final LoadingCycleCallback listener : listeners) {
+            listener.onLoadCycle(state);
+        }
+    });
+
+    public static final Event<ChangeProtocolVersionCallback> CHANGE_PROTOCOL_VERSION = EventFactory.createArrayBacked(ChangeProtocolVersionCallback.class, listeners -> (oldVersion, newVersion) -> {
+        for (final ChangeProtocolVersionCallback listener : listeners) {
+            listener.onChangeProtocolVersion(oldVersion, newVersion);
+        }
+    });
+
     public static final ViaFabricPlusImpl INSTANCE = new ViaFabricPlusImpl();
 
     private final Logger logger = LogManager.getLogger("ViaFabricPlus");
@@ -79,55 +92,40 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
 
     private String version;
     private String implVersion;
-
     private CompletableFuture<Void> loadingFuture;
 
     public void init() {
-        // Set API instance
         ViaFabricPlus.init(INSTANCE);
 
-        // Get mod version
         final ModMetadata metadata = FabricLoader.getInstance().getModContainer("viafabricplus").get().getMetadata();
         version = metadata.getVersion().getFriendlyString();
         implVersion = metadata.getCustomValue("vfp:implVersion").getAsString();
 
-        // Call entrypoint for addons
         for (final EntrypointContainer<ViaFabricPlusLoadEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(KEY, ViaFabricPlusLoadEntrypoint.class)) {
             container.getEntrypoint().onPlatformLoad(INSTANCE);
         }
 
-        // Create ViaFabricPlus directory if it doesn't exist
         try {
             Files.createDirectories(path);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             logger.error("Failed to create ViaFabricPlus directory", e);
         }
 
-        // Load overriding jars first so other code can access the new classes
         ClassLoaderPriorityUtil.loadOverridingJars(path, logger);
-
-        // Load settings and config files
         SettingsManager.INSTANCE.init();
         SaveManager.INSTANCE.init();
-
-        // Init features
         SyncTasks.init();
         FeaturesLoading.init();
 
-        // Init ViaVersion protocol translator platform
-        loadingFuture = ProtocolTranslator.init(path);
-
-        // Initialize stuff after Minecraft is loaded
-        Events.LOADING_CYCLE.register(cycle -> {
-            if (cycle != LoadingCycleCallback.LoadingCycle.POST_GAME_LOAD) {
-                return;
+        this.loadingFuture = ProtocolTranslator.init(path);
+        LOADING_CYCLE.register(cycle -> {
+            if (cycle == LoadingCycleCallback.LoadingCycle.POST_GAME_LOAD) {
+                this.loadingFuture.join();
+                FeaturesLoading.postInit();
+                SaveManager.INSTANCE.postInit();
             }
-            loadingFuture.join();
-
-            FeaturesLoading.postInit();
-            SaveManager.INSTANCE.postInit();
         });
-        Events.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.FINAL_LOAD);
+        LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.FINAL_LOAD);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -135,17 +133,17 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
 
     @Override
     public String getVersion() {
-        return version;
+        return this.version;
     }
 
     @Override
     public String getImplVersion() {
-        return implVersion;
+        return this.implVersion;
     }
 
     @Override
     public Path getPath() {
-        return path;
+        return this.path;
     }
 
     @Override
@@ -190,12 +188,12 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
 
     @Override
     public void registerOnChangeProtocolVersionCallback(ChangeProtocolVersionCallback callback) {
-        Events.CHANGE_PROTOCOL_VERSION.register(callback);
+        CHANGE_PROTOCOL_VERSION.register(callback);
     }
 
     @Override
     public void registerLoadingCycleCallback(LoadingCycleCallback callback) {
-        Events.LOADING_CYCLE.register(callback);
+        LOADING_CYCLE.register(callback);
     }
 
     @Override
@@ -215,7 +213,7 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
 
     @Override
     public @Nullable SettingGroup getSettingGroup(String translationKey) {
-        for (SettingGroup group : SettingsManager.INSTANCE.getGroups()) {
+        for (final SettingGroup group : SettingsManager.INSTANCE.getGroups()) {
             if (ChatUtil.uncoverTranslationKey(group.getName()).equals(translationKey)) {
                 return group;
             }
@@ -279,7 +277,7 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
     }
 
     public Logger getLogger() {
-        return logger;
+        return this.logger;
     }
 
 }

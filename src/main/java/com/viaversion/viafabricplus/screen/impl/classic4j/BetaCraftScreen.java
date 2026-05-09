@@ -25,7 +25,7 @@ import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.screen.impl.settings.TitleEntry;
-import com.viaversion.viafabricplus.util.ConnectionUtil;
+import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import de.florianreuth.classic4j.BetaCraftHandler;
 import de.florianreuth.classic4j.model.betacraft.BCServerInfo;
 import de.florianreuth.classic4j.model.betacraft.BCServerList;

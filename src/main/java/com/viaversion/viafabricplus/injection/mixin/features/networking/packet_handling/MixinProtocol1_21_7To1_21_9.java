@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.networking.packet_handling;
 
-import com.viaversion.viafabricplus.base.sync_tasks.SyncTasks;
+import com.viaversion.viafabricplus.util.network.SyncTasks;
 import com.viaversion.viafabricplus.injection.access.networking.packet_handling.IGameTestBlockHighlightRenderer;
 import com.viaversion.viaversion.api.protocol.AbstractProtocol;
 import com.viaversion.viaversion.api.type.Types;

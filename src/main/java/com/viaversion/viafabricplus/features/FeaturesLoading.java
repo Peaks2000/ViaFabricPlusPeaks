@@ -22,15 +22,15 @@
 package com.viaversion.viafabricplus.features;
 
 import com.viaversion.viaaprilfools.api.AprilFoolsProtocolVersion;
-import com.viaversion.viafabricplus.base.Events;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.features.block.connections.BlockConnectionsEmulation1_12_2;
 import com.viaversion.viafabricplus.features.block.shape.CollisionShapes;
 import com.viaversion.viafabricplus.features.classic.cpe_extension.CPEAdditions;
-import com.viaversion.viafabricplus.features.entity.EntityDimensionDiff;
+import com.viaversion.viafabricplus.features.entity.dimensions.EntityDimensionDiff;
 import com.viaversion.viafabricplus.features.entity.attribute.EnchantmentAttributesEmulation1_20_6;
 import com.viaversion.viafabricplus.features.font.FontCacheReload;
 import com.viaversion.viafabricplus.features.font.RenderableGlyphDiff;
-import com.viaversion.viafabricplus.features.footstep_particle.FootStepParticle1_12_2;
+import com.viaversion.viafabricplus.features.world.footstep_particle.FootStepParticle1_12_2;
 import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
 import com.viaversion.viafabricplus.features.networking.armor_hud.ArmorHudEmulation1_8;
 import com.viaversion.viafabricplus.features.networking.resource_pack_header.ResourcePackHeaderDiff;
@@ -48,7 +48,7 @@ public final class FeaturesLoading {
         FootStepParticle1_12_2.init();
         CPEAdditions.init();
 
-        Events.CHANGE_PROTOCOL_VERSION.register((oldVersion, newVersion) -> Minecraft.getInstance().execute(() -> {
+        ViaFabricPlusImpl.CHANGE_PROTOCOL_VERSION.register((oldVersion, newVersion) -> Minecraft.getInstance().execute(() -> {
             CollisionShapes.reloadBlockShapes();
 
             if (oldVersion.equals(AprilFoolsProtocolVersion.s3d_shareware) || newVersion.equals(AprilFoolsProtocolVersion.s3d_shareware)) {

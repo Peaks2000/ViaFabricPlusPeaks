@@ -22,7 +22,7 @@
 package com.viaversion.viafabricplus.injection.mixin.features.movement.vehicle;
 
 import com.mojang.authlib.GameProfile;
-import com.viaversion.viafabricplus.injection.access.base.IConnection;
+import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;

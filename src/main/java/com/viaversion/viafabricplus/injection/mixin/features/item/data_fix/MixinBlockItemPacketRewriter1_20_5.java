@@ -21,8 +21,8 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.item.data_fix;
 
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
-import com.viaversion.viafabricplus.base.Events;
 import com.viaversion.viafabricplus.protocoltranslator.impl.ViaFabricPlusMappingDataLoader;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.HolderSet;
@@ -75,7 +75,7 @@ public abstract class MixinBlockItemPacketRewriter1_20_5 extends ItemRewriter<Cl
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void loadItemMappings(Protocol1_20_3To1_20_5 protocol, CallbackInfo ci) {
-        // Technically it would be cleaner to split mapping loading into there respective protocols, but that will be impossible
+        // Technically, it would be cleaner to split mapping loading into their respective protocols, but that will be impossible
         // in a clean way, so let's just wait for Via* to load all protocols and then load everything in here.
         this.viaFabricPlus$foodItems_b1_7_3.add("minecraft:apple");
         this.viaFabricPlus$foodItems_b1_7_3.add("minecraft:mushroom_stew");
@@ -92,7 +92,7 @@ public abstract class MixinBlockItemPacketRewriter1_20_5 extends ItemRewriter<Cl
             this.viaFabricPlus$armorMaxDamage_b1_8_1.put(entry.getKey(), entry.getValue().getAsInt());
         }
 
-        Events.LOADING_CYCLE.register(cycle -> {
+        ViaFabricPlusImpl.LOADING_CYCLE.register(cycle -> {
             if (cycle != LoadingCycleCallback.LoadingCycle.POST_VIAVERSION_LOAD) {
                 return;
             }

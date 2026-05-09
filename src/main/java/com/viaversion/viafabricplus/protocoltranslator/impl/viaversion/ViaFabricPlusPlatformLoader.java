@@ -21,8 +21,8 @@
 
 package com.viaversion.viafabricplus.protocoltranslator.impl.viaversion;
 
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
-import com.viaversion.viafabricplus.base.Events;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.viabedrock.ViaFabricPlusNettyPipelineProvider;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusAlphaInventoryProvider;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
@@ -84,7 +84,7 @@ public final class ViaFabricPlusPlatformLoader implements ViaPlatformLoader {
 
         providers.use(NettyPipelineProvider.class, new ViaFabricPlusNettyPipelineProvider());
 
-        Events.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.POST_VIAVERSION_LOAD);
+        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.POST_VIAVERSION_LOAD);
     }
 
     @Override

@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.injection.mixin.compat.classic4j;
 
-import com.viaversion.viafabricplus.injection.access.base.IEditBox;
+import com.viaversion.viafabricplus.injection.access.core.IEditBox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.util.StringUtil;

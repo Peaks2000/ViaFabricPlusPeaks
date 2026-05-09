@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.protocoltranslator.impl.command.classic;
 
-import com.viaversion.viafabricplus.injection.access.base.IExtensionProtocolMetadataStorage;
+import com.viaversion.viafabricplus.injection.access.core.IExtensionProtocolMetadataStorage;
 import com.viaversion.viafabricplus.protocoltranslator.impl.command.VFPSubCommand;
 import com.viaversion.viaversion.api.command.ViaCommandSender;
 import net.minecraft.ChatFormatting;

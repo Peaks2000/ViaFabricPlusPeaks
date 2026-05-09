@@ -24,8 +24,8 @@
     "r1_7_tab_list_style.MixinClientPacketListener",
     "r1_7_tab_list_style.MixinPlayerInfo",
     "r1_7_tab_list_style.MixinPlayerTabOverlay",
-    "remove_newer_screen_features.MixinPauseScreen",
-    "remove_newer_screen_features.MixinScreen",
+    "screen_changes.MixinPauseScreen",
+    "screen_changes.MixinScreen",
     "secure_chat_warning.MixinClientPacketListener",
     "strike_through_offset.MixinFont_PreparedTextBuilder",
     "villager_profession.MixinVillagerProfessionLayer"

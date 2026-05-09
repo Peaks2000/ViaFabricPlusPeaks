@@ -22,12 +22,12 @@
 package com.viaversion.viafabricplus.screen.impl.realms;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.base.bedrock.NetherNetJsonRpcAddress;
+import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
-import com.viaversion.viafabricplus.util.ConnectionUtil;
+import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
 import java.awt.*;
 import java.util.List;
