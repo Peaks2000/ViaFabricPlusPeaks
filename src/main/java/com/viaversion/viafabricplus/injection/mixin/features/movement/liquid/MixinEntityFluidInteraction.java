@@ -27,8 +27,11 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityFluidInteraction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
@@ -48,6 +51,18 @@ public abstract class MixinEntityFluidInteraction {
         }
     }
 
+    @Definition(id = "eyeY", local = @Local(type = double.class, name = "eyeY"))
+    @Definition(id = "fluidTop", local = @Local(type = double.class, name = "fluidTop"))
+    @Expression("eyeY <= fluidTop")
+    @ModifyExpressionValue(method = "update", at = @At("MIXINEXTRAS:EXPRESSION"))
+    private boolean addMagicOffset(boolean original, @Local(name = "eyeY") double eyeY, @Local(name = "fluidBottom") double fluidBottom, @Local(name = "level") BlockGetter level, @Local(name = "fluidState") FluidState fluidState, @Local(name = "mutablePos") BlockPos.MutableBlockPos mutablePos) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_15_2)) {
+            return eyeY <= (fluidBottom + (fluidState.getHeight(level, mutablePos) + (0.11111111F * 2F)));
+        } else {
+            return original;
+        }
+    }
+
     @Definition(id = "fluidTop", local = @Local(type = double.class, name = "fluidTop"))
     @Definition(id = "box", local = @Local(type = AABB.class, name = "box"))
     @Definition(id = "minY", field = "Lnet/minecraft/world/phys/AABB;minY:D")
@@ -55,7 +70,7 @@ public abstract class MixinEntityFluidInteraction {
     @ModifyExpressionValue(method = "update", at = @At("MIXINEXTRAS:EXPRESSION"))
     private boolean removeConditional(boolean original) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2) || ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
-            return false; // Equates to true due to the !
+            return false; // Equates to true due to the negation in the original code
         } else {
             return original;
         }
