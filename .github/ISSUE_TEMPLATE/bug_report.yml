@@ -1,23 +1,26 @@
 name: Bug Report
-description: Report a bug in ViaFabricPlus
+description: Report a ViaFabricPlus bug or issue
 labels: [ S-needs-triage, T-bug ]
 
 body:
   - type: markdown
     attributes:
       value: |
-        **Before reporting a bug, please see if using latest build from https://github.com/ViaVersion/ViaFabricPlus/actions fixes your issue.**
-        Whenever you see fit, you can upload images or videos to any of the text fields.
+        **Before reporting a bug, please check whether the latest build from https://ci.viaversion.com/view/Platforms/job/ViaFabricPlus/ resolves your issue.**
+
+        You can upload screenshots or videos in any text field when relevant.
 
   - type: textarea
     attributes:
       label: General Information
       description: |
-        Please provide a ViaVersion dump, if you experience a crash, also the crash report (latest.log file). You can get both by
-        going to `ViaFabricPlus -> Report issues` and using the buttons there.
+        Go to `Multiplayer -> ViaFabricPlus -> Report Issues`, click `Create a ViaVersion dump`, and paste the generated link here.
+
+        Then click `Open Logs Folder`, upload `latest.log` to mclo.gs, and paste the link here.
       placeholder: |
-        ViaVersion dump url: **paste here**
-        Crash report url: **upload to mclo.gs and paste here**
+        ViaVersion dump URL: paste here
+        (Alternative: screenshot of your mods folder): paste here
+        latest.log URL (mclo.gs): paste here
     validations:
       required: true
 
@@ -26,9 +29,10 @@ body:
       label: Bug Description
       description: |
         Describe the unexpected behavior.
+
         If you want to attach screenshots, use the comment field at the bottom of the page.
       placeholder: |
-        Example: "Joining server xy causes my game to crash."
+        Example: "Joining server XY causes the game to crash."
     validations:
       required: true
 
@@ -36,11 +40,13 @@ body:
     attributes:
       label: Steps to Reproduce
       description: |
-        List the steps on how we can reproduce the issue. Make sure I can easily understand what you mean with each step.
+        List the exact steps required to reproduce the issue.
+
+        Please make each step clear and easy to follow.
       placeholder: |
         Example:
-        1. Joining server xy with version 1.14.4
-        2. Game crashes
+        1. Join server XY using Minecraft 1.14.4
+        2. The game crashes
     validations:
       required: true
 
@@ -48,8 +54,10 @@ body:
     attributes:
       label: Expected Behavior
       description: |
-        Describe what exactly you expected to happen.
+        Describe what you expected to happen.
+
+        If the expected behavior is obvious, this field can be left brief.
       placeholder: |
-        Example: "the game should not crash when I join server xy."
+        Example: "The game should not crash when joining server XY."
     validations:
       required: true
