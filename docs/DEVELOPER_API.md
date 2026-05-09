@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    // Replace with latest release
+    // Replace it with latest release
     runtimeOnly("com.viaversion:viafabricplus:x.x.x")
     compileOnly("com.viaversion:viafabricplus-api:x.x.x")
 }
@@ -50,7 +50,7 @@ repositories {
 }
 
 dependencies {
-    // Replace with latest release
+    // Replace it with latest release
     runtimeOnly("com.viaversion:viafabricplus:x.x.x")
     compileOnly("com.viaversion:viafabricplus-api:x.x.x")
 }
