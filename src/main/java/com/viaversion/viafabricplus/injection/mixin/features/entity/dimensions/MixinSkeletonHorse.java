@@ -19,15 +19,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.injection.mixin.features.movement.liquid;
+package com.viaversion.viafabricplus.injection.mixin.features.entity.dimensions;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import net.minecraft.world.entity.EntityAttachment;
+import net.minecraft.world.entity.EntityAttachments;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -35,14 +40,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(SkeletonHorse.class)
 public abstract class MixinSkeletonHorse extends AbstractHorse {
 
-    protected MixinSkeletonHorse(EntityType<? extends AbstractHorse> entityType, Level world) {
-        super(entityType, world);
+    @Unique
+    private static final EntityDimensions viaFabricPlus$baby_dimensions_r1_21_11 = EntityType.SKELETON_HORSE
+        .getDimensions()
+        .withAttachments(EntityAttachments.builder().attach(EntityAttachment.PASSENGER, 0.0F, EntityType.SKELETON_HORSE.getHeight() - 0.03125F, 0.0F))
+        .scale(0.5F);
+
+    public MixinSkeletonHorse(final EntityType<? extends AbstractHorse> type, final Level level) {
+        super(type, level);
     }
 
-    @Inject(method = "getWaterSlowDown", at = @At("HEAD"), cancellable = true)
-    private void modifyBaseWaterMovementSpeedMultiplier(CallbackInfoReturnable<Float> cir) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2)) {
-            cir.setReturnValue(super.getWaterSlowDown());
+    @Inject(method = "getDefaultDimensions", at = @At("HEAD"), cancellable = true)
+    private void changeBabyDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_11) && this.isBaby()) {
+            cir.setReturnValue(viaFabricPlus$baby_dimensions_r1_21_11);
         }
     }
 
