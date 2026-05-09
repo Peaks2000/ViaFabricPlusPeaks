@@ -21,8 +21,11 @@
 
 package com.viaversion.viafabricplus.features.recipe;
 
+import com.viaversion.viafabricplus.features.recipe.custom.AddBannerPatternRecipe;
+import com.viaversion.viafabricplus.features.recipe.custom.ShulkerBoxColoringRecipe;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.impl.ViaFabricPlusMappingDataLoader;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersionRange;
 import com.viaversion.viaversion.libs.gson.JsonArray;
 import com.viaversion.viaversion.libs.gson.JsonElement;
@@ -30,35 +33,51 @@ import com.viaversion.viaversion.libs.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.data.recipes.RecipeBuilder;
+import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.BannerDuplicateRecipe;
+import net.minecraft.world.item.crafting.BookCloningRecipe;
 import net.minecraft.world.item.crafting.CookingBookCategory;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.DyeRecipe;
+import net.minecraft.world.item.crafting.FireworkRocketRecipe;
+import net.minecraft.world.item.crafting.ImbueRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.MapExtendingRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RepairItemRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.item.crafting.ShieldDecorationRecipe;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.item.crafting.TransmuteRecipe;
 import net.minecraft.world.level.ItemLike;
+import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 
 /**
  * Recipe data dump for all versions below 1.12.
@@ -86,7 +105,7 @@ public final class Recipes1_11_2 {
         }
     }
 
-    public static RecipeManager1_11_2 getRecipeManager() {
+    public static RecipeManager1_11_2 getRecipeManager(final RegistryAccess.Frozen registryAccess) {
         if (RECIPE_MANAGER == null) {
             final List<RecipeHolder<?>> recipes = new ArrayList<>();
 
@@ -143,41 +162,68 @@ public final class Recipes1_11_2 {
                 }
             }
 
-            // TODO 26.1
             // Special recipes
-//            final List<CraftingRecipe> specialRecipes = new ArrayList<>();
-//            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(LegacyProtocolVersion.r1_4_2)) {
-//                specialRecipes.add(new ArmorDyeRecipe(CraftingBookCategory.MISC));
-//                specialRecipes.add(new MapCloningRecipe(CraftingBookCategory.MISC));
-//                specialRecipes.add(new MapExtendingRecipe(CraftingBookCategory.MISC));
-//            }
-//            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(LegacyProtocolVersion.r1_4_6tor1_4_7)) {
-//                specialRecipes.add(new FireworkRocketRecipe(CraftingBookCategory.MISC));
-//            }
-//            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_11)) {
-//                specialRecipes.add(new ShulkerBoxColoringRecipe(CraftingBookCategory.MISC));
-//            }
-//            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_9)) {
-//                specialRecipes.add(new TippedArrowRecipe(CraftingBookCategory.MISC));
-//                specialRecipes.add(new ShieldDecorationRecipe(CraftingBookCategory.MISC));
-//            }
-//            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_8)) {
-//                specialRecipes.add(new RepairItemRecipe(CraftingBookCategory.MISC));
-//                specialRecipes.add(new BannerDuplicateRecipe(CraftingBookCategory.MISC));
-//                specialRecipes.add(new AddBannerPatternRecipe(CraftingBookCategory.MISC));
-//            }
-//            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_7_2)) {
-//                specialRecipes.add(new BookCloningRecipe(CraftingBookCategory.MISC));
-//            }
-//            for (CraftingRecipe specialRecipe : specialRecipes) {
-//                final ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath("viafabricplus", "recipe/special_" + specialRecipe.getClass().getSimpleName().replace("Recipe", "").toLowerCase(Locale.ROOT)));
-//                recipes.add(new RecipeHolder<>(key, specialRecipe));
-//            }
+            final List<CraftingRecipe> specialRecipes = new ArrayList<>();
+            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(LegacyProtocolVersion.r1_4_2)) {
+                specialRecipes.add(createDyeRecipe(registryAccess, Items.LEATHER_HELMET));
+                specialRecipes.add(createDyeRecipe(registryAccess, Items.LEATHER_CHESTPLATE));
+                specialRecipes.add(createDyeRecipe(registryAccess, Items.LEATHER_LEGGINGS));
+                specialRecipes.add(createDyeRecipe(registryAccess, Items.LEATHER_BOOTS));
+                specialRecipes.add(createDyeRecipe(registryAccess, Items.LEATHER_HORSE_ARMOR));
+                specialRecipes.add(new TransmuteRecipe(RecipeBuilder.createCraftingCommonInfo(true), RecipeBuilder.createCraftingBookInfo(RecipeCategory.MISC, "map_cloning"), Ingredient.of(Items.FILLED_MAP), Ingredient.of(Items.MAP), TransmuteRecipe.FULL_RANGE_MATERIAL_COUNT, new ItemStackTemplate(Items.FILLED_MAP), true));
+                specialRecipes.add(new MapExtendingRecipe(Ingredient.of(Items.FILLED_MAP), Ingredient.of(Items.PAPER), new ItemStackTemplate(Items.FILLED_MAP)));
+            }
+            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(LegacyProtocolVersion.r1_4_6tor1_4_7)) {
+                specialRecipes.add(new FireworkRocketRecipe(Ingredient.of(Items.PAPER), Ingredient.of(Items.GUNPOWDER), Ingredient.of(Items.FIREWORK_STAR), new ItemStackTemplate(Items.FIREWORK_ROCKET, 3)));
+            }
+            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_11)) {
+                specialRecipes.add(new ShulkerBoxColoringRecipe());
+            }
+            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_9)) {
+                specialRecipes.add(new ImbueRecipe(RecipeBuilder.createCraftingCommonInfo(true), RecipeBuilder.createCraftingBookInfo(RecipeCategory.MISC, "tipped_arrow"), Ingredient.of(Items.LINGERING_POTION), Ingredient.of(Items.ARROW), new ItemStackTemplate(Items.TIPPED_ARROW, 8)));
+                specialRecipes.add(new ShieldDecorationRecipe(Ingredient.of(registryAccess.getOrThrow(ItemTags.BANNERS)), Ingredient.of(Items.SHIELD), new ItemStackTemplate(Items.SHIELD)));
+            }
+            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_8)) {
+                specialRecipes.add(new RepairItemRecipe());
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.WHITE_BANNER), new ItemStackTemplate(Items.WHITE_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.ORANGE_BANNER), new ItemStackTemplate(Items.ORANGE_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.MAGENTA_BANNER), new ItemStackTemplate(Items.MAGENTA_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.LIGHT_BLUE_BANNER), new ItemStackTemplate(Items.LIGHT_BLUE_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.YELLOW_BANNER), new ItemStackTemplate(Items.YELLOW_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.LIME_BANNER), new ItemStackTemplate(Items.LIME_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.PINK_BANNER), new ItemStackTemplate(Items.PINK_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.GRAY_BANNER), new ItemStackTemplate(Items.GRAY_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.LIGHT_GRAY_BANNER), new ItemStackTemplate(Items.LIGHT_GRAY_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.CYAN_BANNER), new ItemStackTemplate(Items.CYAN_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.PURPLE_BANNER), new ItemStackTemplate(Items.PURPLE_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BLUE_BANNER), new ItemStackTemplate(Items.BLUE_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BROWN_BANNER), new ItemStackTemplate(Items.BROWN_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.GREEN_BANNER), new ItemStackTemplate(Items.GREEN_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.RED_BANNER), new ItemStackTemplate(Items.RED_BANNER)));
+                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BLACK_BANNER), new ItemStackTemplate(Items.BLACK_BANNER)));
+                specialRecipes.add(new AddBannerPatternRecipe());
+            }
+            if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_7_2)) {
+                specialRecipes.add(new BookCloningRecipe(Ingredient.of(Items.WRITTEN_BOOK), Ingredient.of(Items.WRITABLE_BOOK), BookCloningRecipe.DEFAULT_BOOK_GENERATION_RANGES, new ItemStackTemplate(Items.WRITTEN_BOOK)));
+            }
+            int index = 0;
+            for (CraftingRecipe specialRecipe : specialRecipes) {
+                final ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath("viafabricplus", "recipe/special_" + specialRecipe.getClass().getSimpleName().replace("Recipe", "").toLowerCase(Locale.ROOT) + (index == 0 ? "" : index)));
+                recipes.add(new RecipeHolder<>(key, specialRecipe));
+                index++;
+            }
 
             RECIPE_MANAGER = new RecipeManager1_11_2(recipes);
         }
 
         return RECIPE_MANAGER;
+    }
+
+    private static DyeRecipe createDyeRecipe(final RegistryAccess.Frozen registryAccess, final Item result) {
+        final Recipe.CommonInfo commonInfo = RecipeBuilder.createCraftingCommonInfo(true);
+        final CraftingRecipe.CraftingBookInfo craftingBookInfo = RecipeBuilder.createCraftingBookInfo(RecipeCategory.MISC, "dyed_armor");
+        final Ingredient ingredient = Ingredient.of(registryAccess.getOrThrow(ItemTags.DYES));
+        return new DyeRecipe(commonInfo, craftingBookInfo, Ingredient.of(result), ingredient, new ItemStackTemplate(result));
     }
 
     public static void reset() {
@@ -198,7 +244,7 @@ public final class Recipes1_11_2 {
         final ClientLevel world = Minecraft.getInstance().level;
         final CraftingInput input = inventory.asCraftInput();
 
-        final ItemStack result = getRecipeManager()
+        final ItemStack result = getRecipeManager(network.registryAccess())
             .getFirstMatch(RecipeType.CRAFTING, input, world) // Get the first matching recipe
             .map(recipe -> recipe.value().assemble(input)) // Craft the recipe to get the result
             .orElse(ItemStack.EMPTY); // If there is no recipe, set the result to air
