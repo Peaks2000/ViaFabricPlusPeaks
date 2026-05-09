@@ -21,18 +21,19 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.interaction.container_clicking;
 
-import com.viaversion.viaversion.api.data.entity.EntityTracker;
-import com.viaversion.viaversion.protocols.v1_21_4to1_21_5.rewriter.BlockItemPacketRewriter1_21_5;
-import com.viaversion.viaversion.rewriter.StructuredItemRewriter;
+import com.viaversion.viaversion.data.entity.EntityTrackerBase;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(value = {BlockItemPacketRewriter1_21_5.class, StructuredItemRewriter.class}, remap = false)
-public abstract class MixinStructuredItemRewriters {
+@Mixin(value = EntityTrackerBase.class, remap = false)
+public abstract class MixinEntityTrackerBase {
 
-    @Redirect(method = "*", at = @At(value = "INVOKE", target = "Lcom/viaversion/viaversion/api/data/entity/EntityTracker;canInstaBuild()Z"))
-    private boolean dontCancelPackets(EntityTracker entityTracker) {
+    /**
+     * @author Florian Reuth (EnZaXD)
+     * @reason Don't cancel serverbound set creative slot packets
+     */
+    @Overwrite
+    public boolean canInstaBuild() {
         return true;
     }
 

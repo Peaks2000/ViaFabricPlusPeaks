@@ -177,7 +177,7 @@
     "features.interaction.container_clicking.MixinItemPacketRewriter1_17",
     "features.interaction.container_clicking.MixinMerchantMenu",
     "features.interaction.container_clicking.MixinMultiPlayerGameMode",
-    "features.interaction.container_clicking.MixinStructuredItemRewriters",
+    "features.interaction.container_clicking.MixinEntityTrackerBase",
     "features.interaction.cooldown.MixinItemCooldowns",
     "features.interaction.cooldown.MixinMinecraft",
     "features.interaction.cooldown.MixinPlayer",
