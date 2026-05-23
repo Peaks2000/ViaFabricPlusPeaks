@@ -35,16 +35,21 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractChestedHorse.class)
 public abstract class MixinAbstractChestedHorse extends AbstractHorse {
 
     @Unique
-    private final EntityDimensions viaFabricPlus$baby_dimensions_r1_21_11;
+    private EntityDimensions viaFabricPlus$baby_dimensions_r1_21_11;
 
     public MixinAbstractChestedHorse(final EntityType<? extends AbstractHorse> type, final Level level) {
         super(type, level);
+    }
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void initializeDimensions(EntityType<? extends AbstractChestedHorse> type, Level level, CallbackInfo ci) {
         this.viaFabricPlus$baby_dimensions_r1_21_11 = type.getDimensions()
             .withAttachments(EntityAttachments.builder().attach(EntityAttachment.PASSENGER, 0.0F, type.getHeight() - 0.15625F, 0.0F))
             .scale(0.5F);
