@@ -40,10 +40,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinCanPlaceAt1_14 {
 
     @Inject(method = "canSurvive", at = @At(value = "RETURN"), cancellable = true)
-    private void canPlaceAt1_14(BlockState state, LevelReader world, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+    private void canPlaceAt1_14(BlockState state, LevelReader level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_14)) {
 
-            final Block block = world.getBlockState(pos).getBlock();
+            final Block block = level.getBlockState(pos).getBlock();
             if (Block1_14.isExceptBlockForAttachWithPiston(block)) {
                 cir.setReturnValue(false);
             }

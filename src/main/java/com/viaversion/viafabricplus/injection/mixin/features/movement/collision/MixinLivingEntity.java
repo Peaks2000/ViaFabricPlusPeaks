@@ -34,6 +34,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -55,7 +56,7 @@ public abstract class MixinLivingEntity extends Entity {
     @Shadow
     protected abstract boolean trapdoorUsableAsLadder(final BlockPos pos, final BlockState state);
 
-    @Redirect(method = "handleRelativeFrictionAndCalculateMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;wasInPowderSnow:Z"))
+    @Redirect(method = "handleRelativeFrictionAndCalculateMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;wasInPowderSnow:Z", opcode = Opcodes.GETFIELD))
     private boolean dontCheckLastTick(LivingEntity instance) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_4)) {
             return this.getInBlockState().is(Blocks.POWDER_SNOW);

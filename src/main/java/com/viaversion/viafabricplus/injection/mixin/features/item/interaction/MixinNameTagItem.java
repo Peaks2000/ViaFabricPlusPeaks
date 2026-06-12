@@ -39,8 +39,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinNameTagItem {
 
     @Inject(method = "interactLivingEntity", at = @At("HEAD"), cancellable = true)
-    private void dontAllowNameTagsOnCreaking(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_4) && entity instanceof Creaking) {
+    private void dontAllowNameTagsOnCreaking(ItemStack itemStack, Player player, LivingEntity target, InteractionHand type, CallbackInfoReturnable<InteractionResult> cir) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_4) && target instanceof Creaking) {
             cir.setReturnValue(InteractionResult.PASS);
         }
     }

@@ -37,9 +37,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinFishingRodItem {
 
     @Inject(method = "use", at = @At("RETURN"))
-    private void swingHand(Level world, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+    private void swingHand(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_14_4)) {
-            user.swing(hand);
+            player.swing(hand);
         }
     }
 

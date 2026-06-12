@@ -44,8 +44,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinSignBlock {
 
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
-    private void changeInteractionCalculation(ItemStack stack, BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir) {
-        if (!world.isClientSide()) {
+    private void changeInteractionCalculation(ItemStack itemStack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
+        if (!level.isClientSide()) {
             return;
         }
 
@@ -55,9 +55,9 @@ public abstract class MixinSignBlock {
         } else if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_19_4)) {
             // Removes the isWaxed() condition and reverts the interaction changes from 1.19.4 -> 1.20 when signs
             // got a front and back side.
-            final ItemStack itemStack = player.getItemInHand(hand);
-            final Item item = itemStack.getItem();
-            final boolean isSuccess = (item instanceof DyeItem || itemStack.is(Items.GLOW_INK_SAC) || itemStack.is(Items.INK_SAC)) && player.mayBuild();
+            final ItemStack itemInHand = player.getItemInHand(hand);
+            final Item item = itemInHand.getItem();
+            final boolean isSuccess = (item instanceof DyeItem || itemInHand.is(Items.GLOW_INK_SAC) || itemInHand.is(Items.INK_SAC)) && player.mayBuild();
 
             cir.setReturnValue(isSuccess ? InteractionResult.SUCCESS : InteractionResult.CONSUME);
         }

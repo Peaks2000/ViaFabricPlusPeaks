@@ -47,14 +47,14 @@ public abstract class MixinScreen {
     protected Minecraft minecraft;
 
     @Inject(method = "addRenderableWidget", at = @At("HEAD"), cancellable = true)
-    private <T extends GuiEventListener & Renderable & NarratableEntry> void removeRecipeBook(T drawableElement, CallbackInfoReturnable<T> cir) {
-        if (drawableElement instanceof ImageButton button && button.sprites == RecipeBookComponent.RECIPE_BUTTON_SPRITES) {
+    private <T extends GuiEventListener & Renderable & NarratableEntry> void removeRecipeBook(T widget, CallbackInfoReturnable<T> cir) {
+        if (widget instanceof ImageButton button && button.sprites == RecipeBookComponent.RECIPE_BUTTON_SPRITES) {
             final boolean furnace = ((Screen) (Object) this) instanceof FurnaceScreen;
 
             if (VisualSettings.INSTANCE.hideFurnaceRecipeBook.isEnabled() && furnace) {
-                cir.setReturnValue(drawableElement);
+                cir.setReturnValue(widget);
             } else if (VisualSettings.INSTANCE.hideCraftingRecipeBook.isEnabled() && !furnace) {
-                cir.setReturnValue(drawableElement);
+                cir.setReturnValue(widget);
             }
         }
     }

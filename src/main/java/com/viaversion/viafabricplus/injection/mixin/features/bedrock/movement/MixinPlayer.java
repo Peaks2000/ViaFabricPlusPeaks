@@ -63,7 +63,7 @@ public abstract class MixinPlayer extends MixinLivingEntity {
     }
 
     @Inject(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getAbilities()Lnet/minecraft/world/entity/player/Abilities;"))
-    private void preventJumpingWhenStartedSwimming(Vec3 movementInput, CallbackInfo ci) {
+    private void preventJumpingWhenStartedSwimming(Vec3 input, CallbackInfo ci) {
         if (!ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
             return;
         }
@@ -96,8 +96,8 @@ public abstract class MixinPlayer extends MixinLivingEntity {
     }
 
     @Redirect(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", ordinal = 1))
-    private void removeFlySlipperiness(Player instance, Vec3 vec3d, @Local(argsOnly = true) Vec3 movementInput) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) && movementInput.horizontalDistanceSqr() == 0) {
+    private void removeFlySlipperiness(Player instance, Vec3 vec3d, @Local(argsOnly = true, name = "input") Vec3 input) {
+        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) && input.horizontalDistanceSqr() == 0) {
             instance.setDeltaMovement(new Vec3(0, vec3d.y, 0));
         } else {
             instance.setDeltaMovement(vec3d);

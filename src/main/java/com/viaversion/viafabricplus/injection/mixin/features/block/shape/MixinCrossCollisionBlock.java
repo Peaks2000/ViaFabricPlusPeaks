@@ -38,7 +38,7 @@ public abstract class MixinCrossCollisionBlock implements ICrossCollisionBlock {
 
     @Override
     public int viaFabricPlus$getShapeIndex(final BlockState blockState) {
-        return viaFabricPlus$SHAPE_INDEX_CACHE.computeIfAbsent(blockState, statex -> {
+        return viaFabricPlus$SHAPE_INDEX_CACHE.computeIfAbsent(blockState, _ -> {
             int index = 0;
             if (blockState.getValue(CrossCollisionBlock.NORTH)) {
                 index |= 1 << Direction.NORTH.get2DDataValue();

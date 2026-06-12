@@ -29,6 +29,7 @@ import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.level.Level;
+import org.jspecify.annotations.NonNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -50,14 +51,14 @@ public abstract class MixinCamel extends AbstractHorse {
     }
 
     @Override
-    public void onPassengerTurned(Entity passenger) {
+    public void onPassengerTurned(@NonNull Entity passenger) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_20) && this.getControllingPassenger() != passenger) {
             this.viaFabricPlus$clampPassengerYaw1_20_1(passenger);
         }
     }
 
     @Override
-    protected void positionRider(Entity passenger, MoveFunction positionUpdater) {
+    protected void positionRider(@NonNull Entity passenger, @NonNull MoveFunction positionUpdater) {
         super.positionRider(passenger, positionUpdater);
 
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_20)) {

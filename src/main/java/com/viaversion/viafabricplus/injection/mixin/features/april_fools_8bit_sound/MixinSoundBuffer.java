@@ -42,9 +42,9 @@ public abstract class MixinSoundBuffer {
     private AudioFormat format;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void modifyBuffer(ByteBuffer sample, AudioFormat format, CallbackInfo ci) {
+    private void modifyBuffer(ByteBuffer data, AudioFormat format, CallbackInfo ci) {
         if (ProtocolTranslator.getTargetVersion().equals(AprilFoolsProtocolVersion.s3d_shareware)) {
-            this.viaFabricPlus$apply8BitSound(sample);
+            this.viaFabricPlus$apply8BitSound(data);
         }
     }
 

@@ -39,7 +39,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinItemStack {
 
     @Inject(method = "addAttributeTooltips", at = @At("HEAD"))
-    private void captureItemEnchantments(Consumer<Component> textConsumer, TooltipDisplay displayComponent, @Nullable Player player, CallbackInfo ci) {
+    private void captureItemEnchantments(Consumer<Component> consumer, TooltipDisplay display, @Nullable Player player, CallbackInfo ci) {
         final ItemStack itemStack = (ItemStack) (Object) this;
         final IDisplayDefault mixinDefault = (IDisplayDefault) ItemAttributeModifiers.Display.attributeModifiers();
         mixinDefault.viaFabricPlus$setItemEnchantments(EnchantmentHelper.getEnchantmentsForCrafting(itemStack));

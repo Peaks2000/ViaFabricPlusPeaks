@@ -44,10 +44,10 @@ public abstract class MixinChatScreen {
     protected String initial;
 
     @Shadow
-    CommandSuggestions commandSuggestions;
+    private CommandSuggestions commandSuggestions;
 
     @WrapWithCondition(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;setValue(Ljava/lang/String;)V"))
-    public boolean moveSetTextDown(EditBox instance, String text) {
+    public boolean moveSetTextDown(EditBox instance, String value) {
         return !DebugSettings.INSTANCE.legacyTabCompletions.isEnabled();
     }
 

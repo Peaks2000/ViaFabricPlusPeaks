@@ -49,14 +49,14 @@ public abstract class MixinClientLevel extends Level {
 
     @Shadow
     @Final
-    EntityTickList tickingEntities;
+    private EntityTickList tickingEntities;
 
     protected MixinClientLevel(WritableLevelData properties, ResourceKey<Level> registryRef, RegistryAccess registryManager, Holder<DimensionType> dimensionEntry, boolean isClient, boolean debugWorld, long seed, int maxChainedNeighborUpdates) {
         super(properties, registryRef, registryManager, dimensionEntry, isClient, debugWorld, seed, maxChainedNeighborUpdates);
     }
 
     @Shadow
-    protected abstract void tickPassenger(final Entity entity, final Entity passenger);
+    protected abstract void tickPassenger(final Entity vehicle, final Entity entity);
 
     @Inject(method = "tickNonPassenger", at = @At("HEAD"), cancellable = true)
     private void alwaysTickEntities(Entity entity, CallbackInfo ci) {
@@ -74,17 +74,17 @@ public abstract class MixinClientLevel extends Level {
     }
 
     @Inject(method = "tickPassenger", at = @At("HEAD"), cancellable = true)
-    private void alwaysTickEntities(Entity entity, Entity passenger, CallbackInfo ci) {
-        final IEntity mixinPassenger = (IEntity) passenger;
+    private void alwaysTickEntities(Entity vehicle, Entity entity, CallbackInfo ci) {
+        final IEntity mixinPassenger = (IEntity) entity;
         if (!mixinPassenger.viaFabricPlus$isInLoadedChunkAndShouldTick()) {
-            if (passenger.isRemoved() || passenger.getVehicle() != entity) {
-                passenger.stopRiding();
-            } else if (passenger instanceof Player || this.tickingEntities.contains(passenger)) {
-                passenger.setOldPosAndRot();
-                this.viaFabricPlus$checkChunk(passenger);
+            if (entity.isRemoved() || entity.getVehicle() != vehicle) {
+                entity.stopRiding();
+            } else if (entity instanceof Player || this.tickingEntities.contains(entity)) {
+                entity.setOldPosAndRot();
+                this.viaFabricPlus$checkChunk(entity);
                 if (mixinPassenger.viaFabricPlus$isInLoadedChunkAndShouldTick()) {
-                    for (Entity entity2 : passenger.getPassengers()) {
-                        this.tickPassenger(passenger, entity2);
+                    for (Entity entity2 : entity.getPassengers()) {
+                        this.tickPassenger(entity, entity2);
                     }
                 }
             }

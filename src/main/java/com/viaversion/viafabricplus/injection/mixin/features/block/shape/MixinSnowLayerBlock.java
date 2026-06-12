@@ -60,7 +60,7 @@ public abstract class MixinSnowLayerBlock {
     public static IntegerProperty LAYERS;
 
     @Inject(method = "getCollisionShape", at = @At("HEAD"), cancellable = true)
-    private void changeCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+    private void changeCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2)) {
             cir.setReturnValue(viaFabricPlus$layers_to_shape_r1_12_2[state.getValue(LAYERS) - 1]);
         }

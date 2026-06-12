@@ -56,7 +56,7 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Redirect(method = "sendUnattendedCommand", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;send(Lnet/minecraft/network/protocol/Packet;)V"))
-    private void alwaysSignCommands(ClientPacketListener instance, Packet<?> packet, @Local(argsOnly = true) String command) {
+    private void alwaysSignCommands(ClientPacketListener instance, Packet<?> packet, @Local(argsOnly = true, name = "command") String command) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_20_3)) {
             this.send(new ServerboundChatCommandSignedPacket(command, Instant.now(), 0L, ArgumentSignatures.EMPTY, this.lastSeenMessages.generateAndApplyUpdate().update()));
         } else {

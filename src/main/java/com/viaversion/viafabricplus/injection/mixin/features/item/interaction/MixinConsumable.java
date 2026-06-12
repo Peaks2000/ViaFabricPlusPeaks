@@ -36,11 +36,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinConsumable {
 
     @Redirect(method = "startConsuming", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/InteractionResult$Success;heldItemTransformedTo(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/InteractionResult$Success;"))
-    private InteractionResult.Success dontExchangeStack(InteractionResult.Success instance, ItemStack newHandStack, @Local(argsOnly = true) ItemStack stack) {
+    private InteractionResult.Success dontExchangeStack(InteractionResult.Success instance, ItemStack itemStack, @Local(argsOnly = true, name = "stack") ItemStack stack) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_20_5) && stack.is(Items.MILK_BUCKET)) {
             return instance.heldItemTransformedTo(stack.isEmpty() ? new ItemStack(Items.BUCKET) : stack);
         } else {
-            return instance.heldItemTransformedTo(newHandStack);
+            return instance.heldItemTransformedTo(itemStack);
         }
     }
 

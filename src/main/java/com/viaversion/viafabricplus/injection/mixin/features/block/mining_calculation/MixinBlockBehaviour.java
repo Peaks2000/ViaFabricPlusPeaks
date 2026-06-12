@@ -37,9 +37,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinBlockBehaviour {
 
     @Inject(method = "getDestroyProgress", at = @At("HEAD"), cancellable = true)
-    private void changeMiningSpeedCalculation(BlockState state, Player player, BlockGetter world, BlockPos pos, CallbackInfoReturnable<Float> cir) {
+    private void changeMiningSpeedCalculation(BlockState state, Player player, BlockGetter level, BlockPos pos, CallbackInfoReturnable<Float> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(LegacyProtocolVersion.r1_4_6tor1_4_7)) {
-            final float hardness = state.getDestroySpeed(world, pos);
+            final float hardness = state.getDestroySpeed(level, pos);
             if (hardness == -1.0F) {
                 cir.setReturnValue(0.0F);
             } else {

@@ -37,8 +37,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinEnderpearlItem {
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
-    private void removeCreativeModeEnderPearl(Level world, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> ci) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_8) && user.getAbilities().instabuild) {
+    private void removeCreativeModeEnderPearl(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> ci) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_8) && player.getAbilities().instabuild) {
             ci.setReturnValue(InteractionResult.PASS);
         }
     }

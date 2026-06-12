@@ -41,6 +41,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -80,7 +81,7 @@ public abstract class MixinServerSelectionList_OnlineServerEntry {
         return original.call(instance, runnable);
     }
 
-    @Redirect(method = "extractContent", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ServerData$State;INCOMPATIBLE:Lnet/minecraft/client/multiplayer/ServerData$State;"))
+    @Redirect(method = "extractContent", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ServerData$State;INCOMPATIBLE:Lnet/minecraft/client/multiplayer/ServerData$State;", opcode = Opcodes.GETSTATIC))
     private ServerData.State disableServerPinging() {
         if (viaFabricPlus$disableServerPinging) {
             return this.serverData.state(); // server version will always be shown (as we don't have a player count anyway)
@@ -90,11 +91,11 @@ public abstract class MixinServerSelectionList_OnlineServerEntry {
     }
 
     @Redirect(method = "extractContent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;split(Lnet/minecraft/network/chat/FormattedText;I)Ljava/util/List;"))
-    private List<FormattedCharSequence> disableServerPinging(Font instance, FormattedText text, int width) {
+    private List<FormattedCharSequence> disableServerPinging(Font instance, FormattedText input, int maxWidth) {
         if (viaFabricPlus$disableServerPinging) { // server label will just show the server address
-            return instance.split(Component.nullToEmpty(serverData.ip), width);
+            return instance.split(Component.nullToEmpty(serverData.ip), maxWidth);
         } else {
-            return instance.split(text, width);
+            return instance.split(input, maxWidth);
         }
     }
 

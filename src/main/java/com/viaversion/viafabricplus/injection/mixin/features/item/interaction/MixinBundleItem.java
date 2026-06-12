@@ -40,9 +40,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinBundleItem {
 
     @Inject(method = "use", at = @At("RETURN"), cancellable = true)
-    private void dontSwing(Level world, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+    private void dontSwing(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21)) {
-            final ItemStack itemStack = user.getItemInHand(hand);
+            final ItemStack itemStack = player.getItemInHand(hand);
             final BundleContents component = itemStack.get(DataComponents.BUNDLE_CONTENTS);
             if (component == null || component.isEmpty()) {
                 cir.setReturnValue(InteractionResult.FAIL);

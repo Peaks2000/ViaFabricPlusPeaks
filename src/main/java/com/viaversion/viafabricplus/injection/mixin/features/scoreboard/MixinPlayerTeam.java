@@ -44,11 +44,11 @@ public abstract class MixinPlayerTeam {
     private Component playerSuffix;
 
     @Inject(method = "getFormattedName(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/MutableComponent;", at = @At("HEAD"), cancellable = true)
-    private void decorateName1_12_2(Component name, CallbackInfoReturnable<MutableComponent> cir) {
+    private void decorateName1_12_2(Component teamMemberName, CallbackInfoReturnable<MutableComponent> cir) {
         // All components were legacy strings prior to 1.13, meaning their styles are not separated but used across the whole component.
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2)) {
             final Style prefixStyle = viaFabricPlus$getLastStyle(this.playerPrefix);
-            final Component nameWithStyle = viaFabricPlus$fillStyle(name, prefixStyle);
+            final Component nameWithStyle = viaFabricPlus$fillStyle(teamMemberName, prefixStyle);
             final Style nameStyle = viaFabricPlus$getLastStyle(nameWithStyle);
 
             cir.setReturnValue(Component.empty()

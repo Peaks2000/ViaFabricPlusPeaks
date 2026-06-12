@@ -42,9 +42,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinBlockItem {
 
     @Inject(method = "canPlace", at = @At("HEAD"), cancellable = true)
-    private void checkChestPlacement(BlockPlaceContext context, BlockState state, CallbackInfoReturnable<Boolean> cir) {
+    private void checkChestPlacement(BlockPlaceContext context, BlockState stateForPlacement, CallbackInfoReturnable<Boolean> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2)) {
-            Block block = state.getBlock();
+            Block block = stateForPlacement.getBlock();
             if (block == Blocks.CHEST || block == Blocks.TRAPPED_CHEST) {
                 Level world = context.getLevel();
                 BlockPos pos = context.getClickedPos();

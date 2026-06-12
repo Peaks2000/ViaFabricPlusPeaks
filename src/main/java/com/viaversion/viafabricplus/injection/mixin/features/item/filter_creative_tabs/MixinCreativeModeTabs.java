@@ -54,12 +54,12 @@ public abstract class MixinCreativeModeTabs {
     private static int viaFabricPlus$state;
 
     @Inject(method = "tryRebuildTabContents", at = @At("HEAD"), cancellable = true)
-    private static void trackLastVersion(FeatureFlagSet enabledFeatures, boolean operatorEnabled, HolderLookup.Provider lookup, CallbackInfoReturnable<Boolean> cir) {
+    private static void trackLastVersion(FeatureFlagSet enabledFeatures, boolean hasPermissions, HolderLookup.Provider lookup, CallbackInfoReturnable<Boolean> cir) {
         if (viaFabricPlus$version != ProtocolTranslator.getTargetVersion() || viaFabricPlus$state != GeneralSettings.INSTANCE.removeNotAvailableItemsFromCreativeTab.getIndex()) {
             viaFabricPlus$version = ProtocolTranslator.getTargetVersion();
             viaFabricPlus$state = GeneralSettings.INSTANCE.removeNotAvailableItemsFromCreativeTab.getIndex();
 
-            CACHED_PARAMETERS = new CreativeModeTab.ItemDisplayParameters(enabledFeatures, operatorEnabled, lookup);
+            CACHED_PARAMETERS = new CreativeModeTab.ItemDisplayParameters(enabledFeatures, hasPermissions, lookup);
             buildAllTabContents(CACHED_PARAMETERS);
 
             cir.setReturnValue(true);

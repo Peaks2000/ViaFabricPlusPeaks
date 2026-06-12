@@ -43,10 +43,10 @@ public abstract class MixinAbstractBoat extends VehicleEntity {
     }
 
     @Inject(method = "positionRider", at = @At(value = "HEAD"), cancellable = true)
-    private void updatePassengerPosition1_8(Entity passenger, Entity.MoveFunction positionUpdater, CallbackInfo ci) {
+    private void updatePassengerPosition1_8(Entity passenger, Entity.MoveFunction moveFunction, CallbackInfo ci) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_8)) {
             final Vec3 newPosition = EntityRidingOffsetsPre1_20_2.getMountedHeightOffset(this, passenger).add(this.position());
-            positionUpdater.accept(passenger, newPosition.x, newPosition.y + EntityRidingOffsetsPre1_20_2.getHeightOffset(passenger), newPosition.z);
+            moveFunction.accept(passenger, newPosition.x, newPosition.y + EntityRidingOffsetsPre1_20_2.getHeightOffset(passenger), newPosition.z);
             ci.cancel();
         }
     }

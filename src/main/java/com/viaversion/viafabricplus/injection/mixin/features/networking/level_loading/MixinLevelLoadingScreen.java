@@ -60,8 +60,8 @@ public abstract class MixinLevelLoadingScreen extends Screen implements ILevelLo
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void modifyCloseCondition(CallbackInfo ci) {
         if (Minecraft.getInstance() != null && Minecraft.getInstance().isLocalServer()) {
-            // When joining the singleplayer, we set the target version to the native version when the integrated server is started
-            // However this is already to late and the screen was already opened (and ticked), causing NPEs due to the network handler being null
+            // When joining the singleplayer, we set the target version to the native version when the integrated server is started,
+            // However, this is already too late, and the screen was already opened (and ticked), causing NPEs due to the network handler being null
             return;
         }
 

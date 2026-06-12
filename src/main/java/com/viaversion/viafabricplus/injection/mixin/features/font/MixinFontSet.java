@@ -45,7 +45,7 @@ public abstract class MixinFontSet {
 
     @Shadow
     @Final
-    GlyphStitcher stitcher;
+    private GlyphStitcher stitcher;
 
     @Shadow
     @Final

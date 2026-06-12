@@ -44,6 +44,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
+import org.jspecify.annotations.NonNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -93,7 +94,7 @@ public abstract class MixinAbstractBoat extends VehicleEntity implements IAbstra
     }
 
     @Override
-    public void lerpMotion(final Vec3 clientVelocity) {
+    public void lerpMotion(final @NonNull Vec3 clientVelocity) {
         super.lerpMotion(clientVelocity);
 
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_8)) {
@@ -265,10 +266,10 @@ public abstract class MixinAbstractBoat extends VehicleEntity implements IAbstra
     }
 
     @Inject(method = "checkFallDamage", at = @At("HEAD"), cancellable = true)
-    private void fall1_8(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition, CallbackInfo ci) {
+    private void fall1_8(double ya, boolean onGround, BlockState onState, BlockPos pos, CallbackInfo ci) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(LegacyProtocolVersion.r1_6_4)) {
             ci.cancel();
-            super.checkFallDamage(heightDifference, onGround, state, landedPosition);
+            super.checkFallDamage(ya, onGround, onState, pos);
         } else if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_8)) {
             this.status = Boat.Status.ON_LAND;
         }

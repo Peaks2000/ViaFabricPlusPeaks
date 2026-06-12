@@ -67,7 +67,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     }
 
     @Inject(method = "startRiding", at = @At("RETURN"))
-    private void setRotationsWhenInBoat(Entity entity, boolean force, boolean emitEvent, CallbackInfoReturnable<Boolean> cir) {
+    private void setRotationsWhenInBoat(Entity entity, boolean force, boolean sendEventAndTriggers, CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValueZ() && entity instanceof Boat && ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_18)) {
             this.yRotO = entity.getYRot();
             this.setYRot(entity.getYRot());

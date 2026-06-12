@@ -68,7 +68,7 @@ public abstract class MixinClientCommonPacketListenerImpl {
 
     @Shadow
     @Nullable
-    private static URL parseResourcePackUrl(String url) {
+    private static URL parseResourcePackUrl(String urlString) {
         return null;
     }
 
@@ -80,7 +80,7 @@ public abstract class MixinClientCommonPacketListenerImpl {
     }
 
     @WrapWithCondition(method = "onPacketError", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;disconnect(Lnet/minecraft/network/DisconnectionDetails;)V"))
-    private boolean dontDisconnectOnPacketException(Connection instance, DisconnectionDetails disconnectionInfo) {
+    private boolean dontDisconnectOnPacketException(Connection instance, DisconnectionDetails details) {
         return ProtocolTranslator.getTargetVersion().newerThan(ProtocolVersion.v1_20_3);
     }
 

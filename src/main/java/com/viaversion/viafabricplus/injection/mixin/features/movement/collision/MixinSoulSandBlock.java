@@ -30,6 +30,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import org.jspecify.annotations.NonNull;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(SoulSandBlock.class)
@@ -40,7 +41,7 @@ public abstract class MixinSoulSandBlock extends Block {
     }
 
     @Override
-    protected void entityInside(final BlockState state, final Level world, final BlockPos pos, final Entity entity, final InsideBlockEffectApplier handler, final boolean bl) {
+    protected void entityInside(final @NonNull BlockState state, final @NonNull Level world, final @NonNull BlockPos pos, final @NonNull Entity entity, final @NonNull InsideBlockEffectApplier handler, final boolean bl) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_14_4)) {
             entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.4D, 1, 0.4D));
         }

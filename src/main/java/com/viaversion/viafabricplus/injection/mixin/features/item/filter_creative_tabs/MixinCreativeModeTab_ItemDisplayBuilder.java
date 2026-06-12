@@ -46,7 +46,7 @@ public abstract class MixinCreativeModeTab_ItemDisplayBuilder {
     private CreativeModeTab tab;
 
     @WrapOperation(method = "accept", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;isEnabled(Lnet/minecraft/world/flag/FeatureFlagSet;)Z"))
-    private boolean removeUnknownItems(Item instance, FeatureFlagSet featureSet, Operation<Boolean> original, @Local(argsOnly = true) ItemStack stack) {
+    private boolean removeUnknownItems(Item instance, FeatureFlagSet featureSet, Operation<Boolean> original, @Local(argsOnly = true, name = "stack") ItemStack stack) {
         final boolean originalValue = original.call(instance, featureSet);
         final int index = GeneralSettings.INSTANCE.removeNotAvailableItemsFromCreativeTab.getIndex();
 

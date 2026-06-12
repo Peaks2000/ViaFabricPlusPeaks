@@ -45,8 +45,8 @@ public abstract class MixinMultiPlayerGameMode implements IMultiPlayerGameMode {
     private final ClientPlayerInteractionManager1_18_2 viaFabricPlus$1_18_2InteractionManager = new ClientPlayerInteractionManager1_18_2();
 
     @Inject(method = "startPrediction", at = @At("HEAD"))
-    private void trackPlayerAction(ClientLevel world, PredictiveAction packetCreator, CallbackInfo ci) {
-        if (ProtocolTranslator.getTargetVersion().betweenInclusive(ProtocolVersion.v1_14_4, ProtocolVersion.v1_18_2) && packetCreator instanceof ServerboundPlayerActionPacket playerActionC2SPacket) {
+    private void trackPlayerAction(ClientLevel level, PredictiveAction predictiveAction, CallbackInfo ci) {
+        if (ProtocolTranslator.getTargetVersion().betweenInclusive(ProtocolVersion.v1_14_4, ProtocolVersion.v1_18_2) && predictiveAction instanceof ServerboundPlayerActionPacket playerActionC2SPacket) {
             this.viaFabricPlus$1_18_2InteractionManager.trackPlayerAction(playerActionC2SPacket.getAction(), playerActionC2SPacket.getPos());
         }
     }

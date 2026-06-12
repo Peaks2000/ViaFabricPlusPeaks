@@ -57,11 +57,11 @@ public abstract class MixinLivingEntity extends Entity {
     }
 
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Mth;abs(F)F"))
-    private float alwaysRotateWhenWalkingBackwards(float value) {
+    private float alwaysRotateWhenWalkingBackwards(float v) {
         if (VisualSettings.INSTANCE.sidewaysBackwardsRunning.isEnabled()) {
             return 0F;
         } else {
-            return Mth.abs(value);
+            return Mth.abs(v);
         }
     }
 

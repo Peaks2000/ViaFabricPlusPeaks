@@ -130,7 +130,7 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @WrapWithCondition(method = "handleMoveEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/VecDeltaCodec;setBase(Lnet/minecraft/world/phys/Vec3;)V", ordinal = 0))
-    private boolean dontHandleEntityPositionChange(VecDeltaCodec instance, Vec3 pos) {
+    private boolean dontHandleEntityPositionChange(VecDeltaCodec instance, Vec3 base) {
         return ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_21_2);
     }
 
@@ -140,7 +140,7 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Redirect(method = "handleOpenSignEditor", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false))
-    private void openEmptySignEditor(Logger instance, String format, Object arg1, Object arg2, @Local(argsOnly = true) ClientboundOpenSignEditorPacket packet) {
+    private void openEmptySignEditor(Logger instance, String format, Object arg1, Object arg2, @Local(argsOnly = true, name = "packet") ClientboundOpenSignEditorPacket packet) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21)) {
             final BlockPos pos = packet.getPos();
 
@@ -177,17 +177,17 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Redirect(method = "handleOpenBook", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/inventory/BookViewScreen$BookAccess;fromItem(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/client/gui/screens/inventory/BookViewScreen$BookAccess;"))
-    private BookViewScreen.BookAccess dontOpenWriteableBookScreen(ItemStack stack) {
-        if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_20_5) || stack.is(Items.WRITTEN_BOOK)) {
-            return BookViewScreen.BookAccess.fromItem(stack);
+    private BookViewScreen.BookAccess dontOpenWriteableBookScreen(ItemStack itemStack) {
+        if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_20_5) || itemStack.is(Items.WRITTEN_BOOK)) {
+            return BookViewScreen.BookAccess.fromItem(itemStack);
         } else {
             return null;
         }
     }
 
     @WrapWithCondition(method = "handleRespawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;startWaitingForNewLevel(Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/gui/screens/LevelLoadingScreen$Reason;)V"))
-    private boolean checkDimensionChange(ClientPacketListener instance, LocalPlayer player, ClientLevel world, LevelLoadingScreen.Reason worldEntryReason, @Local(ordinal = 0) ResourceKey<Level> registryKey) {
-        return ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_20_3) || registryKey != this.minecraft.player.level().dimension();
+    private boolean checkDimensionChange(ClientPacketListener instance, LocalPlayer player, ClientLevel level, LevelLoadingScreen.Reason reason, @Local(name = "dimensionKey") ResourceKey<Level> dimensionKey) {
+        return ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_20_3) || dimensionKey != this.minecraft.player.level().dimension();
     }
 
     @WrapWithCondition(method = "handlePlayerChat", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Object;)V", remap = false))
@@ -196,9 +196,9 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Redirect(method = "applyPlayerInfoUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;onGameModeChanged(Lnet/minecraft/world/level/GameType;)V"))
-    private void dontResetVelocity(LocalPlayer instance, GameType gameMode) {
+    private void dontResetVelocity(LocalPlayer instance, GameType gameType) {
         if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_20)) {
-            instance.onGameModeChanged(gameMode);
+            instance.onGameModeChanged(gameType);
         }
     }
 
@@ -222,7 +222,7 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void fixPlayerListOrdering(Minecraft client, Connection clientConnection, CommonListenerCookie clientConnectionState, CallbackInfo ci) {
+    private void fixPlayerListOrdering(Minecraft minecraft, Connection connection, CommonListenerCookie cookie, CallbackInfo ci) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_19_1)) {
             this.listedPlayers = new LinkedHashSet<>();
         }
@@ -245,14 +245,14 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     }
 
     @Redirect(method = "setValuesFromPositionPacket", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;moveOrInterpolateTo(Lnet/minecraft/world/phys/Vec3;FF)V"))
-    private static void cancelSmallChanges(Entity instance, Vec3 pos, float yaw, float pitch) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_16_1) && Math.abs(instance.getX() - pos.x) < 0.03125 && Math.abs(instance.getY() - pos.y) < 0.015625 && Math.abs(instance.getZ() - pos.z) < 0.03125) {
+    private static void cancelSmallChanges(Entity instance, Vec3 position, float yRot, float xRot) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_16_1) && Math.abs(instance.getX() - position.x) < 0.03125 && Math.abs(instance.getY() - position.y) < 0.015625 && Math.abs(instance.getZ() - position.z) < 0.03125) {
             if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_15_2) && instance.getInterpolation() != null) {
                 instance.getInterpolation().setInterpolationLength(0);
             }
-            instance.moveOrInterpolateTo(instance.position(), yaw, pitch);
+            instance.moveOrInterpolateTo(instance.position(), yRot, xRot);
         } else {
-            instance.moveOrInterpolateTo(pos, yaw, pitch);
+            instance.moveOrInterpolateTo(position, yRot, xRot);
         }
     }
 

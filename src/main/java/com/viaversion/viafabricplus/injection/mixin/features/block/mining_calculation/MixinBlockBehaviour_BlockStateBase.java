@@ -63,7 +63,7 @@ public abstract class MixinBlockBehaviour_BlockStateBase {
     }
 
     @Inject(method = "getDestroySpeed", at = @At("RETURN"), cancellable = true)
-    private void changeHardness(BlockGetter world, BlockPos pos, CallbackInfoReturnable<Float> cir) {
+    private void changeHardness(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Float> cir) {
         final Block block = this.getBlock();
 
         if (block.equals(Blocks.END_STONE_BRICKS) || block.equals(Blocks.END_STONE_BRICK_SLAB) || block.equals(Blocks.END_STONE_BRICK_STAIRS) || block.equals(Blocks.END_STONE_BRICK_WALL)) {

@@ -50,7 +50,7 @@ public abstract class MixinEquippable {
     }
 
     @Inject(method = "swapWithEquipmentSlot", at = @At("HEAD"), cancellable = true)
-    private void cancelArmorSwap(ItemStack stack, Player player, CallbackInfoReturnable<InteractionResult> cir) {
+    private void cancelArmorSwap(ItemStack inHand, Player player, CallbackInfoReturnable<InteractionResult> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_19_3)) {
             final ItemStack targetItem = player.getItemBySlot(this.slot);
             if (!targetItem.isEmpty()) {

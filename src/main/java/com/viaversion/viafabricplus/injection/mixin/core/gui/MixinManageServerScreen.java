@@ -81,7 +81,7 @@ public abstract class MixinManageServerScreen extends Screen {
             viaFabricPlus$addressField = null;
         }
 
-        final Button.Builder buttonBuilder = Button.builder(forcedVersion == null ? Component.translatable("base.viafabricplus.set_version") : Component.nullToEmpty(forcedVersion.getName()), button -> {
+        final Button.Builder buttonBuilder = Button.builder(forcedVersion == null ? Component.translatable("base.viafabricplus.set_version") : Component.nullToEmpty(forcedVersion.getName()), _ -> {
             // Store current input in case the user cancels the version selection
             viaFabricPlus$nameField = nameEdit.getValue();
             viaFabricPlus$addressField = ipEdit.getValue();

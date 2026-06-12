@@ -53,9 +53,9 @@ public abstract class MixinBowItem {
     }
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
-    private void makeInstantUsable(Level world, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+    private void makeInstantUsable(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(LegacyProtocolVersion.b1_7tob1_7_3)) {
-            final ItemStack arrowStack = user.getProjectile(user.getItemInHand(hand));
+            final ItemStack arrowStack = player.getProjectile(player.getItemInHand(hand));
             if (arrowStack.isEmpty()) {
                 cir.setReturnValue(InteractionResult.FAIL);
             } else {
