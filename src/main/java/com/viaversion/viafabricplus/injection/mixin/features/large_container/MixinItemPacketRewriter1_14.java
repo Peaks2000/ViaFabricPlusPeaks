@@ -75,7 +75,7 @@ public abstract class MixinItemPacketRewriter1_14 extends ItemRewriter<Clientbou
 
                     final ChestMenu screenHandler = new ChestMenu(null, syncId, mc.player.getInventory(), new SimpleContainer(size), Mth.ceil(size / 9F));
                     mc.player.containerMenu = screenHandler;
-                    mc.setScreen(new ContainerScreen(screenHandler, mc.player.getInventory(), mcTitle));
+                    mc.gui.setScreen(new ContainerScreen(screenHandler, mc.player.getInventory(), mcTitle));
                 } catch (Throwable t) {
                     throw new RuntimeException("Failed to handle OpenWindow packet data", t);
                 }

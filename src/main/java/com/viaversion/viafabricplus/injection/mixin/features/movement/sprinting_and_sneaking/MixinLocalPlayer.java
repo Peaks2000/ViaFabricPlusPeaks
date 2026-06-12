@@ -43,7 +43,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.stats.StatsCounter;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec2;
 import org.spongepowered.asm.mixin.Final;
@@ -262,7 +262,7 @@ public abstract class MixinLocalPlayer extends AbstractClientPlayer {
     @Inject(method = "shouldStopRunSprinting", at = @At("HEAD"), cancellable = true)
     private void changeStopSprintingConditions(CallbackInfoReturnable<Boolean> cir) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_4)) {
-            final boolean ridingCamel = getVehicle() != null && getVehicle().getType() == EntityType.CAMEL;
+            final boolean ridingCamel = getVehicle() != null && getVehicle().getType() == EntityTypes.CAMEL;
             cir.setReturnValue(this.isFallFlying() || this.isMobilityRestricted() || this.isMovingSlowly() || this.isPassenger() && !ridingCamel || this.isUsingItem() && !this.isPassenger() && !this.isUnderWater());
         } else if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_7)) {
             cir.setReturnValue(this.isMobilityRestricted() || this.isPassenger() && !this.vehicleCanSprint(this.getVehicle()) || !this.input.hasForwardImpulse() || !this.viaFabricPlus$hasEnoughFoodToSprint1_19_1() || this.horizontalCollision && !this.minorHorizontalCollision || this.isInWater() && !this.isUnderWater());

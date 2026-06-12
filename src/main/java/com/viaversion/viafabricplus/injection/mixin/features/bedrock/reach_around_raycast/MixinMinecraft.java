@@ -29,6 +29,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -54,7 +55,7 @@ public abstract class MixinMinecraft {
             final int z = Mth.floor(entity.getZ());
             final BlockPos floorPos = new BlockPos(x, y, z);
 
-            return new BlockHitResult(floorPos.getCenter(), entity.getDirection(), floorPos, false);
+            return new BlockHitResult(Vec3.atCenterOf(floorPos), entity.getDirection(), floorPos, false);
         }
 
         return hitResult;

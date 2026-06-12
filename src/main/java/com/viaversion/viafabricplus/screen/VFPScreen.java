@@ -156,7 +156,7 @@ public class VFPScreen extends Screen {
     public static void setScreen(final Screen screen) {
         final Minecraft client = Minecraft.getInstance();
 
-        client.execute(() -> client.setScreen(screen));
+        client.execute(() -> client.gui.setScreen(screen));
     }
 
     @Override
@@ -169,7 +169,7 @@ public class VFPScreen extends Screen {
     public void addRefreshButton(final Runnable click) {
         this.addRenderableWidget(Button.builder(Component.translatable("base.viafabricplus.refresh"), button -> {
             click.run();
-            minecraft.setScreen(this);
+            minecraft.gui.setScreen(this);
         }).pos(width - 60 - 5, 5).size(60, 20).build());
     }
 
@@ -185,7 +185,7 @@ public class VFPScreen extends Screen {
         if (prevScreen instanceof VFPScreen vfpScreen) {
             vfpScreen.open(vfpScreen.prevScreen); // Support recursive opening
         } else {
-            Minecraft.getInstance().setScreen(prevScreen);
+            Minecraft.getInstance().gui.setScreen(prevScreen);
         }
     }
 
@@ -238,14 +238,14 @@ public class VFPScreen extends Screen {
      * Opens an error screen with a specific title and throws the given throwable
      *
      * @param title     The title of the error screen
-     * @param throwable The throwable which should be thrown
-     * @param next      The screen which should be opened after the error screen is closed
+     * @param throwable The throwable that should be thrown
+     * @param next      The screen that should be opened after the error screen is closed
      */
     public static void showErrorScreen(final Component title, final Throwable throwable, final Screen next) {
         ViaFabricPlusImpl.INSTANCE.getLogger().error("Something went wrong!", throwable);
 
         final Minecraft client = Minecraft.getInstance();
-        client.execute(() -> client.setScreen(new AlertScreen(() -> client.setScreen(next), title, Component.translatable("base.viafabricplus.something_went_wrong").append("\n" + throwable.getMessage()), Component.translatable("base.viafabricplus.cancel"), false)));
+        client.execute(() -> client.gui.setScreen(new AlertScreen(() -> client.gui.setScreen(next), title, Component.translatable("base.viafabricplus.something_went_wrong").append("\n" + throwable.getMessage()), Component.translatable("base.viafabricplus.cancel"), false)));
     }
 
 }

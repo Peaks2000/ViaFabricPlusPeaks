@@ -57,12 +57,12 @@ public abstract class MixinProtocol1_21_7To1_21_9 extends AbstractProtocol<Clien
                     final String name = buf.readUtf();
                     final int duration = buf.readInt();
 
-                    final IGameTestBlockHighlightRenderer mixinTestDebugRenderer = (IGameTestBlockHighlightRenderer) Minecraft.getInstance().levelRenderer.gameTestBlockHighlightRenderer;
+                    final IGameTestBlockHighlightRenderer mixinTestDebugRenderer = (IGameTestBlockHighlightRenderer) Minecraft.getInstance().levelExtractor.gameTestBlockHighlightRenderer;
                     mixinTestDebugRenderer.viaFabricPlus$addMarker(pos, color, name, duration);
                 }));
             } else if (channel.equals("minecraft:debug/game_test_clear")) {
                 wrapper.set(Types.STRING, 0, SyncTasks.PACKET_SYNC_IDENTIFIER);
-                wrapper.write(Types.STRING, SyncTasks.executeSyncTask(buf -> Minecraft.getInstance().levelRenderer.gameTestBlockHighlightRenderer.clear()));
+                wrapper.write(Types.STRING, SyncTasks.executeSyncTask(buf -> Minecraft.getInstance().levelExtractor.gameTestBlockHighlightRenderer.clear()));
             }
         });
     }

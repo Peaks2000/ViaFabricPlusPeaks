@@ -25,6 +25,7 @@ import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.chicken.Chicken;
@@ -91,7 +92,7 @@ public final class EntityRidingOffsetsPre1_20_2 {
                 if (abstractBoatEntity.isRemoved()) {
                     yOffset = 0.01F;
                 } else {
-                    yOffset = abstractBoatEntity.getType() == EntityType.BAMBOO_RAFT || abstractBoatEntity.getType() == EntityType.BAMBOO_CHEST_RAFT ? 0.25F : -0.1F;
+                    yOffset = abstractBoatEntity.getType() == EntityTypes.BAMBOO_RAFT || abstractBoatEntity.getType() == EntityTypes.BAMBOO_CHEST_RAFT ? 0.25F : -0.1F;
                 }
 
                 double xOffset = abstractBoatEntity instanceof AbstractChestBoat ? 0.15F : 0F;
@@ -186,7 +187,7 @@ public final class EntityRidingOffsetsPre1_20_2 {
             return 0.1D;
         } else if (entity instanceof Shulker shulkerEntity) {
             final EntityType<?> vehicleType = shulkerEntity.getVehicle().getType();
-            return !(shulkerEntity.getVehicle() instanceof Boat) && vehicleType != EntityType.MINECART ? 0D : 0.1875D - getMountedHeightOffset(shulkerEntity.getVehicle(), null).y;
+            return !(shulkerEntity.getVehicle() instanceof Boat) && vehicleType != EntityTypes.MINECART ? 0D : 0.1875D - getMountedHeightOffset(shulkerEntity.getVehicle(), null).y;
         } else if (entity instanceof Silverfish) {
             return 0.1D;
         } else if (entity instanceof ZombifiedPiglin zombifiedPiglinEntity) {

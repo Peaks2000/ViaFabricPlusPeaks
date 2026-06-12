@@ -71,7 +71,7 @@ public final class ShulkerBoxColoringRecipe extends CustomRecipe {
 
     public @NonNull ItemStack assemble(CraftingInput input) {
         ItemStack result = ItemStack.EMPTY;
-        ItemStack dyeStack = Items.WHITE_DYE.getDefaultInstance();
+        ItemStack dyeStack = Items.DYE.white().getDefaultInstance();
 
         for (int i = 0; i < input.size(); i++) {
             ItemStack stack = input.getItem(i);
@@ -96,26 +96,26 @@ public final class ShulkerBoxColoringRecipe extends CustomRecipe {
     private static Block getBlockByColor(@Nullable DyeColor color) {
         if (color == null) {
             return Blocks.SHULKER_BOX;
-        } else {
-            return switch (color) {
-                case WHITE -> Blocks.WHITE_SHULKER_BOX;
-                case ORANGE -> Blocks.ORANGE_SHULKER_BOX;
-                case MAGENTA -> Blocks.MAGENTA_SHULKER_BOX;
-                case LIGHT_BLUE -> Blocks.LIGHT_BLUE_SHULKER_BOX;
-                case YELLOW -> Blocks.YELLOW_SHULKER_BOX;
-                case LIME -> Blocks.LIME_SHULKER_BOX;
-                case PINK -> Blocks.PINK_SHULKER_BOX;
-                case GRAY -> Blocks.GRAY_SHULKER_BOX;
-                case LIGHT_GRAY -> Blocks.LIGHT_GRAY_SHULKER_BOX;
-                case CYAN -> Blocks.CYAN_SHULKER_BOX;
-                case BLUE -> Blocks.BLUE_SHULKER_BOX;
-                case BROWN -> Blocks.BROWN_SHULKER_BOX;
-                case GREEN -> Blocks.GREEN_SHULKER_BOX;
-                case RED -> Blocks.RED_SHULKER_BOX;
-                case BLACK -> Blocks.BLACK_SHULKER_BOX;
-                case PURPLE -> Blocks.PURPLE_SHULKER_BOX;
-            };
         }
+
+        return switch (color) {
+            case WHITE -> Blocks.DYED_SHULKER_BOX.white();
+            case ORANGE -> Blocks.DYED_SHULKER_BOX.orange();
+            case MAGENTA -> Blocks.DYED_SHULKER_BOX.magenta();
+            case LIGHT_BLUE -> Blocks.DYED_SHULKER_BOX.lightBlue();
+            case YELLOW -> Blocks.DYED_SHULKER_BOX.yellow();
+            case LIME -> Blocks.DYED_SHULKER_BOX.lime();
+            case PINK -> Blocks.DYED_SHULKER_BOX.pink();
+            case GRAY -> Blocks.DYED_SHULKER_BOX.gray();
+            case LIGHT_GRAY -> Blocks.DYED_SHULKER_BOX.lightGray();
+            case CYAN -> Blocks.DYED_SHULKER_BOX.cyan();
+            case BLUE -> Blocks.DYED_SHULKER_BOX.blue();
+            case BROWN -> Blocks.DYED_SHULKER_BOX.brown();
+            case GREEN -> Blocks.DYED_SHULKER_BOX.green();
+            case RED -> Blocks.DYED_SHULKER_BOX.red();
+            case BLACK -> Blocks.DYED_SHULKER_BOX.black();
+            case PURPLE -> Blocks.DYED_SHULKER_BOX.purple();
+        };
     }
 
 }
