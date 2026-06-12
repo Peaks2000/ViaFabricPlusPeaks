@@ -37,7 +37,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public final class ShulkerBoxColoringRecipe extends CustomRecipe {
 
@@ -85,37 +84,13 @@ public final class ShulkerBoxColoringRecipe extends CustomRecipe {
             }
         }
 
-        return result.transmuteCopy(getBlockByColor(dyeStack.get(DataComponents.DYE)), 1);
+        final DyeColor dye = dyeStack.get(DataComponents.DYE);
+        return result.transmuteCopy(dye == null ? Blocks.SHULKER_BOX : Blocks.DYED_SHULKER_BOX.pick(dye), 1);
     }
 
     @Override
     public @NonNull RecipeSerializer<ShulkerBoxColoringRecipe> getSerializer() {
         return SERIALIZER;
-    }
-
-    private static Block getBlockByColor(@Nullable DyeColor color) {
-        if (color == null) {
-            return Blocks.SHULKER_BOX;
-        }
-
-        return switch (color) {
-            case WHITE -> Blocks.DYED_SHULKER_BOX.white();
-            case ORANGE -> Blocks.DYED_SHULKER_BOX.orange();
-            case MAGENTA -> Blocks.DYED_SHULKER_BOX.magenta();
-            case LIGHT_BLUE -> Blocks.DYED_SHULKER_BOX.lightBlue();
-            case YELLOW -> Blocks.DYED_SHULKER_BOX.yellow();
-            case LIME -> Blocks.DYED_SHULKER_BOX.lime();
-            case PINK -> Blocks.DYED_SHULKER_BOX.pink();
-            case GRAY -> Blocks.DYED_SHULKER_BOX.gray();
-            case LIGHT_GRAY -> Blocks.DYED_SHULKER_BOX.lightGray();
-            case CYAN -> Blocks.DYED_SHULKER_BOX.cyan();
-            case BLUE -> Blocks.DYED_SHULKER_BOX.blue();
-            case BROWN -> Blocks.DYED_SHULKER_BOX.brown();
-            case GREEN -> Blocks.DYED_SHULKER_BOX.green();
-            case RED -> Blocks.DYED_SHULKER_BOX.red();
-            case BLACK -> Blocks.DYED_SHULKER_BOX.black();
-            case PURPLE -> Blocks.DYED_SHULKER_BOX.purple();
-        };
     }
 
 }

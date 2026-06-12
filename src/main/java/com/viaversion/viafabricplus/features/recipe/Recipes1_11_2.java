@@ -185,22 +185,7 @@ public final class Recipes1_11_2 {
             }
             if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_8)) {
                 specialRecipes.add(new RepairItemRecipe());
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.white()), new ItemStackTemplate(Items.BANNER.white())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.orange()), new ItemStackTemplate(Items.BANNER.orange())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.magenta()), new ItemStackTemplate(Items.BANNER.magenta())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.lightBlue()), new ItemStackTemplate(Items.BANNER.lightBlue())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.yellow()), new ItemStackTemplate(Items.BANNER.yellow())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.lime()), new ItemStackTemplate(Items.BANNER.lime())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.pink()), new ItemStackTemplate(Items.BANNER.pink())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.gray()), new ItemStackTemplate(Items.BANNER.gray())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.lightGray()), new ItemStackTemplate(Items.BANNER.lightGray())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.cyan()), new ItemStackTemplate(Items.BANNER.cyan())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.purple()), new ItemStackTemplate(Items.BANNER.purple())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.blue()), new ItemStackTemplate(Items.BANNER.blue())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.brown()), new ItemStackTemplate(Items.BANNER.brown())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.green()), new ItemStackTemplate(Items.BANNER.green())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.red()), new ItemStackTemplate(Items.BANNER.red())));
-                specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(Items.BANNER.black()), new ItemStackTemplate(Items.BANNER.black())));
+                Items.BANNER.forEach(item -> specialRecipes.add(new BannerDuplicateRecipe(Ingredient.of(item), new ItemStackTemplate(item))));
                 specialRecipes.add(new AddBannerPatternRecipe());
             }
             if (ProtocolTranslator.getTargetVersion().newerThanOrEqualTo(ProtocolVersion.v1_7_2)) {
@@ -232,7 +217,7 @@ public final class Recipes1_11_2 {
 
     /**
      * Sets the result slot of a crafting screen handler to the correct item stack. In Minecraft versions up to 1.11.2 the result slot
-     * is not updated when the input slots change, so we need to update it manually, Spigot and Paper re-syncs the slot,
+     * is not updated when the input slots change, so we need to update it manually, Spigot and Paper re-sync the slot,
      * so we don't notice this bug on servers that use Spigot or Paper
      *
      * @param syncId        The sync id of the screen handler

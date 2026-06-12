@@ -61,7 +61,7 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     public Channel channel;
 
     @Shadow
-    public abstract void channelActive(@NotNull ChannelHandlerContext context) throws Exception;
+    public abstract void channelActive(@NotNull ChannelHandlerContext ctx) throws Exception;
 
     @Unique
     private UserConnection viaFabricPlus$userConnection;
@@ -94,7 +94,6 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
                 throw new IllegalStateException("Encryption cipher is null");
             }
 
-            this.encrypted = true;
             this.channel.pipeline().addBefore(PreNettyLengthRemover.NAME, HandlerNames.ENCRYPT, new CipherEncoder(encryptCipher));
         }
     }
@@ -131,7 +130,6 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
             throw new IllegalStateException("Decryption cipher is null");
         }
 
-        this.encrypted = true;
         // Enabling the decryption side for 1.6.4 if the 1.7 -> 1.6 protocol tells us to do
         this.channel.pipeline().addBefore(PreNettyLengthPrepender.NAME, HandlerNames.DECRYPT, new CipherDecoder(this.viaFabricPlus$decryptionCipher));
     }
