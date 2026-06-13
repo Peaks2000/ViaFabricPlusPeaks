@@ -73,7 +73,7 @@ public abstract class MixinLivingEntity extends Entity {
         return ProtocolTranslator.getTargetVersion().newerThan(ProtocolVersion.v1_13_2) && instance.horizontalCollision;
     }
 
-    @ModifyVariable(method = "getFluidFallingAdjustedMovement", at = @At("HEAD"), argsOnly = true, name = "isFalling")
+    @ModifyVariable(method = "getFluidFallingAdjustedMovement", at = @At("HEAD"), argsOnly = true)
     private boolean modifyMovingDown(boolean isFalling) {
         return ProtocolTranslator.getTargetVersion().newerThan(ProtocolVersion.v1_13_2) && isFalling;
     }

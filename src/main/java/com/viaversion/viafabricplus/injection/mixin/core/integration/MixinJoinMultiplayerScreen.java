@@ -44,7 +44,7 @@ public abstract class MixinJoinMultiplayerScreen extends Screen {
     }
 
     @WrapOperation(method = "join(Lnet/minecraft/client/multiplayer/ServerData;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/resolver/ServerAddress;parseString(Ljava/lang/String;)Lnet/minecraft/client/multiplayer/resolver/ServerAddress;"))
-    private ServerAddress replaceDefaultPort(String input, Operation<ServerAddress> original, @Local(argsOnly = true, name = "data") ServerData data) {
+    private ServerAddress replaceDefaultPort(String input, Operation<ServerAddress> original, @Local(argsOnly = true) ServerData data) {
         final IServerData mixinServerInfo = (IServerData) data;
 
         ProtocolVersion version;

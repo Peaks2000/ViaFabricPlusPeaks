@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinKnowledgeBookItem {
 
     @Redirect(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;consume(ILnet/minecraft/world/entity/LivingEntity;)V"))
-    private void removeFullStack(ItemStack instance, int amount, LivingEntity owner, @Local(argsOnly = true, name = "hand") InteractionHand hand) {
+    private void removeFullStack(ItemStack instance, int amount, LivingEntity owner, @Local(argsOnly = true) InteractionHand hand) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_20_5)) {
             if (!owner.hasInfiniteMaterials()) {
                 owner.setItemInHand(hand, ItemStack.EMPTY);

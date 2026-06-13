@@ -31,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(Options.class)
 public abstract class MixinOptions {
 
-    @ModifyVariable(method = "setServerRenderDistance", at = @At("HEAD"), argsOnly = true, name = "serverRenderDistance")
+    @ModifyVariable(method = "setServerRenderDistance", at = @At("HEAD"), argsOnly = true)
     private int changeServerViewDistance(int serverRenderDistance) {
         if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_17_1)) {
             return 0;

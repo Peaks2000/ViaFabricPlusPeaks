@@ -96,7 +96,7 @@ public abstract class MixinPlayer extends MixinLivingEntity {
     }
 
     @Redirect(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", ordinal = 1))
-    private void removeFlySlipperiness(Player instance, Vec3 vec3d, @Local(argsOnly = true, name = "input") Vec3 input) {
+    private void removeFlySlipperiness(Player instance, Vec3 vec3d, @Local(argsOnly = true) Vec3 input) {
         if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) && input.horizontalDistanceSqr() == 0) {
             instance.setDeltaMovement(new Vec3(0, vec3d.y, 0));
         } else {

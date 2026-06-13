@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MixinServerStatusPinger {
 
     @WrapOperation(method = "pingServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/resolver/ServerAddress;parseString(Ljava/lang/String;)Lnet/minecraft/client/multiplayer/resolver/ServerAddress;"))
-    private ServerAddress replaceDefaultPort(String input, Operation<ServerAddress> original, @Local(argsOnly = true, name = "data") ServerData data) {
+    private ServerAddress replaceDefaultPort(String input, Operation<ServerAddress> original, @Local(argsOnly = true) ServerData data) {
         // Replace port when pinging the server and the forced version is set
         return original.call(BedrockSettings.replaceDefaultPort(input, ((IServerData) data).viaFabricPlus$forcedVersion()));
     }

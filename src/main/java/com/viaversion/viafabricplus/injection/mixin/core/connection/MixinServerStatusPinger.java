@@ -39,7 +39,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MixinServerStatusPinger {
 
     @WrapOperation(method = "pingServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;connectToServer(Ljava/net/InetSocketAddress;Lnet/minecraft/server/network/EventLoopGroupHolder;Lnet/minecraft/util/debugchart/LocalSampleLogger;)Lnet/minecraft/network/Connection;"))
-    private Connection setForcedVersion(InetSocketAddress address, EventLoopGroupHolder eventLoopGroupHolder, LocalSampleLogger localSampleLogger, Operation<Connection> original, @Local(argsOnly = true, name = "data") ServerData data) {
+    private Connection setForcedVersion(InetSocketAddress address, EventLoopGroupHolder eventLoopGroupHolder, LocalSampleLogger localSampleLogger, Operation<Connection> original, @Local(argsOnly = true) ServerData data) {
         final IServerData mixinServerInfo = (IServerData) data;
 
         if (mixinServerInfo.viaFabricPlus$forcedVersion() != null && !mixinServerInfo.viaFabricPlus$passedDirectConnectScreen()) {

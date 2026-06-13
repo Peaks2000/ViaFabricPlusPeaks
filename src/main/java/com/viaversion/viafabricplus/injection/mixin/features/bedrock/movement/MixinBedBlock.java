@@ -35,17 +35,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BedBlock.class)
 public abstract class MixinBedBlock {
 
-    @Inject(method = "bounceUp", at = @At("HEAD"), cancellable = true)
-    private void collisionChanges(Entity entity, CallbackInfo ci) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
-            ci.cancel();
-
-            Vec3 velocity = entity.getDeltaMovement();
-            if (velocity.y < (double) 0.0F) {
-                double d = entity instanceof LivingEntity ? (double) 1.0F : 0.8;
-                entity.setDeltaMovement(velocity.x, Math.min(-velocity.y * 0.75F * d, 0.75F), velocity.z);
-            }
-        }
-    }
+    // TODO 26.2
+//    @Inject(method = "bounceUp", at = @At("HEAD"), cancellable = true)
+//    private void collisionChanges(Entity entity, CallbackInfo ci) {
+//        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+//            ci.cancel();
+//
+//            Vec3 velocity = entity.getDeltaMovement();
+//            if (velocity.y < (double) 0.0F) {
+//                double d = entity instanceof LivingEntity ? (double) 1.0F : 0.8;
+//                entity.setDeltaMovement(velocity.x, Math.min(-velocity.y * 0.75F * d, 0.75F), velocity.z);
+//            }
+//        }
+//    }
 
 }

@@ -12,7 +12,7 @@
     "hud_element_changes.MixinChatComponent",
     "hud_element_changes.MixinChatComponent_1",
     "hud_element_changes.MixinMultiPlayerGameMode",
-    "hud_element_changes.MixinGui",
+    "hud_element_changes.MixinHud",
     "instant_sneaking.MixinCamera",
     "level_loading_transitions.MixinLevelLoadingScreen",
     "oof_sound.MixinPlayer",
