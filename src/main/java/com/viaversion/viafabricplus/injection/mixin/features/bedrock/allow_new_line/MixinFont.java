@@ -21,24 +21,13 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.allow_new_line;
 
-import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Mth;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Font.class)
 public abstract class MixinFont {

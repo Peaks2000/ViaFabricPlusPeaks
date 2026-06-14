@@ -31,15 +31,15 @@ import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import io.netty.channel.Channel;
 import java.nio.file.Path;
 import java.util.List;
-import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Holder;
 import net.minecraft.network.Connection;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.core.Holder;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.block.entity.BannerPattern;
 import org.jetbrains.annotations.Nullable;
 
 /**

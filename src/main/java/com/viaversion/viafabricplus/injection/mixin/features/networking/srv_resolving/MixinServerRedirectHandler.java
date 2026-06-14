@@ -24,8 +24,8 @@ package com.viaversion.viafabricplus.injection.mixin.features.networking.srv_res
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import java.util.Optional;
 import javax.naming.directory.DirContext;
-import net.minecraft.client.multiplayer.resolver.ServerRedirectHandler;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.client.multiplayer.resolver.ServerRedirectHandler;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

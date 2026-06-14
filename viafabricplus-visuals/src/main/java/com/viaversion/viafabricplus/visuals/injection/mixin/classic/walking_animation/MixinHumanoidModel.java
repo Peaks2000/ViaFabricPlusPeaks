@@ -22,8 +22,8 @@
 package com.viaversion.viafabricplus.visuals.injection.mixin.classic.walking_animation;
 
 import com.viaversion.viafabricplus.visuals.settings.VisualSettings;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.util.Mth;
 import org.objectweb.asm.Opcodes;

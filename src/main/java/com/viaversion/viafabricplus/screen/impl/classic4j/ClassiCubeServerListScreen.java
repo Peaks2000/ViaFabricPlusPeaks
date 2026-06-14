@@ -34,12 +34,12 @@ import de.florianreuth.classic4j.model.classicube.account.CCAccount;
 import de.florianreuth.classic4j.model.classicube.server.CCServerInfo;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 import org.jspecify.annotations.NonNull;
 

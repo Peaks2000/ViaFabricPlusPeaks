@@ -24,8 +24,8 @@ package com.viaversion.viafabricplus.injection.mixin.features.legacy_tab_complet
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.viaversion.viafabricplus.settings.impl.DebugSettings;
 import net.minecraft.client.gui.components.CommandSuggestions;
-import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.ChatScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;

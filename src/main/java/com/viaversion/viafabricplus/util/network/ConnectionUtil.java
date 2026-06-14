@@ -21,8 +21,8 @@
 
 package com.viaversion.viafabricplus.util.network;
 
-import com.viaversion.viafabricplus.injection.access.core.bedrock.IServerAddress;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
+import com.viaversion.viafabricplus.injection.access.core.bedrock.IServerAddress;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
 import net.minecraft.client.Minecraft;

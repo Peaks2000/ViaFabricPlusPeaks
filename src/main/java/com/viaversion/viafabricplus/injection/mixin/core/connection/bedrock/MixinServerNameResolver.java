@@ -21,8 +21,8 @@
 
 package com.viaversion.viafabricplus.injection.mixin.core.connection.bedrock;
 
-import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IServerAddress;
+import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
 import java.net.InetSocketAddress;
 import java.util.Optional;

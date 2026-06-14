@@ -23,9 +23,9 @@ package com.viaversion.viafabricplus.injection.mixin.features.entity.legacy_boat
 
 import com.google.common.collect.ImmutableMap;
 import com.viaversion.viafabricplus.features.entity.legacy_boat_model.BoatModel1_8;
-import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.LayerDefinitions;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;

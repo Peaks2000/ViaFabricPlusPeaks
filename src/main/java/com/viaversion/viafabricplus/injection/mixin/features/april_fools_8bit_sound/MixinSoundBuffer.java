@@ -21,11 +21,11 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.april_fools_8bit_sound;
 
+import com.mojang.blaze3d.audio.SoundBuffer;
 import com.viaversion.viaaprilfools.api.AprilFoolsProtocolVersion;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import java.nio.ByteBuffer;
 import javax.sound.sampled.AudioFormat;
-import com.mojang.blaze3d.audio.SoundBuffer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

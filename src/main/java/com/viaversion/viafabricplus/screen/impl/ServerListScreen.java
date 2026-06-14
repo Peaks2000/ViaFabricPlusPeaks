@@ -27,8 +27,8 @@ import com.viaversion.viafabricplus.screen.impl.classic4j.BetaCraftScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeLoginScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeServerListScreen;
 import com.viaversion.viafabricplus.screen.impl.realms.BedrockRealmsScreen;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 public final class ServerListScreen extends VFPScreen {

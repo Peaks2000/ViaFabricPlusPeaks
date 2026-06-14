@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.injection.mixin.core.connection;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.Connection;
 import net.minecraft.server.WorldStem;
@@ -33,7 +34,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.util.Optional;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft {
