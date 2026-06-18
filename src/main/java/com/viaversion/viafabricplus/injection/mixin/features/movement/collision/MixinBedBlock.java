@@ -36,7 +36,13 @@ public abstract class MixinBedBlock extends HorizontalDirectionalBlock {
 
     @Override
     public float getBounceRestitution() {
-        return ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_11_1) ? 0F : super.getBounceRestitution();
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_11_1)) {
+            return 0F;
+        } else if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v26_1)) {
+            return 0.66F;
+        } else {
+            return super.getBounceRestitution();
+        }
     }
 
 }

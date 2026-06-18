@@ -64,7 +64,6 @@
     "features.bedrock.block.MixinTrapDoorBlock",
     "features.bedrock.chat.MixinClientSuggestionProvider",
     "features.bedrock.inventory.MixinInventoryScreen",
-    "features.bedrock.movement.MixinBedBlock",
     "features.bedrock.movement.MixinEntity",
     "features.bedrock.movement.MixinHoneyBlock",
     "features.bedrock.movement.MixinLivingEntity",
