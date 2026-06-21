@@ -116,7 +116,8 @@ public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPac
     public void init(UserConnection connection) {
         super.init(connection);
 
-        if (connection.getProtocolInfo().serverProtocolVersion().olderThanOrEqualTo(ProtocolVersion.v1_14_4)) {
+        final ProtocolVersion serverVersion = ProtocolTranslator.getTargetVersion(connection.getChannel()); // UserConnection#getProtocolInfo is not initialized yet
+        if (serverVersion.olderThanOrEqualTo(ProtocolVersion.v1_14_4)) {
             connection.put(new WolfHealthTracker1_14_4());
         }
     }
