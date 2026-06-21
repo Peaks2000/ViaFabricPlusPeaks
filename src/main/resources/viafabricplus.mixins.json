@@ -14,6 +14,7 @@
     "compat.minecraftauth.MixinClasses",
     "compat.minecraftauth.MixinDefaultJwtParserBuilder",
     "core.MixinMain",
+    "core.MixinMinecraft",
     "core.access.MixinChunkTracker",
     "core.access.MixinExtensionProtocolMetadataStorage",
     "core.access.MixinLocalSampleLogger",
