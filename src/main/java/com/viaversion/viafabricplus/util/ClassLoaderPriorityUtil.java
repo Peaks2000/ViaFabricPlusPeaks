@@ -25,6 +25,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import net.lenni0451.reflect.ClassLoaders;
 import net.lenni0451.reflect.stream.RStream;
 import org.apache.logging.log4j.Logger;
@@ -34,11 +36,15 @@ import org.apache.logging.log4j.Logger;
  */
 public final class ClassLoaderPriorityUtil {
 
+    private static final Set<String> overridingJars = new HashSet<>();
+
     /**
      * Loads all overriding jars
      */
     public static void loadOverridingJars(final Path path, final Logger logger) {
         try {
+            overridingJars.clear();
+
             final Path jars = path.resolve("jars");
             if (!Files.exists(jars)) {
                 Files.createDirectory(jars);
@@ -66,6 +72,7 @@ public final class ClassLoaderPriorityUtil {
                 logger.warn("OVERRIDING JARS LOADING! THIS CAN CAUSE UNEXPECTED BEHAVIOR AND ISSUES!");
                 for (File file : jarFiles) {
                     ClassLoaders.loadToFront(file.toURI().toURL());
+                    overridingJars.add(file.getName());
                     logger.warn(" -> {}", file.getName());
                 }
                 logger.warn("================================");
@@ -75,6 +82,10 @@ public final class ClassLoaderPriorityUtil {
         } catch (Throwable e) {
             logger.error("Failed to load overriding jars", e);
         }
+    }
+
+    public static Set<String> getOverridingJars() {
+        return overridingJars;
     }
 
 }

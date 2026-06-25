@@ -27,6 +27,7 @@ import com.viaversion.viafabricplus.protocoltranslator.impl.viaversion.ViaFabric
 import com.viaversion.viafabricplus.protocoltranslator.protocol.ViaFabricPlusProtocol;
 import com.viaversion.viafabricplus.protocoltranslator.util.JLoggerToSLF4J;
 import com.viaversion.viafabricplus.save.SaveManager;
+import com.viaversion.viafabricplus.util.ClassLoaderPriorityUtil;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
 import com.viaversion.viaversion.api.type.Types;
@@ -126,6 +127,14 @@ public final class ViaFabricPlusViaVersionPlatform extends UserConnectionViaVers
         final com.google.gson.JsonObject settings = new com.google.gson.JsonObject();
         SaveManager.INSTANCE.getSettingsSave().writeSettings(settings);
         platformDump.add("settings", GsonUtil.getGson().fromJson(settings.toString(), JsonObject.class));
+
+        if (!ClassLoaderPriorityUtil.getOverridingJars().isEmpty()) {
+            final JsonArray overridingJars = new JsonArray();
+            for (final String jar : ClassLoaderPriorityUtil.getOverridingJars()) {
+                overridingJars.add(jar);
+            }
+            platformDump.add("overriding_jars", overridingJars);
+        }
 
         return platformDump;
     }
