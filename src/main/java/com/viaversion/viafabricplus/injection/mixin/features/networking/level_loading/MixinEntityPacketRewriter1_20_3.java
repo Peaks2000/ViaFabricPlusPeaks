@@ -31,7 +31,7 @@ public abstract class MixinEntityPacketRewriter1_20_3 {
 
     /**
      * @author Florian Reuth (EnZaXD)
-     * @reason Handled in MixinClientPlayNetworkHandler
+     * @reason Handled in MixinClientPacketListener
      */
     @Overwrite
     private void sendChunksSentGameEvent(final PacketWrapper wrapper) {

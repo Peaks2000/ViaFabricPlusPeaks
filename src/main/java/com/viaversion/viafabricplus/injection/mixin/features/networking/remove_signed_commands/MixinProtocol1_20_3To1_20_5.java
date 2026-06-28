@@ -48,7 +48,7 @@ public abstract class MixinProtocol1_20_3To1_20_5 extends AbstractProtocol<Clien
         // Map signed command packet to normal one since we modify the game to always send signed commands
         registerServerbound(ServerboundPackets1_20_5.CHAT_COMMAND_SIGNED, ServerboundPackets1_20_3.CHAT_COMMAND, null, true);
 
-        // Don't allow mods to directly send packets - Use ClientPlayNetworkHandler#sendChatCommand instead
+        // Don't allow mods to directly send packets - Use ClientPacketListener#sendCommand instead
         registerServerbound(ServerboundPackets1_20_5.CHAT_COMMAND, ServerboundPackets1_20_3.CHAT_COMMAND, wrapper -> {
             NotificationUtil.warnIncompatibilityPacket("1.20.5", "CHAT_COMMAND", "ClientPacketListener#sendCommand");
             wrapper.cancel();
