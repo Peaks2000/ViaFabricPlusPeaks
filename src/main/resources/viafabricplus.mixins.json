@@ -241,6 +241,7 @@
     "features.item.interaction.MixinLeadItem",
     "features.item.interaction.MixinNameTagItem",
     "features.item.interaction.MixinShovelItem",
+    "features.item.interaction.MixinSpawnEggItem",
     "features.item.negative_item_count.MixinGuiGraphicsExtractor",
     "features.item.sword_blocking.MixinBlockItemPacketRewriter1_21_X",
     "features.item.tooltip.MixinComponentRewriter1_21_5",
