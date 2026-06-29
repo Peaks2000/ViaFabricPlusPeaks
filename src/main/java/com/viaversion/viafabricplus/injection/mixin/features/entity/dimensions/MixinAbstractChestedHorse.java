@@ -27,19 +27,25 @@ import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.EntityAttachments;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.level.Level;
+import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractChestedHorse.class)
 public abstract class MixinAbstractChestedHorse extends AbstractHorse {
+
+    @Shadow
+    @Final
+    private EntityDimensions babyDimensions;
 
     @Unique
     private EntityDimensions viaFabricPlus$baby_dimensions_r1_21_11;
@@ -55,10 +61,12 @@ public abstract class MixinAbstractChestedHorse extends AbstractHorse {
             .scale(0.5F);
     }
 
-    @Inject(method = "getDefaultDimensions", at = @At("HEAD"), cancellable = true)
-    private void changeBabyDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_11) && this.isBaby()) {
-            cir.setReturnValue(this.viaFabricPlus$baby_dimensions_r1_21_11);
+    @Redirect(method = "getDefaultDimensions", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/animal/equine/AbstractChestedHorse;babyDimensions:Lnet/minecraft/world/entity/EntityDimensions;", opcode = Opcodes.GETFIELD))
+    private EntityDimensions changeBabyDimensions(AbstractChestedHorse instance) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_11)) {
+            return this.viaFabricPlus$baby_dimensions_r1_21_11;
+        } else {
+            return this.babyDimensions;
         }
     }
 

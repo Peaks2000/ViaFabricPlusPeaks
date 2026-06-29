@@ -34,6 +34,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Camel.class)
@@ -41,6 +42,11 @@ public abstract class MixinCamel extends AbstractHorse {
 
     public MixinCamel(EntityType<? extends AbstractHorse> entityType, Level world) {
         super(entityType, world);
+    }
+
+    @Redirect(method = "getDefaultDimensions", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/camel/Camel;isBaby()Z"))
+    private boolean dontChangeScale(Camel instance) {
+        return ProtocolTranslator.getTargetVersion().newerThan(ProtocolVersion.v26_1) && instance.isBaby();
     }
 
     @Inject(method = "getAgeScale", at = @At("HEAD"), cancellable = true)

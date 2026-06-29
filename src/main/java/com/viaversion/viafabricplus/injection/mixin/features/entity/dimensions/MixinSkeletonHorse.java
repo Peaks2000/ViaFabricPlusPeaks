@@ -28,18 +28,23 @@ import net.minecraft.world.entity.EntityAttachments;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.level.Level;
+import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(SkeletonHorse.class)
 public abstract class MixinSkeletonHorse extends AbstractHorse {
+
+    @Shadow
+    @Final
+    private static EntityDimensions BABY_DIMENSIONS;
 
     @Unique
     private static final EntityDimensions viaFabricPlus$baby_dimensions_r1_21_11 = EntityTypes.SKELETON_HORSE
@@ -51,10 +56,12 @@ public abstract class MixinSkeletonHorse extends AbstractHorse {
         super(type, level);
     }
 
-    @Inject(method = "getDefaultDimensions", at = @At("HEAD"), cancellable = true)
-    private void changeBabyDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_11) && this.isBaby()) {
-            cir.setReturnValue(viaFabricPlus$baby_dimensions_r1_21_11);
+    @Redirect(method = "getDefaultDimensions", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/animal/equine/SkeletonHorse;BABY_DIMENSIONS:Lnet/minecraft/world/entity/EntityDimensions;", opcode = Opcodes.GETSTATIC))
+    private EntityDimensions changeBabyDimensions() {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_11)) {
+            return viaFabricPlus$baby_dimensions_r1_21_11;
+        } else {
+            return BABY_DIMENSIONS;
         }
     }
 

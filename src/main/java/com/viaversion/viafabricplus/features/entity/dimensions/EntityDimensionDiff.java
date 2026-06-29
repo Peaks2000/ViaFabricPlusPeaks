@@ -44,6 +44,8 @@ public final class EntityDimensionDiff {
     private static final Map<EntityType<?>, Map<ProtocolVersion, EntityDimensions>> ENTITY_DIMENSIONS = new HashMap<>();
 
     public static void init() {
+        // TODO: Find a way to isolate baby (or other conditional dimension changes) across entities with same code patterns
+        // to reduce the need of manual mixing into each entity
         final JsonObject dimensionDiff = ViaFabricPlusMappingDataLoader.INSTANCE.loadData("entity-dimensions.json");
         for (final String entity : dimensionDiff.keySet()) {
             final EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.parse(entity)).orElse(null);
