@@ -35,9 +35,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MixinBoneMealItem {
 
     @Inject(method = "useOn", at = @At(value = "RETURN", ordinal = 1), cancellable = true)
-    private void swingHand(UseOnContext context, CallbackInfoReturnable<InteractionResult> cir) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_21_11)) {
-            cir.setReturnValue(InteractionResult.SUCCESS);
+    private void dontSwingHand(UseOnContext context, CallbackInfoReturnable<InteractionResult> cir) {
+        if (ProtocolTranslator.getTargetVersion().equalTo(ProtocolVersion.v26_1)) {
+            cir.setReturnValue(InteractionResult.PASS);
         }
     }
 
