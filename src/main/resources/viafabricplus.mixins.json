@@ -278,6 +278,7 @@
     "features.movement.elytra.MixinPlayer",
     "features.movement.jump.MixinLivingEntity",
     "features.movement.jump.MixinLocalPlayer",
+    "features.movement.limitation.MixinEntity",
     "features.movement.limitation.MixinLivingEntity",
     "features.movement.limitation.MixinPlayer",
     "features.movement.limitation.rotation.MixinEntity",
