@@ -388,5 +388,19 @@
       "eyeHeight": 0.13,
       "fixed": false
     }
+  },
+  "bee": {
+    "26.1-26.1.2": {
+      "width": 0.7,
+      "height": 0.6,
+      "eyeHeight": 0.3,
+      "fixed": false
+    },
+    "26.2": {
+      "width": 0.55,
+      "height": 0.5,
+      "eyeHeight": 0.3,
+      "fixed": false
+    }
   }
 }
