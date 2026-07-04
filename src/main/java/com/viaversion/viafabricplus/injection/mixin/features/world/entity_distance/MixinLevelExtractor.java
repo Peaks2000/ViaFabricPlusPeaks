@@ -19,23 +19,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.injection.mixin.features.world.particle_distance;
+package com.viaversion.viafabricplus.injection.mixin.features.world.entity_distance;
 
-import com.viaversion.viafabricplus.settings.impl.DebugSettings;
-import net.minecraft.client.multiplayer.ClientLevel;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.client.renderer.extract.LevelExtractor;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(ClientLevel.class)
-public abstract class MixinClientLevel {
+@Mixin(LevelExtractor.class)
+public abstract class MixinLevelExtractor {
 
-    @ModifyConstant(method = "doAddParticle", constant = @Constant(doubleValue = 1024.0))
-    private double lowerParticleRenderDistance(double constant) {
-        if (DebugSettings.INSTANCE.lowerParticleRenderDistance.isEnabled()) {
-            return 256.0;
+    @Redirect(method = "extractVisibleEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/OptionInstance;get()Ljava/lang/Object;"))
+    private @Coerce Object removeDistanceScaling(OptionInstance<Double> instance) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_15_2)) {
+            return 1.0D;
         } else {
-            return constant;
+            return instance.get();
         }
     }
 
