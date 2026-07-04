@@ -8,3 +8,4 @@ If you discover a **security vulnerability**, please **do not** open a public is
 * **Discord Username:** `florianreuth`
 
 If your issue is **not security-related** (e.g., bug reports, feature requests, or usage questions), please use the [GitHub Issues page](https://github.com/ViaVersion/ViaFabricPlus/issues) or contact us via the [Discord server](https://discord.gg/viaversion).
+t
