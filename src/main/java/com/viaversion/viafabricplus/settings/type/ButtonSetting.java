@@ -19,21 +19,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.api.entrypoint;
+package com.viaversion.viafabricplus.settings.type;
 
-import com.viaversion.viafabricplus.api.ViaFabricPlusBase;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
+import com.google.gson.JsonObject;
+import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
+import net.minecraft.network.chat.MutableComponent;
 
-/**
- * Optional Entrypoint called before the ViaFabricPlus loading cycle starts. This is needed to register a {@link LoadingCycleCallback} callback.
- * <p>
- * See {@link LoadingCycleCallback} for more information.
- */
-@FunctionalInterface
-public interface ViaFabricPlusLoadEntrypoint {
+public class ButtonSetting extends AbstractSetting<Runnable> {
 
-    String KEY = "viafabricplus";
+    public ButtonSetting(SettingGroup parent, MutableComponent name, Runnable onClick) {
+        super(parent, name, onClick);
+    }
 
-    void onPlatformLoad(final ViaFabricPlusBase platform);
+
+    public MutableComponent displayValue() {
+        return getName();
+    }
+
+    @Override
+    public void write(JsonObject object) {
+    }
+
+    @Override
+    public void read(JsonObject object) {
+    }
 
 }

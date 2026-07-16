@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.screen.impl.settings;
 
-import com.viaversion.viafabricplus.api.settings.type.VersionedBooleanSetting;
+import com.viaversion.viafabricplus.settings.type.AutoVersionSetting;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import java.awt.*;
 import net.minecraft.ChatFormatting;
@@ -32,9 +32,9 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
 public final class VersionedBooleanListEntry extends VFPListEntry {
-    private final VersionedBooleanSetting value;
+    private final AutoVersionSetting value;
 
-    public VersionedBooleanListEntry(VersionedBooleanSetting value) {
+    public VersionedBooleanListEntry(AutoVersionSetting value) {
         this.value = value;
     }
 
@@ -53,7 +53,7 @@ public final class VersionedBooleanListEntry extends VFPListEntry {
     public void mappedRender(GuiGraphicsExtractor context, int x, int y, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
         final Font textRenderer = Minecraft.getInstance().font;
 
-        final boolean isAuto = this.value.getCurrentValue() == VersionedBooleanSetting.AUTO_INDEX;
+        final boolean isAuto = this.value.getCurrentValue() == AutoVersionSetting.AUTO_INDEX;
         final boolean isEnabled = this.value.isEnabled(this.value.getCurrentValue());
         final Component text = Component.translatable("base.viafabricplus." + (isAuto ? "auto" : isEnabled ? "on" : "off"));
         Color color = isAuto ? Color.ORANGE : isEnabled ? Color.GREEN : Color.RED;

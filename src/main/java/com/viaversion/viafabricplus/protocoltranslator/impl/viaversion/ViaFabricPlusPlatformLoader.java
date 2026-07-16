@@ -22,7 +22,6 @@
 package com.viaversion.viafabricplus.protocoltranslator.impl.viaversion;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusAlphaInventoryProvider;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicWorldHeightProvider;
@@ -79,8 +78,6 @@ public final class ViaFabricPlusPlatformLoader implements ViaPlatformLoader {
         if (GeneralSettings.INSTANCE.emulateInventoryActionsInAlphaVersions.getValue()) {
             providers.use(AlphaInventoryProvider.class, new ViaFabricPlusAlphaInventoryProvider());
         }
-
-        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.POST_VIAVERSION_LOAD);
     }
 
     @Override

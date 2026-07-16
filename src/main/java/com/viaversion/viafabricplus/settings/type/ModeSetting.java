@@ -19,11 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.api.settings.type;
+package com.viaversion.viafabricplus.settings.type;
 
 import com.google.gson.JsonObject;
-import com.viaversion.viafabricplus.api.settings.AbstractSetting;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
 import com.viaversion.viafabricplus.util.ChatUtil;
 import java.util.Arrays;
 import net.minecraft.network.chat.MutableComponent;

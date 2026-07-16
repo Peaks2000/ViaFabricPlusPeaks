@@ -21,8 +21,6 @@
 
 package com.viaversion.viafabricplus.save;
 
-import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
 import com.viaversion.viafabricplus.save.impl.AccountsSave;
 import com.viaversion.viafabricplus.save.impl.SettingsSave;
 import java.util.ArrayList;
@@ -39,20 +37,11 @@ public final class SaveManager {
     private AccountsSave accountsSave;
 
     public void init() {
-        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.PRE_FILES_LOAD);
-
-        // Register saves
-        add(
-            settingsSave = new SettingsSave(),
-            accountsSave = new AccountsSave()
-        );
-
-        // Load save files
+        add(settingsSave = new SettingsSave(), accountsSave = new AccountsSave());
         for (AbstractSave save : saves) {
             save.init();
         }
 
-        // Save the save files on shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             for (AbstractSave save : saves) {
                 save.save();
@@ -64,7 +53,6 @@ public final class SaveManager {
         for (AbstractSave save : saves) {
             save.postInit();
         }
-        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.POST_FILES_LOAD);
     }
 
     public void add(final AbstractSave... saves) {

@@ -72,7 +72,6 @@ public final class FeaturesLoading {
         }));
     }
 
-    // Make sure this is called *after* ViaVersion has been initialized
     public static void postInit() {
         VersionedRegistries.init();
         EntityDimensionDiff.init();

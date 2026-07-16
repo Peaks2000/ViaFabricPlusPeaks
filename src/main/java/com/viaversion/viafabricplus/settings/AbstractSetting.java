@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.api.settings;
+package com.viaversion.viafabricplus.settings;
 
 import com.google.gson.JsonObject;
 import com.viaversion.viafabricplus.util.ChatUtil;

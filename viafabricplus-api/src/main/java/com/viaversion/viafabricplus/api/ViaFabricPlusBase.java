@@ -22,16 +22,10 @@
 package com.viaversion.viafabricplus.api;
 
 import com.viaversion.viafabricplus.ViaFabricPlus;
-import com.viaversion.viafabricplus.api.events.ChangeProtocolVersionCallback;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.item.Item;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
-import io.netty.channel.Channel;
 import java.nio.file.Path;
-import java.util.List;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.core.Holder;
 import net.minecraft.network.Connection;
@@ -39,11 +33,10 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.level.block.entity.BannerPattern;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * General API point for mods. Get instance via {@link ViaFabricPlus#getImpl()}.
+ * General API point for mods. Get the instance via {@link ViaFabricPlus#getImpl()}.
  */
 public interface ViaFabricPlusBase {
 
@@ -51,72 +44,50 @@ public interface ViaFabricPlusBase {
      * @return an <b>internally based API version</b> incremented with meaningful or breaking changes.
      */
     default int apiVersion() {
-        return 6;
+        return 7;
     }
 
     /**
-     * The version of the mod, this is the version that is displayed in the mod list (e.g., 4.0.0)
-     *
-     * @return the version of the mod
+     * @return The version of the mod as displayed in mod lists (e.g., 4.0.0)
      */
     String getVersion();
 
     /**
-     * The implementation version of the current running jar file, containing commit-hash as well as the {@link #getVersion()}.
-     *
-     * @return the implementation version of the mod
+     * @return The implementation version formatted as "git-ViaFabricPlus-{@link #getVersion()}-hash of the commit the jar was built on"
      */
     String getImplVersion();
 
     /**
-     * Get the root path of the mod.
-     *
-     * @return The root path
+     * @return The path where ViaFabricPlus stores its configuration files.
      */
     Path getPath();
 
     /**
-     * This method is used when you need the target version after connecting to the server.
-     *
-     * @return the target version
+     * @return The active version ViaFabricPlus is translating to.
      */
     ProtocolVersion getTargetVersion();
 
     /**
-     * Sets the target version
+     * Sets active version ViaFabricPlus will translate future (!) connections to.
      *
-     * @param newVersion the target version
+     * @param targetVersion the target version
+     * @throws IllegalStateException if there is an active connection to a server
      */
-    void setTargetVersion(final ProtocolVersion newVersion);
+    void setTargetVersion(final ProtocolVersion targetVersion) throws IllegalStateException;
 
     /**
-     * Gets the target version from the channel attribute, can be used in the early stages of the connection
+     * Sets active version ViaFabricPlus will translate future (!) connections to.
      *
-     * @param channel the channel
-     * @return the target version
-     */
-    ProtocolVersion getTargetVersion(final Channel channel);
-
-    /**
-     * Gets the target version from the connection, can be used in the early stages of the connection
-     *
-     * @param connection the connection
-     * @return the target version
-     */
-    ProtocolVersion getTargetVersion(final Connection connection);
-
-    /**
-     * Sets the target version
-     *
-     * @param newVersion         the target version
+     * @param targetVersion      the target version
      * @param revertOnDisconnect if true, the previous version will be set when the player disconnects from the server
+     * @throws IllegalStateException if there is an active connection to a server
      */
-    void setTargetVersion(final ProtocolVersion newVersion, final boolean revertOnDisconnect);
+    void setTargetVersion(final ProtocolVersion targetVersion, final boolean revertOnDisconnect) throws IllegalStateException;
 
     /**
      * @return the current UserConnection of the connection to the server, if the player isn't connected to a server, it will return null
      */
-    @Nullable UserConnection getPlayNetworkUserConnection();
+    @Nullable UserConnection getUserConnection();
 
     /**
      * Get the UserConnection for the given connection {@link Connection}.
@@ -142,14 +113,6 @@ public interface ViaFabricPlusBase {
     void registerOnChangeProtocolVersionCallback(final ChangeProtocolVersionCallback callback);
 
     /**
-     * Register a callback for the loading cycle which covers most of the loading process of the mod. Intended to be used
-     * inside {@link com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusLoadEntrypoint} implementations.
-     *
-     * @param callback the callback
-     */
-    void registerLoadingCycleCallback(final LoadingCycleCallback callback);
-
-    /**
      * Calculates the maximum chat length for given {@link ProtocolVersion} instance.
      *
      * @return The maximum chat length
@@ -157,40 +120,28 @@ public interface ViaFabricPlusBase {
     int getMaxChatLength(final ProtocolVersion version);
 
     /**
-     * All setting groups of the mod. Note that this list is not modifiable.
+     * Gets a boolean setting from the settings screen by its translation key.
      *
-     * @return The setting groups
+     * @param translationKey The translation key of the setting.
+     * @return The boolean value of the setting.
      */
-    List<SettingGroup> getSettingGroups();
+    boolean getBooleanSetting(final String translationKey);
 
     /**
-     * Add a setting group to the mod.
+     * Gets the mode setting from the settings screen by its translation key.
      *
-     * @param group The setting group
+     * @param translationKey The translation key of the setting.
+     * @return The translation key of the selected mode.
      */
-    void addSettingGroup(final SettingGroup group);
+    String getModeSetting(final String translationKey);
 
     /**
-     * Get a setting group by its translationKey.
+     * Gets the auto version setting from the settings screen by its translation key.
      *
-     * @param translationKey The translationKey of the setting group
-     * @return The setting group or null if it does not exist
+     * @param translationKey The translation key of the setting.
+     * @return The translation key, which can be "base.viafabricplus.auto", "base.viafabricplus.off" or "base.viafabricplus.on".
      */
-    @Nullable SettingGroup getSettingGroup(final String translationKey);
-
-    /**
-     * Open the protocol selection screen.
-     *
-     * @param parent The parent screen
-     */
-    void openProtocolSelectionScreen(final Screen parent);
-
-    /**
-     * Open the settings screen.
-     *
-     * @param parent The parent screen
-     */
-    void openSettingsScreen(final Screen parent);
+    String getAutoVersionSetting(final String translationKey);
 
     /**
      * Converts a Minecraft item stack {@link ItemStack} to a ViaVersion item {@link Item}
@@ -230,13 +181,6 @@ public interface ViaFabricPlusBase {
      * @return true if the status effect exists in the given version, false otherwise
      */
     boolean effectExists(final Holder<MobEffect> effect, final ProtocolVersion version);
-
-    /**
-     * @param pattern The banner pattern to check
-     * @param version The version to check for
-     * @return true if the banner pattern exists in the given version, false otherwise
-     */
-    boolean bannerPatternExists(final ResourceKey<BannerPattern> pattern, final ProtocolVersion version);
 
     /**
      * Similar to {@link #itemExists(net.minecraft.world.item.Item, ProtocolVersion)}, but takes in the current connection details (e.g., classic protocol extensions being loaded)

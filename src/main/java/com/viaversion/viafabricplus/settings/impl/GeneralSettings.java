@@ -21,9 +21,9 @@
 
 package com.viaversion.viafabricplus.settings.impl;
 
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
-import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
-import com.viaversion.viafabricplus.api.settings.type.ModeSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.type.BooleanSetting;
+import com.viaversion.viafabricplus.settings.type.ModeSetting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 

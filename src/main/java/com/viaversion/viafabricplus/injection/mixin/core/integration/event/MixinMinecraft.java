@@ -22,7 +22,6 @@
 package com.viaversion.viafabricplus.injection.mixin.core.integration.event;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.main.GameConfig;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,8 +33,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinMinecraft {
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void callPostGameLoadEvent(GameConfig gameConfig, CallbackInfo ci) {
-        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.POST_GAME_LOAD);
+    private void callPostInit(GameConfig gameConfig, CallbackInfo ci) {
+        ViaFabricPlusImpl.INSTANCE.postInit();
     }
 
 }

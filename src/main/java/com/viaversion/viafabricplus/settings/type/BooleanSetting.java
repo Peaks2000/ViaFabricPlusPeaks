@@ -19,16 +19,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.api.events;
+package com.viaversion.viafabricplus.settings.type;
 
-import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import com.google.gson.JsonObject;
+import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
+import net.minecraft.network.chat.MutableComponent;
 
-/**
- * This event is fired when the user changes the target version in the screen, or if the user joins a server with a different version.
- * If the user disconnects, the event will also be fired with the current version.
- */
-public interface ChangeProtocolVersionCallback {
+public class BooleanSetting extends AbstractSetting<Boolean> {
 
-    void onChangeProtocolVersion(final ProtocolVersion oldVersion, final ProtocolVersion newVersion);
+    public BooleanSetting(SettingGroup parent, MutableComponent name, Boolean defaultValue) {
+        super(parent, name, defaultValue);
+    }
+
+    @Override
+    public void write(JsonObject object) {
+        object.addProperty(getTranslationKey(), getCurrentValue());
+    }
+
+    @Override
+    public void read(JsonObject object) {
+        setValue(object.get(getTranslationKey()).getAsBoolean());
+    }
 
 }

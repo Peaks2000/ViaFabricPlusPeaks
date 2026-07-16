@@ -19,17 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.api.settings.type;
+package com.viaversion.viafabricplus.settings.type;
 
 import com.google.gson.JsonObject;
 import com.viaversion.viafabricplus.ViaFabricPlus;
-import com.viaversion.viafabricplus.api.settings.AbstractSetting;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersionRange;
 import net.minecraft.network.chat.MutableComponent;
 
-public class VersionedBooleanSetting extends AbstractSetting<Integer> {
+public class AutoVersionSetting extends AbstractSetting<Integer> {
 
     public static final int AUTO_INDEX = 2;
     public static final int DISABLED_INDEX = 1;
@@ -37,7 +37,7 @@ public class VersionedBooleanSetting extends AbstractSetting<Integer> {
 
     private final ProtocolVersionRange protocolRange;
 
-    public VersionedBooleanSetting(SettingGroup parent, MutableComponent name, ProtocolVersionRange protocolRange) {
+    public AutoVersionSetting(SettingGroup parent, MutableComponent name, ProtocolVersionRange protocolRange) {
         super(parent, name, AUTO_INDEX);
 
         this.protocolRange = protocolRange;
