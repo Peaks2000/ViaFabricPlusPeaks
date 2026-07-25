@@ -27,12 +27,6 @@ allprojects {
 
 }
 
-subprojects {
-
-    configureVVDependencies("api")
-
-}
-
 project.property("updating_minecraft").toString().toBoolean().let {
     configureTestTasks(it)
     if (it) {
@@ -41,8 +35,6 @@ project.property("updating_minecraft").toString().toBoolean().let {
 }
 
 val jij = configureApiJij()
-
-configureVVDependencies("jij")
 
 dependencies {
     jij(project(":viafabricplus-api")) {
@@ -58,6 +50,10 @@ dependencies {
     jij(fabricApi.module("fabric-particles-v1", fabricApiVersion))
     jij(fabricApi.module("fabric-registry-sync-v0", fabricApiVersion))
 
+    jij("com.viaversion:viaversion-common:5.11.1-SNAPSHOT")
+    jij("com.viaversion:viabackwards-common:5.11.1-SNAPSHOT")
+    jij("com.viaversion:viaaprilfools-common:4.2.2")
+    jij("net.raphimc:ViaLegacy:3.0.16")
     jij("net.lenni0451:Reflect:1.6.3")
     jij("de.florianreuth:classic4j:2.3.0")
 
@@ -66,12 +62,3 @@ dependencies {
 }
 
 includeTransitiveJijDependencies()
-
-fun Project.configureVVDependencies(configuration: String) {
-    dependencies {
-        configuration("com.viaversion:viaversion-common:5.11.1-SNAPSHOT")
-        configuration("com.viaversion:viabackwards-common:5.11.1-SNAPSHOT")
-        configuration("com.viaversion:viaaprilfools-common:4.2.2")
-        configuration("net.raphimc:ViaLegacy:3.0.16")
-    }
-}

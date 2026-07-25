@@ -3,7 +3,6 @@
   "id": "viafabricplus-api",
   "version": "${version}",
   "name": "ViaFabricPlus API",
-  "description": "${description}",
   "authors": [
     {
       "name": "Florian Reuth (EnZaXD)",
@@ -35,10 +34,10 @@
     "issues": "https://github.com/ViaVersion/ViaFabricPlus/issues",
     "email": "florian@florianreuth.de"
   },
-  "license": "GPL-v3",
+  "license": "MIT",
   "environment": "client",
   "depends": {
-    "viafabricplus": ">=4.6.0"
+    "viafabricplus": ">=5.0.0-SNAPSHOT"
   },
   "custom": {
     "modmenu": {
