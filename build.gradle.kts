@@ -1,7 +1,5 @@
-import de.florianreuth.baseproject.integration.configureJarInJar
-import de.florianreuth.baseproject.integration.fabricApiVersion
-import de.florianreuth.baseproject.integration.includeTransitiveJijDependencies
-import de.florianreuth.baseproject.integration.setupFabric
+import de.florianreuth.baseproject.core.unlockBuildErrors
+import de.florianreuth.baseproject.integration.*
 import de.florianreuth.baseproject.setupProject
 import de.florianreuth.baseproject.setupViaPublishing
 
@@ -32,9 +30,11 @@ allprojects {
 
 }
 
-// Uncomment during Minecraft updates for generating data dumps
-//configureTest()
-//unlockBuildErrors()
+configureTest().also {
+    // Uncomment during Minecraft updates to update data diff files
+    tasks.test.get().enabled = false
+}
+unlockBuildErrors()
 
 val shade = configureJarInJar()
 
