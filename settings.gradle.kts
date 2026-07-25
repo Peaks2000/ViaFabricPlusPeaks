@@ -2,13 +2,13 @@ pluginManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven("https://maven.florianreuth.de/releases")
+        maven("https://maven.florianreuth.de/snapshots")
         maven("https://maven.fabricmc.net/")
     }
 
     plugins {
         id("net.fabricmc.fabric-loom") version "1.17-SNAPSHOT"
-        id("de.florianreuth.baseproject") version "2.0.2"
+        id("de.florianreuth.baseproject") version "3.0.0-SNAPSHOT"
     }
 }
 
