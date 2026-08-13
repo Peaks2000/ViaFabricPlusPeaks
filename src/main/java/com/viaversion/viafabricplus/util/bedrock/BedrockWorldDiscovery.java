@@ -169,6 +169,7 @@ public final class BedrockWorldDiscovery {
         final JsonObject properties = new JsonObject();
         properties.add("system", system);
         final JsonObject constantSystem = new JsonObject();
+        constantSystem.addProperty("xuid", account.getMinecraftMultiplayerToken().getUpToDate().getXuid());
         constantSystem.addProperty("initialize", true);
         final JsonObject constants = new JsonObject();
         constants.add("system", constantSystem);
@@ -190,7 +191,7 @@ public final class BedrockWorldDiscovery {
             .PUT(HttpRequest.BodyPublishers.ofString(body.toString()))
             .build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IOException("Could not join Xbox multiplayer session: HTTP " + response.statusCode());
+            throw new IOException("Could not join Xbox multiplayer session: HTTP " + response.statusCode() + " - " + summarizeResponse(response.body()));
         }
     }
 
@@ -492,6 +493,14 @@ public final class BedrockWorldDiscovery {
         } catch (final NumberFormatException ignored) {
             return fallback;
         }
+    }
+
+    private static String summarizeResponse(final String body) {
+        if (body == null || body.isBlank()) {
+            return "empty response";
+        }
+        final String summary = body.replaceAll("\\s+", " ").trim();
+        return summary.length() <= 1_000 ? summary : summary.substring(0, 1_000) + "...";
     }
 
     private static String formatAddress(final String host, final int port) {

@@ -32,6 +32,7 @@ import com.viaversion.viafabricplus.protocoltranslator.netty.RakNetPingEncapsula
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
+import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetDiscoverySignaling;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetXboxRpcSignaling;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
@@ -39,7 +40,6 @@ import dev.kastle.netty.channel.nethernet.NetherNetChannelFactory;
 import dev.kastle.netty.channel.nethernet.NetherNetClientChannel;
 import dev.kastle.netty.channel.nethernet.config.NetherChannelOption;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetClientSignaling;
-import dev.kastle.netty.channel.nethernet.signaling.NetherNetDiscoverySignaling;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetXboxSignaling;
 import dev.kastle.webrtc.PeerConnectionFactory;
 import io.netty.bootstrap.AbstractBootstrap;
@@ -105,7 +105,7 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
         if (BedrockProtocolVersion.bedrockLatest.equals(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
                 if (netherNetAddress.isDiscoveryAddress()) {
-                    return instance.channelFactory(configuredNetherNetClientFactory(new NetherNetDiscoverySignaling()));
+                    return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetDiscoverySignaling()));
                 }
 
                 final String authorizationHeader = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount().getMinecraftSession().getUpToDateUnchecked().getAuthorizationHeader();
