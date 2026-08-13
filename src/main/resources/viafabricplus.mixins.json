@@ -27,6 +27,7 @@
     "core.connection.bedrock.MixinConnection",
     "core.connection.bedrock.MixinConnectScreen_1",
     "core.connection.bedrock.MixinEventLoopGroupHolder",
+    "core.connection.bedrock.MixinNetherNetClientChannel",
     "core.connection.bedrock.MixinNetherNetDiscovery",
     "core.connection.bedrock.MixinServerAddress",
     "core.connection.bedrock.MixinServerNameResolver",

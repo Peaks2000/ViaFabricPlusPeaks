@@ -32,10 +32,12 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -61,6 +63,8 @@ public final class BedrockWorldDiscovery {
     private static final String MINECRAFT_SCID = "4fc10100-5f7a-4470-899b-280835760c07";
     private static final String MINECRAFT_SESSION_TEMPLATE = "MinecraftLobby";
     private static final int NETHERNET_DISCOVERY_PORT = 7551;
+    private static final int RAKNET_DISCOVERY_PORT = 19132;
+    private static final byte[] RAKNET_MAGIC = ByteBufUtil.decodeHexDump("00ffff00fefefefefdfdfdfd12345678");
     private static final int XBOX_CONTRACT_VERSION = 107;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(12);
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build();
@@ -133,12 +137,12 @@ public final class BedrockWorldDiscovery {
                 lanDiscovery.bind(new InetSocketAddress(0));
             }
 
-            final Map<Long, BedrockWorld> worlds = new ConcurrentHashMap<>();
+            final Map<String, BedrockWorld> worlds = new ConcurrentHashMap<>();
             final java.util.function.BiConsumer<Long, ByteBuf> callback = (networkId, data) -> {
                 try {
                     final InetSocketAddress sender = lanDiscovery.sender();
                     if (sender != null) {
-                        worlds.put(networkId, parseLanAdvertisement(data, sender));
+                        worlds.put("nethernet:" + Long.toUnsignedString(networkId), parseLanAdvertisement(data, sender));
                     }
                 } catch (final Throwable ignored) {
                     // Invalid or outdated advertisements are ignored while other hosts remain discoverable.
@@ -147,11 +151,46 @@ public final class BedrockWorldDiscovery {
                 }
             };
 
-            for (final InetSocketAddress broadcast : broadcastAddresses()) {
+            for (final InetSocketAddress broadcast : broadcastAddresses(NETHERNET_DISCOVERY_PORT)) {
                 lanDiscovery.sendDiscoveryRequest(broadcast, callback);
             }
-            Thread.sleep(2_500L);
+            discoverRakNetLanWorlds(worlds);
             return worlds.values().stream().sorted(Comparator.comparing(BedrockWorld::name, String.CASE_INSENSITIVE_ORDER)).toList();
+        }
+    }
+
+    public static void joinXboxSession(final BedrockAuthManager account, final String sessionName) throws IOException, InterruptedException {
+        if (sessionName == null || sessionName.isBlank()) {
+            return;
+        }
+
+        final JsonObject system = new JsonObject();
+        system.addProperty("active", true);
+        final JsonObject properties = new JsonObject();
+        properties.add("system", system);
+        final JsonObject constantSystem = new JsonObject();
+        constantSystem.addProperty("initialize", true);
+        final JsonObject constants = new JsonObject();
+        constants.add("system", constantSystem);
+        final JsonObject me = new JsonObject();
+        me.add("constants", constants);
+        me.add("properties", properties);
+        final JsonObject members = new JsonObject();
+        members.add("me", me);
+        final JsonObject body = new JsonObject();
+        body.add("members", members);
+
+        final String authorization = account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader();
+        final HttpResponse<String> response = HTTP_CLIENT.send(HttpRequest.newBuilder()
+            .uri(xboxSessionUri(sessionName))
+            .timeout(REQUEST_TIMEOUT)
+            .header("Authorization", authorization)
+            .header("x-xbl-contract-version", Integer.toString(XBOX_CONTRACT_VERSION))
+            .header("Content-Type", "application/json")
+            .PUT(HttpRequest.BodyPublishers.ofString(body.toString()))
+            .build(), HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IOException("Could not join Xbox multiplayer session: HTTP " + response.statusCode());
         }
     }
 
@@ -178,9 +217,8 @@ public final class BedrockWorldDiscovery {
     }
 
     private static BedrockWorld getXboxSession(final String authorization, final String sessionName, final String fallbackOwner) throws IOException, InterruptedException {
-        final String encodedSession = URLEncoder.encode(sessionName, StandardCharsets.UTF_8).replace("+", "%20");
         final JsonObject response = sendJson(HttpRequest.newBuilder()
-            .uri(URI.create("https://sessiondirectory.xboxlive.com/serviceconfigs/" + MINECRAFT_SCID + "/sessionTemplates/" + MINECRAFT_SESSION_TEMPLATE + "/sessions/" + encodedSession))
+            .uri(xboxSessionUri(sessionName))
             .timeout(REQUEST_TIMEOUT)
             .header("Authorization", authorization)
             .header("x-xbl-contract-version", Integer.toString(XBOX_CONTRACT_VERSION))
@@ -210,7 +248,7 @@ public final class BedrockWorldDiscovery {
             string(custom, "worldType"),
             players,
             integer(custom, "MaxMemberCount", -1),
-            connection
+            connection.withXboxSession(sessionName)
         );
     }
 
@@ -286,6 +324,96 @@ public final class BedrockWorldDiscovery {
         }
     }
 
+    static BedrockWorld parseRakNetAdvertisement(final byte[] data, final int length, final InetSocketAddress sender) {
+        final ByteBuf buffer = Unpooled.wrappedBuffer(data, 0, length);
+        try {
+            if (buffer.readableBytes() < 35 || buffer.readUnsignedByte() != 0x1C) {
+                throw new IllegalArgumentException("Not a RakNet unconnected pong");
+            }
+            buffer.skipBytes(Long.BYTES); // Ping timestamp
+            buffer.readLong(); // Server GUID
+            final byte[] magic = new byte[RAKNET_MAGIC.length];
+            buffer.readBytes(magic);
+            if (!java.util.Arrays.equals(magic, RAKNET_MAGIC)) {
+                throw new IllegalArgumentException("Invalid RakNet magic");
+            }
+
+            final int motdLength = buffer.readUnsignedShort();
+            if (motdLength <= 0 || buffer.readableBytes() < motdLength) {
+                throw new IllegalArgumentException("Invalid RakNet advertisement length");
+            }
+            final String[] fields = buffer.readCharSequence(motdLength, StandardCharsets.UTF_8).toString().split(";", -1);
+            if (fields.length < 6 || !"MCPE".equals(fields[0])) {
+                throw new IllegalArgumentException("Invalid Bedrock advertisement");
+            }
+
+            final String serverName = fields[1];
+            final String levelName = fields.length > 7 ? fields[7] : "";
+            final String gameMode = fields.length > 8 ? fields[8] : "";
+            final int port = fields.length > 10 ? integer(fields[10], sender.getPort()) : sender.getPort();
+            final InetSocketAddress address = new InetSocketAddress(sender.getAddress(), port > 0 && port <= 65_535 ? port : sender.getPort());
+            return new BedrockWorld(
+                !levelName.isBlank() ? levelName : serverName,
+                serverName,
+                BedrockWorld.Source.LAN,
+                fields.length > 3 ? fields[3] : "",
+                gameMode,
+                integer(fields[4], -1),
+                integer(fields[5], -1),
+                BedrockWorld.Connection.rakNet(formatAddress(address.getAddress().getHostAddress(), address.getPort()))
+            );
+        } finally {
+            buffer.release();
+        }
+    }
+
+    private static void discoverRakNetLanWorlds(final Map<String, BedrockWorld> worlds) throws InterruptedException {
+        final ByteBuf ping = Unpooled.buffer(33);
+        final byte[] pingData;
+        try {
+            ping.writeByte(0x01);
+            ping.writeLong(System.currentTimeMillis());
+            ping.writeBytes(RAKNET_MAGIC);
+            ping.writeLong(ThreadLocalRandom.current().nextLong());
+            pingData = ByteBufUtil.getBytes(ping);
+        } finally {
+            ping.release();
+        }
+
+        try (final DatagramSocket socket = new DatagramSocket(null)) {
+            socket.setBroadcast(true);
+            socket.bind(new InetSocketAddress(0));
+            for (final InetSocketAddress broadcast : broadcastAddresses(RAKNET_DISCOVERY_PORT)) {
+                try {
+                    socket.send(new java.net.DatagramPacket(pingData, pingData.length, broadcast));
+                } catch (final IOException ignored) {
+                    // Continue probing the remaining network interfaces.
+                }
+            }
+
+            final long deadline = System.nanoTime() + 2_500_000_000L;
+            final byte[] responseData = new byte[65_535];
+            while (System.nanoTime() < deadline) {
+                socket.setSoTimeout((int) Math.min(250L, Math.max(1L, (deadline - System.nanoTime()) / 1_000_000L)));
+                final java.net.DatagramPacket response = new java.net.DatagramPacket(responseData, responseData.length);
+                try {
+                    socket.receive(response);
+                    final InetSocketAddress sender = (InetSocketAddress) response.getSocketAddress();
+                    final BedrockWorld world = parseRakNetAdvertisement(response.getData(), response.getLength(), sender);
+                    worlds.put("raknet:" + world.connection().address(), world);
+                } catch (final SocketTimeoutException ignored) {
+                } catch (final IllegalArgumentException ignored) {
+                    // Other UDP services and invalid advertisements are ignored.
+                }
+            }
+        } catch (final IOException ignored) {
+            // NetherNet LAN results remain available if RakNet discovery fails.
+        }
+        if (Thread.currentThread().isInterrupted()) {
+            throw new InterruptedException();
+        }
+    }
+
     private static String readString(final ByteBuf buffer) {
         if (!buffer.isReadable()) {
             return "";
@@ -297,7 +425,7 @@ public final class BedrockWorldDiscovery {
         return buffer.readCharSequence(length, StandardCharsets.UTF_8).toString();
     }
 
-    private static List<InetSocketAddress> broadcastAddresses() {
+    private static List<InetSocketAddress> broadcastAddresses(final int port) {
         final Set<InetAddress> broadcasts = new HashSet<>();
         try {
             final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -318,7 +446,12 @@ public final class BedrockWorldDiscovery {
             broadcasts.add(InetAddress.getByName("255.255.255.255"));
         } catch (final IOException ignored) {
         }
-        return broadcasts.stream().map(address -> new InetSocketAddress(address, NETHERNET_DISCOVERY_PORT)).toList();
+        return broadcasts.stream().map(address -> new InetSocketAddress(address, port)).toList();
+    }
+
+    private static URI xboxSessionUri(final String sessionName) {
+        final String encodedSession = URLEncoder.encode(sessionName, StandardCharsets.UTF_8).replace("+", "%20");
+        return URI.create("https://sessiondirectory.xboxlive.com/serviceconfigs/" + MINECRAFT_SCID + "/sessionTemplates/" + MINECRAFT_SESSION_TEMPLATE + "/sessions/" + encodedSession);
     }
 
     private static JsonObject sendJson(final HttpRequest request) throws IOException, InterruptedException {
@@ -348,6 +481,14 @@ public final class BedrockWorldDiscovery {
         final JsonElement value = object != null ? object.get(name) : null;
         try {
             return value != null && value.isJsonPrimitive() ? value.getAsInt() : fallback;
+        } catch (final NumberFormatException ignored) {
+            return fallback;
+        }
+    }
+
+    private static int integer(final String value, final int fallback) {
+        try {
+            return Integer.parseInt(value);
         } catch (final NumberFormatException ignored) {
             return fallback;
         }

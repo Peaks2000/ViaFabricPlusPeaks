@@ -39,22 +39,26 @@ public record BedrockWorld(
         LAN
     }
 
-    public record Connection(Type type, String address, InetSocketAddress discoveryAddress) {
+    public record Connection(Type type, String address, InetSocketAddress discoveryAddress, String xboxSessionName) {
 
         public static Connection rakNet(final String address) {
-            return new Connection(Type.RAKNET, address, null);
+            return new Connection(Type.RAKNET, address, null, null);
         }
 
         public static Connection netherNet(final String networkId) {
-            return new Connection(Type.NETHERNET, networkId, null);
+            return new Connection(Type.NETHERNET, networkId, null, null);
         }
 
         public static Connection netherNetJsonRpc(final String networkId) {
-            return new Connection(Type.NETHERNET_JSON_RPC, networkId, null);
+            return new Connection(Type.NETHERNET_JSON_RPC, networkId, null, null);
         }
 
         public static Connection discovery(final InetSocketAddress address) {
-            return new Connection(Type.NETHERNET_DISCOVERY, null, address);
+            return new Connection(Type.NETHERNET_DISCOVERY, null, address, null);
+        }
+
+        public Connection withXboxSession(final String sessionName) {
+            return new Connection(this.type, this.address, this.discoveryAddress, sessionName);
         }
 
         public enum Type {

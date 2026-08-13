@@ -32,10 +32,12 @@ import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -150,6 +152,32 @@ public final class BedrockWorldsScreen extends VFPScreen {
             return;
         }
         final BedrockWorld world = entry.world;
+        final BedrockAuthManager account = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
+        if (world.source() == BedrockWorld.Source.XBOX_FRIEND && account != null && world.connection().xboxSessionName() != null) {
+            this.joinButton.active = false;
+            this.setupSubtitle(Component.literal("Joining Xbox multiplayer session..."));
+            CompletableFuture.runAsync(() -> {
+                try {
+                    BedrockWorldDiscovery.joinXboxSession(account, world.connection().xboxSessionName());
+                } catch (final IOException | InterruptedException throwable) {
+                    throw new CompletionException(throwable);
+                }
+            }, Util.nonCriticalIoPool()).whenComplete((_, throwable) -> Minecraft.getInstance().execute(() -> {
+                if (throwable != null) {
+                    ViaFabricPlusImpl.INSTANCE.getLogger().error("Failed to join Xbox multiplayer session", throwable);
+                    this.setupSubtitle(Component.literal("Could not join the Xbox multiplayer session"));
+                    this.joinButton.active = true;
+                } else {
+                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Joined Xbox multiplayer session; starting game connection");
+                    this.connect(world);
+                }
+            }));
+            return;
+        }
+        this.connect(world);
+    }
+
+    private void connect(final BedrockWorld world) {
         final BedrockWorld.Connection connection = world.connection();
         switch (connection.type()) {
             case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest);

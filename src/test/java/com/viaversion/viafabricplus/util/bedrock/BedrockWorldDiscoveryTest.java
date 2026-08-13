@@ -105,6 +105,31 @@ public final class BedrockWorldDiscoveryTest {
         }
     }
 
+    @Test
+    public void parsesRakNetLanAdvertisement() {
+        final String motd = "MCPE;Cool Server;2168;26.40;2;20;4041827097780214558;Survival World;Survival;1;19132;19133;";
+        final byte[] motdBytes = motd.getBytes(StandardCharsets.UTF_8);
+        final ByteBuf response = Unpooled.buffer();
+        response.writeByte(0x1C);
+        response.writeLong(1234L);
+        response.writeLong(4041827097780214558L);
+        response.writeBytes(ByteBufUtil.decodeHexDump("00ffff00fefefefefdfdfdfd12345678"));
+        response.writeShort(motdBytes.length);
+        response.writeBytes(motdBytes);
+        final byte[] data = ByteBufUtil.getBytes(response);
+        response.release();
+
+        final BedrockWorld world = BedrockWorldDiscovery.parseRakNetAdvertisement(data, data.length, new InetSocketAddress("192.168.1.30", 19132));
+        assertEquals("Survival World", world.name());
+        assertEquals("Cool Server", world.owner());
+        assertEquals("26.40", world.version());
+        assertEquals("Survival", world.gameMode());
+        assertEquals(2, world.playerCount());
+        assertEquals(20, world.maxPlayerCount());
+        assertEquals(BedrockWorld.Connection.Type.RAKNET, world.connection().type());
+        assertEquals("192.168.1.30:19132", world.connection().address());
+    }
+
     private static JsonObject directConnection(final String host, final int port) {
         final JsonObject connection = new JsonObject();
         connection.addProperty("HostIpAddress", host);
