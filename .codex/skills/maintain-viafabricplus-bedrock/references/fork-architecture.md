@@ -28,7 +28,8 @@
 - `MixinHandshakeStorage` substitutes the selected wire protocol into the Bedrock login payload without changing ViaVersion's route identity.
 - `MixinSkinProvider` keeps the advertised game-version string aligned with that wire protocol.
 - `MixinJoinPackets` suppresses the vanilla-looking version disconnect only while scheduling a verified adjacent-protocol retry.
-- `MixinResourcePackPackets` carries the 1.26.40 change from a little-endian unsigned-short resource-pack count to an unsigned varint. Recheck this temporary synthetic-lambda mixin whenever ViaBedrock changes.
+- `MixinResourcePackPackets` carries the 1.26.40 resource-pack info count change from a little-endian unsigned short to an unsigned varint. It also rewrites `ResourcePackClientResponse`'s leading status from the old fixed int8 values `1-4` to the protocol-2168 unsigned-varint values `0-3`, while preserving the following lowercase response-name string.
+- `MixinResourcePackLoadStateTracker` applies that response-status rewrite to the downloading path and changes its pack-ID array count from an unsigned little-endian short to an unsigned varint. Recheck both temporary synthetic-lambda mixins whenever ViaBedrock changes.
 - `BedrockMappingDataFixer`, `MixinBedrockMappingData`, and `MixinBrewingStandBlockEntityRewriter` repair incomplete or inconsistent ViaBedrock mapping data. Corresponding regression tests live under `src/test/java/.../util/bedrock/`.
 
 ## Diagnostic signatures
@@ -36,6 +37,7 @@
 - Xbox HTTP 400 mentioning `connectionRequiredForActiveMembers`: inspect `xboxJoinBody` and the stable connection GUID.
 - `PlayStatus LoginFailed_ClientOld` / `LoginFailed_ServerOld`: inspect protocol discovery and the bounded retry; do not remove the check.
 - `RESOURCE_PACKS_INFO`, `RESOURCE_PACK_PUSH`, `LongLE`, and an index overrun: verify the resource-pack array count type first.
+- `ResourcePackClientResponse`, packet 8, and `wrong const value for member "Response Type"`: for protocol 2168 verify the leading status is an unsigned varint in `0-3`, the next field is the matching lowercase response-name string, and only `downloading` carries a varint-counted pack-ID array. Cloudburst's `ResourcePackClientResponseSerializer_v2168` is the known-good primary implementation.
 - SDP set-local/set-remote errors: inspect normalization before candidate networking.
 - ICE candidate timeout with omitted candidates: inspect candidate filtering, interface address discovery, and trickle ordering.
 - Missing biome/entity/sound mapping: repair mapping data separately from transport and packet framing.
