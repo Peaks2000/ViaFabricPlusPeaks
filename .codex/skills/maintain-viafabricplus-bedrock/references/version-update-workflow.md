@@ -26,6 +26,8 @@ Check Mojang's release changelog for packets converted to Cereal. Cereal convers
 
 Audit generated enum storage width separately from its use on the wire. `PacketCompressionAlgorithm.None` is `65535` in the uint16 `NetworkSettings` field but is `255` in the uint8 per-batch header. Likewise, do not keep a hand-written legacy enum when the target protocol generated a replacement with new values, as happened with `InteractPacketPayload_Action` in 1.26.40.
 
+For protocol 2168 `PlayerAuthInputPacket`, use Mojang's serialization graph rather than inferring presence from optional JSON properties. The item-use transaction, item-stack request, block-action list, vehicle rotation, and predicted-vehicle ID are gated directly by `InputData` bits and do not carry separate presence booleans. The input-data bitset follows head yaw immediately. Keep the graph's actual primitive encodings: the interaction model is an unsigned varint, the block-action list count is a signed varint, and `StopDestroyBlock` has no trailing position or facing.
+
 ## Decide where to patch
 
 Prefer, in order:
