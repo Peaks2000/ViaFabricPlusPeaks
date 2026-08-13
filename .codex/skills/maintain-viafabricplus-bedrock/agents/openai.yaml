@@ -1,0 +1,4 @@
+interface:
+  display_name: "Maintain ViaFabricPlus Bedrock"
+  short_description: "Maintain Bedrock LAN and Xbox compatibility"
+  default_prompt: "Use $maintain-viafabricplus-bedrock to diagnose and update this fork for the latest Bedrock protocol."

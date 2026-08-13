@@ -31,8 +31,10 @@ public final class BedrockProtocolCompatibility {
     }
 
     public static int protocolForNetherNetAdvertisement(final int advertisementVersion) {
-        // Format 5 introduced the current LAN-secret/self-signed login flow.
-        return advertisementVersion >= 5 ? CURRENT_PROTOCOL : VIA_BEDROCK_ROUTE_PROTOCOL;
+        // This is a NetherNet discovery format revision, not a Bedrock game
+        // protocol. Treating revision 5 as protocol 2169 caused 1.26.40 hosts
+        // to report the normal "server old" login failure.
+        return UNKNOWN_PROTOCOL;
     }
 
     public static int protocolForGameVersion(final String version) {
@@ -50,7 +52,7 @@ public final class BedrockProtocolCompatibility {
     }
 
     public static void prepareConnection(final int protocolVersion) {
-        NEXT_CONNECTION_PROTOCOL.set(isSupported(protocolVersion) ? protocolVersion : UNKNOWN_PROTOCOL);
+        NEXT_CONNECTION_PROTOCOL.set(initialProtocol(protocolVersion));
     }
 
     public static int consumeConnectionProtocol(final int fallbackProtocolVersion) {
@@ -62,7 +64,21 @@ public final class BedrockProtocolCompatibility {
         return protocolVersion == CURRENT_PROTOCOL ? CURRENT_GAME_VERSION : fallbackVersion;
     }
 
-    private static boolean isSupported(final int protocolVersion) {
+    public static int initialProtocol(final int advertisedProtocolVersion) {
+        return isSupported(advertisedProtocolVersion) ? advertisedProtocolVersion : VIA_BEDROCK_ROUTE_PROTOCOL;
+    }
+
+    public static int adjacentProtocol(final int protocolVersion, final boolean serverIsNewer) {
+        if (serverIsNewer && protocolVersion == VIA_BEDROCK_ROUTE_PROTOCOL) {
+            return CURRENT_PROTOCOL;
+        }
+        if (!serverIsNewer && protocolVersion == CURRENT_PROTOCOL) {
+            return VIA_BEDROCK_ROUTE_PROTOCOL;
+        }
+        return UNKNOWN_PROTOCOL;
+    }
+
+    public static boolean isSupported(final int protocolVersion) {
         return protocolVersion == VIA_BEDROCK_ROUTE_PROTOCOL || protocolVersion == CURRENT_PROTOCOL;
     }
 

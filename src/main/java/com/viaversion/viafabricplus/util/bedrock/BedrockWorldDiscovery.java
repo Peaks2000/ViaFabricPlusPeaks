@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
@@ -68,6 +69,7 @@ public final class BedrockWorldDiscovery {
     private static final int XBOX_CONTRACT_VERSION = 107;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(12);
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build();
+    private static final UUID XBOX_CONNECTION_ID = UUID.randomUUID();
     private static final Object LAN_LOCK = new Object();
 
     private static AddressAwareNetherNetDiscovery lanDiscovery;
@@ -164,22 +166,7 @@ public final class BedrockWorldDiscovery {
             return;
         }
 
-        final JsonObject system = new JsonObject();
-        system.addProperty("active", true);
-        final JsonObject properties = new JsonObject();
-        properties.add("system", system);
-        final JsonObject constantSystem = new JsonObject();
-        constantSystem.addProperty("xuid", account.getMinecraftMultiplayerToken().getUpToDate().getXuid());
-        constantSystem.addProperty("initialize", true);
-        final JsonObject constants = new JsonObject();
-        constants.add("system", constantSystem);
-        final JsonObject me = new JsonObject();
-        me.add("constants", constants);
-        me.add("properties", properties);
-        final JsonObject members = new JsonObject();
-        members.add("me", me);
-        final JsonObject body = new JsonObject();
-        body.add("members", members);
+        final JsonObject body = xboxJoinBody(account.getMinecraftMultiplayerToken().getUpToDate().getXuid(), XBOX_CONNECTION_ID);
 
         final String authorization = account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader();
         final HttpResponse<String> response = HTTP_CLIENT.send(HttpRequest.newBuilder()
@@ -193,6 +180,27 @@ public final class BedrockWorldDiscovery {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new IOException("Could not join Xbox multiplayer session: HTTP " + response.statusCode() + " - " + summarizeResponse(response.body()));
         }
+    }
+
+    static JsonObject xboxJoinBody(final String xuid, final UUID connectionId) {
+        final JsonObject system = new JsonObject();
+        system.addProperty("active", true);
+        system.addProperty("connection", connectionId.toString());
+        final JsonObject properties = new JsonObject();
+        properties.add("system", system);
+        final JsonObject constantSystem = new JsonObject();
+        constantSystem.addProperty("xuid", xuid);
+        constantSystem.addProperty("initialize", true);
+        final JsonObject constants = new JsonObject();
+        constants.add("system", constantSystem);
+        final JsonObject me = new JsonObject();
+        me.add("constants", constants);
+        me.add("properties", properties);
+        final JsonObject members = new JsonObject();
+        members.add("me", me);
+        final JsonObject body = new JsonObject();
+        body.add("members", members);
+        return body;
     }
 
     private static Map<String, String> getXboxPeople(final String authorization) throws IOException, InterruptedException {

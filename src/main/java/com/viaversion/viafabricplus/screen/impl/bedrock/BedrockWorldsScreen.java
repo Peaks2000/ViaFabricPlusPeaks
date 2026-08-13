@@ -36,9 +36,12 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -47,6 +50,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayStatus;
 import org.apache.logging.log4j.Level;
 import org.jspecify.annotations.NonNull;
 
@@ -60,6 +64,10 @@ public final class BedrockWorldsScreen extends VFPScreen {
 
     private SlotList slotList;
     private Button joinButton;
+
+    private final Set<Integer> attemptedProtocols = new HashSet<>();
+    private BedrockWorld connectingWorld;
+    private int connectingProtocol = BedrockProtocolCompatibility.UNKNOWN_PROTOCOL;
 
     public BedrockWorldsScreen() {
         super(Component.translatable("screen.viafabricplus.bedrock_worlds"), true);
@@ -179,10 +187,19 @@ public final class BedrockWorldsScreen extends VFPScreen {
     }
 
     private void connect(final BedrockWorld world) {
-        BedrockProtocolCompatibility.prepareConnection(world.protocolVersion());
-        if (world.protocolVersion() != BedrockProtocolCompatibility.UNKNOWN_PROTOCOL) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), world.protocolVersion());
+        final int protocolVersion = BedrockProtocolCompatibility.initialProtocol(world.protocolVersion());
+        synchronized (this.attemptedProtocols) {
+            this.connectingWorld = world;
+            this.connectingProtocol = protocolVersion;
+            this.attemptedProtocols.clear();
+            this.attemptedProtocols.add(protocolVersion);
         }
+        this.connect(world, protocolVersion);
+    }
+
+    private void connect(final BedrockWorld world, final int protocolVersion) {
+        BedrockProtocolCompatibility.prepareConnection(protocolVersion);
+        ViaFabricPlusImpl.INSTANCE.getLogger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), protocolVersion);
         final BedrockWorld.Connection connection = world.connection();
         switch (connection.type()) {
             case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest);
@@ -190,6 +207,45 @@ public final class BedrockWorldsScreen extends VFPScreen {
             case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address()));
             case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress());
         }
+    }
+
+    public static boolean retryVersionMismatch(final PlayStatus status) {
+        final boolean serverIsNewer;
+        if (status == PlayStatus.LoginFailed_ClientOld) {
+            serverIsNewer = true;
+        } else if (status == PlayStatus.LoginFailed_ServerOld) {
+            serverIsNewer = false;
+        } else {
+            return false;
+        }
+        return INSTANCE.scheduleProtocolRetry(serverIsNewer);
+    }
+
+    private boolean scheduleProtocolRetry(final boolean serverIsNewer) {
+        final BedrockWorld world;
+        final int previousProtocol;
+        final int nextProtocol;
+        synchronized (this.attemptedProtocols) {
+            world = this.connectingWorld;
+            previousProtocol = this.connectingProtocol;
+            nextProtocol = BedrockProtocolCompatibility.adjacentProtocol(previousProtocol, serverIsNewer);
+            if (world == null || nextProtocol == BedrockProtocolCompatibility.UNKNOWN_PROTOCOL || !this.attemptedProtocols.add(nextProtocol)) {
+                return false;
+            }
+            this.connectingProtocol = nextProtocol;
+        }
+
+        ViaFabricPlusImpl.INSTANCE.getLogger().info(
+            "Bedrock host rejected protocol {} as {}; retrying '{}' with protocol {}",
+            previousProtocol, serverIsNewer ? "client-old" : "server-old", world.name(), nextProtocol
+        );
+        // Let the rejected connection finish closing before replacing its
+        // ConnectScreen. Otherwise its disconnect callback can race and cover
+        // the retry screen with the old version error.
+        CompletableFuture.delayedExecutor(250, TimeUnit.MILLISECONDS).execute(
+            () -> Minecraft.getInstance().execute(() -> this.connect(world, nextProtocol))
+        );
+        return true;
     }
 
     @Override

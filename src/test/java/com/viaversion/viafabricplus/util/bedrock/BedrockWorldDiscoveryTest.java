@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,10 +37,24 @@ public final class BedrockWorldDiscoveryTest {
 
     @Test
     public void selectsWireProtocolFromAdvertisement() {
-        assertEquals(2168, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(4));
-        assertEquals(2169, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(5));
+        assertEquals(-1, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(4));
+        assertEquals(-1, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(5));
         assertEquals(2169, BedrockProtocolCompatibility.protocolForGameVersion("1.26.50"));
         assertEquals(2168, BedrockProtocolCompatibility.protocolForGameVersion("26.40"));
+        assertEquals(2168, BedrockProtocolCompatibility.initialProtocol(-1));
+        assertEquals(2169, BedrockProtocolCompatibility.adjacentProtocol(2168, true));
+        assertEquals(2168, BedrockProtocolCompatibility.adjacentProtocol(2169, false));
+        assertEquals(-1, BedrockProtocolCompatibility.adjacentProtocol(2168, false));
+    }
+
+    @Test
+    public void includesConnectionGuidWhenJoiningXboxSession() {
+        final UUID connectionId = UUID.fromString("21bc42d5-fce0-4fba-a88f-a34e770d5339");
+        final JsonObject body = BedrockWorldDiscovery.xboxJoinBody("123456789", connectionId);
+        final JsonObject me = body.getAsJsonObject("members").getAsJsonObject("me");
+        assertEquals("123456789", me.getAsJsonObject("constants").getAsJsonObject("system").get("xuid").getAsString());
+        assertEquals(connectionId.toString(), me.getAsJsonObject("properties").getAsJsonObject("system").get("connection").getAsString());
+        assertEquals(true, me.getAsJsonObject("properties").getAsJsonObject("system").get("active").getAsBoolean());
     }
 
     @Test
@@ -107,7 +122,7 @@ public final class BedrockWorldDiscoveryTest {
             assertEquals("Hardcore", world.gameMode());
             assertEquals(2, world.playerCount());
             assertEquals(8, world.maxPlayerCount());
-            assertEquals(BedrockProtocolCompatibility.VIA_BEDROCK_ROUTE_PROTOCOL, world.protocolVersion());
+            assertEquals(BedrockProtocolCompatibility.UNKNOWN_PROTOCOL, world.protocolVersion());
             assertEquals(sender, world.connection().discoveryAddress());
         } finally {
             response.release();
