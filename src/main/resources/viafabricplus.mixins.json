@@ -46,6 +46,7 @@
     "core.integration.MixinViaLegacyConfig",
     "core.integration.bedrock.MixinConfirmScreen",
     "core.integration.bedrock.MixinConnectScreen_1",
+    "core.integration.bedrock.MixinBrewingStandBlockEntityRewriter",
     "core.integration.bedrock.MixinServerStatusPinger",
     "core.integration.event.MixinMinecraft",
     "core.integration.sync_tasks.MixinClientCommonPacketListenerImpl",
