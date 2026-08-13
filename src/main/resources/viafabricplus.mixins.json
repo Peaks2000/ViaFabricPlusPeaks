@@ -52,6 +52,7 @@
     "core.integration.bedrock.MixinConnectScreen_1",
     "core.integration.bedrock.MixinHandshakeStorage",
     "core.integration.bedrock.MixinJoinPackets",
+    "core.integration.bedrock.MixinResourcePackLoadStateTracker",
     "core.integration.bedrock.MixinResourcePackPackets",
     "core.integration.bedrock.MixinServerStatusPinger",
     "core.integration.bedrock.MixinSkinProvider",

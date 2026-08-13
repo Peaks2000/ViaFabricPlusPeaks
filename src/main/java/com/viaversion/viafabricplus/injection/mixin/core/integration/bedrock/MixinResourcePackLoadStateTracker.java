@@ -16,48 +16,35 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
 import com.viaversion.viaversion.api.type.Type;
 import com.viaversion.viaversion.api.type.Types;
-import net.raphimc.viabedrock.protocol.packet.ResourcePackPackets;
+import net.raphimc.viabedrock.protocol.storage.ResourcePackLoadStateTracker;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-@Mixin(value = ResourcePackPackets.class, remap = false)
-public abstract class MixinResourcePackPackets {
-
-    @ModifyArg(
-        method = "lambda$register$0",
-        at = @At(
-            value = "INVOKE",
-            target = "Lcom/viaversion/viaversion/api/protocol/packet/PacketWrapper;read(Lcom/viaversion/viaversion/api/type/Type;)Ljava/lang/Object;",
-            ordinal = 6
-        ),
-        index = 0
-    )
-    private static Type<?> useVariableLengthResourcePackCount(final Type<?> original) {
-        return BedrockTypes.UNSIGNED_VAR_INT;
-    }
+@Mixin(value = ResourcePackLoadStateTracker.class, remap = false)
+public abstract class MixinResourcePackLoadStateTracker {
 
     @WrapOperation(
-        method = {"lambda$register$1", "lambda$register$4", "lambda$register$6"},
+        method = "lambda$loadRequestedResourcePacks$5",
         at = @At(
             value = "INVOKE",
             target = "Lcom/viaversion/viaversion/api/protocol/packet/PacketWrapper;write(Lcom/viaversion/viaversion/api/type/Type;Ljava/lang/Object;)V"
         )
     )
-    private static void writeResourcePackResponseType(
+    private static void writeDownloadingResponse(
         final PacketWrapper wrapper,
         final Type<?> type,
         final Object value,
         final Operation<Void> original
     ) {
         if (type == Types.BYTE && value instanceof final Byte responseType) {
-            // Protocol 2168 changed the leading status from a fixed int8 in the range 1-4
-            // to an unsigned VarInt in the range 0-3. The following lowercase name string remains.
+            // Protocol 2168 uses a zero-based unsigned VarInt status followed by its name string.
             original.call(wrapper, BedrockTypes.UNSIGNED_VAR_INT, Byte.toUnsignedInt(responseType) - 1);
-            return;
+        } else if (type == BedrockTypes.SHORT_LE_STRING_ARRAY) {
+            original.call(wrapper, BedrockTypes.STRING_ARRAY, value);
+        } else {
+            original.call(wrapper, type, value);
         }
-        original.call(wrapper, type, value);
     }
 
 }
