@@ -22,14 +22,22 @@
 package com.viaversion.viafabricplus.injection.mixin.core.integration.bedrock;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.google.common.collect.BiMap;
 import com.viaversion.nbt.tag.CompoundTag;
 import com.viaversion.viafabricplus.util.bedrock.BedrockMappingDataFixer;
+import com.viaversion.viaversion.libs.gson.JsonObject;
 import net.raphimc.viabedrock.protocol.data.BedrockMappingData;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(value = BedrockMappingData.class, remap = false)
 public abstract class MixinBedrockMappingData {
+
+    @Shadow
+    private BiMap<String, Integer> bedrockEntities;
 
     @ModifyExpressionValue(
         method = "load",
@@ -41,6 +49,21 @@ public abstract class MixinBedrockMappingData {
     )
     private CompoundTag addMissingBiomeDefinitions(final CompoundTag definitions) {
         return BedrockMappingDataFixer.addMissingBiomeDefinitions(definitions);
+    }
+
+    @WrapOperation(
+        method = "load",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/raphimc/viabedrock/protocol/data/BedrockMappingData;readJson(Ljava/lang/String;)Lcom/viaversion/viaversion/libs/gson/JsonObject;"
+        )
+    )
+    private JsonObject removeUnknownEntitySoundMappings(BedrockMappingData instance, String file, Operation<JsonObject> original) {
+        final JsonObject mappings = original.call(instance, file);
+        if (file.equals("bedrock/level_sound_event_mappings.json")) {
+            BedrockMappingDataFixer.removeUnknownEntitySoundMappings(mappings, this.bedrockEntities.keySet());
+        }
+        return mappings;
     }
 
 }

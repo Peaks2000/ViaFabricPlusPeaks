@@ -22,6 +22,10 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import com.viaversion.nbt.tag.CompoundTag;
+import com.viaversion.viaversion.libs.gson.JsonElement;
+import com.viaversion.viaversion.libs.gson.JsonObject;
+
+import java.util.Set;
 
 public final class BedrockMappingDataFixer {
 
@@ -44,6 +48,25 @@ public final class BedrockMappingDataFixer {
             }
         }
         return definitions;
+    }
+
+    /**
+     * New experimental sound variants can appear before their entity is added to the vanilla
+     * entity identifier table. They are optional specializations, so discarding only those
+     * variants lets ViaBedrock retain the event's default and other valid sounds.
+     */
+    public static JsonObject removeUnknownEntitySoundMappings(final JsonObject mappings, final Set<String> knownEntities) {
+        for (var event : mappings.entrySet()) {
+            final JsonElement eventMappings = event.getValue();
+            if (!eventMappings.isJsonObject()) {
+                continue;
+            }
+            eventMappings.getAsJsonObject().entrySet().removeIf(entry -> {
+                final String key = entry.getKey();
+                return key.startsWith("entity:") && !knownEntities.contains(key.substring("entity:".length()));
+            });
+        }
+        return mappings;
     }
 
 }
