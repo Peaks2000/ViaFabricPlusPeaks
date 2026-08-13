@@ -274,7 +274,7 @@ public final class BedrockWorldDiscovery {
             if (!networkId.isBlank()) {
                 if (integer(connection, "ConnectionType", 0) == 7) {
                     final String messagingId = string(connection, "PmsgId");
-                    return BedrockWorld.Connection.netherNetJsonRpc(!messagingId.isBlank() ? messagingId : networkId);
+                    return BedrockWorld.Connection.netherNetJsonRpc(networkId, !messagingId.isBlank() ? messagingId : networkId);
                 }
                 return BedrockWorld.Connection.netherNet(networkId);
             }

@@ -25,8 +25,19 @@ import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
 
 public final class NetherNetJsonRpcAddress extends NetherNetAddress {
 
+    private final String signalingId;
+
     public NetherNetJsonRpcAddress(final String networkId) {
+        this(networkId, networkId);
+    }
+
+    public NetherNetJsonRpcAddress(final String networkId, final String signalingId) {
         super(networkId);
+        this.signalingId = signalingId;
+    }
+
+    public String signalingId() {
+        return this.signalingId;
     }
 
 }

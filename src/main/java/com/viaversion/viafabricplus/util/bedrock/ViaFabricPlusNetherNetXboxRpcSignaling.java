@@ -36,8 +36,11 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
  */
 public final class ViaFabricPlusNetherNetXboxRpcSignaling extends NetherNetXboxRpcSignaling {
 
-    public ViaFabricPlusNetherNetXboxRpcSignaling(final String authorizationHeader) {
+    private final String signalingId;
+
+    public ViaFabricPlusNetherNetXboxRpcSignaling(final String authorizationHeader, final String signalingId) {
         super(authorizationHeader);
+        this.signalingId = signalingId;
     }
 
     @Override
@@ -48,8 +51,10 @@ public final class ViaFabricPlusNetherNetXboxRpcSignaling extends NetherNetXboxR
 
     @Override
     public void sendSignal(final String target, final String signal) {
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Sending NetherNet WebRTC offer through Xbox Friends signaling");
-        super.sendSignal(target, signal);
+        final int separator = signal.indexOf(' ');
+        final String signalType = separator >= 0 ? signal.substring(0, separator) : signal;
+        ViaFabricPlusImpl.INSTANCE.getLogger().info("Sending NetherNet {} through Xbox Friends signaling", signalType);
+        super.sendSignal(this.signalingId, signal);
     }
 
     @Override

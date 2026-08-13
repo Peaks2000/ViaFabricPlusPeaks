@@ -204,7 +204,7 @@ public final class BedrockWorldsScreen extends VFPScreen {
         switch (connection.type()) {
             case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest);
             case NETHERNET -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetAddress(connection.address()));
-            case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address()));
+            case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address(), connection.signalingId()));
             case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress());
         }
     }

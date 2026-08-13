@@ -19,7 +19,7 @@ plugins {
 rootProject.name = "viafabricplus"
 
 sourceControl {
-    gitRepository(uri("https://github.com/RaphiMC/ViaBedrock.git")) {
+    gitRepository(uri("https://github.com/Peaks2000/ViaBedrock.git")) {
         producesModule("net.raphimc:ViaBedrock")
     }
 }

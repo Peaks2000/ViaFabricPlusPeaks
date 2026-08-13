@@ -68,7 +68,8 @@ public final class BedrockWorldDiscoveryTest {
 
         final BedrockWorld.Connection target = BedrockWorldDiscovery.findConnection(connections);
         assertEquals(BedrockWorld.Connection.Type.NETHERNET_JSON_RPC, target.type());
-        assertEquals("message-id", target.address());
+        assertEquals("18446744073709551615", target.address());
+        assertEquals("message-id", target.signalingId());
     }
 
     @Test
@@ -82,6 +83,7 @@ public final class BedrockWorldDiscoveryTest {
         final BedrockWorld.Connection target = BedrockWorldDiscovery.findConnection(connections);
         assertEquals(BedrockWorld.Connection.Type.NETHERNET_JSON_RPC, target.type());
         assertEquals("18446744073709551615", target.address());
+        assertEquals("18446744073709551615", target.signalingId());
     }
 
     @Test

@@ -109,8 +109,8 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
                 }
 
                 final String authorizationHeader = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount().getMinecraftSession().getUpToDateUnchecked().getAuthorizationHeader();
-                if (netherNetAddress.getNetherNetAddress() instanceof NetherNetJsonRpcAddress) {
-                    return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetXboxRpcSignaling(authorizationHeader)));
+                if (netherNetAddress.getNetherNetAddress() instanceof NetherNetJsonRpcAddress jsonRpcAddress) {
+                    return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetXboxRpcSignaling(authorizationHeader, jsonRpcAddress.signalingId())));
                 } else {
                     return instance.channelFactory(configuredNetherNetClientFactory(new NetherNetXboxSignaling(authorizationHeader)));
                 }

@@ -98,7 +98,7 @@ fun Project.configureVVDependencies(configuration: String) {
         configuration("net.raphimc:ViaLegacy:3.0.16")
         configuration("net.raphimc:ViaBedrock") {
             version {
-                branch = "update/1.26.40"
+                branch = "peaks/1.26.40-fixes"
             }
             exclude(group = "com.mojang", module = "brigadier")
             exclude(group = "at.yawk.lz4", module = "lz4-java")
