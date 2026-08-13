@@ -27,14 +27,31 @@ import java.util.List;
 public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDiscoverySignaling {
 
     private static final String CONNECT_RESPONSE = "CONNECTRESPONSE ";
+    private static final String CANDIDATE_ADD = "CANDIDATEADD ";
 
     @Override
     public void setSignalHandler(final long connectionId, final NetherNetSignaling.SignalHandler handler) {
-        super.setSignalHandler(connectionId, signal -> handler.onSignal(sanitizeSignal(signal)));
+        super.setSignalHandler(connectionId, signal -> {
+            final String sanitized = sanitizeSignal(signal);
+            if (sanitized != null) {
+                handler.onSignal(sanitized);
+            }
+        });
     }
 
     static String sanitizeSignal(final String signal) {
-        if (signal == null || !signal.startsWith(CONNECT_RESPONSE)) {
+        if (signal == null) {
+            return signal;
+        }
+        if (signal.startsWith(CANDIDATE_ADD)) {
+            final String[] parts = signal.split(" ", 3);
+            if (parts.length < 3 || !isSupportedCandidate(parts[2])) {
+                ViaFabricPlusImpl.INSTANCE.getLogger().warn("Ignored an unsupported NetherNet LAN ICE candidate");
+                return null;
+            }
+            return signal;
+        }
+        if (!signal.startsWith(CONNECT_RESPONSE)) {
             return signal;
         }
 
@@ -42,7 +59,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
         final List<String> validLines = new ArrayList<>(lines.length);
         int removedCandidates = 0;
         for (final String line : lines) {
-            if (line.startsWith("a=candidate:") && !isValidCandidate(line)) {
+            if (line.startsWith("a=candidate:") && !isSupportedCandidate(line)) {
                 removedCandidates++;
                 continue;
             }
@@ -52,13 +69,13 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
             return signal;
         }
 
-        ViaFabricPlusImpl.INSTANCE.getLogger().warn("Removed {} incomplete ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
+        ViaFabricPlusImpl.INSTANCE.getLogger().warn("Removed {} unsupported ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
         return String.join("\r\n", validLines);
     }
 
-    private static boolean isValidCandidate(final String line) {
+    private static boolean isSupportedCandidate(final String line) {
         final String[] fields = line.trim().split("\\s+");
-        if (fields.length < 8 || !"typ".equals(fields[6])) {
+        if (fields.length < 8 || !"typ".equals(fields[6]) || fields[4].indexOf(':') >= 0) {
             return false;
         }
         try {
