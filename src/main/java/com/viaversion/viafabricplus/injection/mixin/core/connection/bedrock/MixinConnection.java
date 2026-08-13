@@ -32,17 +32,20 @@ import com.viaversion.viafabricplus.protocoltranslator.netty.RakNetPingEncapsula
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
+import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetXboxRpcSignaling;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import dev.kastle.netty.channel.nethernet.NetherNetChannelFactory;
+import dev.kastle.netty.channel.nethernet.NetherNetClientChannel;
 import dev.kastle.netty.channel.nethernet.config.NetherChannelOption;
+import dev.kastle.netty.channel.nethernet.signaling.NetherNetClientSignaling;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetDiscoverySignaling;
-import dev.kastle.netty.channel.nethernet.signaling.NetherNetXboxRpcSignaling;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetXboxSignaling;
 import dev.kastle.webrtc.PeerConnectionFactory;
 import io.netty.bootstrap.AbstractBootstrap;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFactory;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -101,17 +104,15 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     private static AbstractBootstrap<?, ?> useRakNetChannelFactory(Bootstrap instance, Class<? extends Channel> channelTypeClass, Operation<AbstractBootstrap<Bootstrap, Channel>> original, @Local(argsOnly = true) InetSocketAddress address, @Local(argsOnly = true) Connection clientConnection) {
         if (BedrockProtocolVersion.bedrockLatest.equals(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
-                instance.option(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
-                instance.option(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 0);
                 if (netherNetAddress.isDiscoveryAddress()) {
-                    return instance.channelFactory(NetherNetChannelFactory.client(new PeerConnectionFactory(), new NetherNetDiscoverySignaling()));
+                    return instance.channelFactory(configuredNetherNetClientFactory(new NetherNetDiscoverySignaling()));
                 }
 
                 final String authorizationHeader = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount().getMinecraftSession().getUpToDateUnchecked().getAuthorizationHeader();
                 if (netherNetAddress.getNetherNetAddress() instanceof NetherNetJsonRpcAddress) {
-                    return instance.channelFactory(NetherNetChannelFactory.client(new PeerConnectionFactory(), new NetherNetXboxRpcSignaling(authorizationHeader)));
+                    return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetXboxRpcSignaling(authorizationHeader)));
                 } else {
-                    return instance.channelFactory(NetherNetChannelFactory.client(new PeerConnectionFactory(), new NetherNetXboxSignaling(authorizationHeader)));
+                    return instance.channelFactory(configuredNetherNetClientFactory(new NetherNetXboxSignaling(authorizationHeader)));
                 }
             } else { // RakNet
                 if (channelTypeClass == NioSocketChannel.class) {
@@ -159,6 +160,16 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
             }
         }
         return original.call(instance, inetHost, inetPort);
+    }
+
+    private static ChannelFactory<NetherNetClientChannel> configuredNetherNetClientFactory(final NetherNetClientSignaling signaling) {
+        final ChannelFactory<NetherNetClientChannel> factory = NetherNetChannelFactory.client(new PeerConnectionFactory(), signaling);
+        return () -> {
+            final NetherNetClientChannel channel = factory.newChannel();
+            channel.config().setOption(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
+            channel.config().setOption(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 0);
+            return channel;
+        };
     }
 
 }

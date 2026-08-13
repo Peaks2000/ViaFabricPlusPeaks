@@ -66,7 +66,7 @@ public final class BedrockWorldDiscovery {
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build();
     private static final Object LAN_LOCK = new Object();
 
-    private static final Map<InetAddress, AddressAwareNetherNetDiscovery> LAN_DISCOVERIES = new HashMap<>();
+    private static AddressAwareNetherNetDiscovery lanDiscovery;
 
     public static List<BedrockWorld> discoverXboxFriends(final BedrockAuthManager account) throws IOException, InterruptedException {
         final XblXstsToken token = account.getXboxLiveXstsToken().getUpToDate();
@@ -128,28 +128,27 @@ public final class BedrockWorldDiscovery {
 
     public static List<BedrockWorld> discoverLanWorlds() throws InterruptedException {
         synchronized (LAN_LOCK) {
-            final Map<Long, BedrockWorld> worlds = new ConcurrentHashMap<>();
-            for (final BroadcastTarget target : broadcastTargets()) {
-                AddressAwareNetherNetDiscovery discovery = LAN_DISCOVERIES.get(target.localAddress());
-                if (discovery == null || !discovery.isActive()) {
-                    discovery = new AddressAwareNetherNetDiscovery(ThreadLocalRandom.current().nextLong());
-                    discovery.bind(new InetSocketAddress(target.localAddress(), 0));
-                    LAN_DISCOVERIES.put(target.localAddress(), discovery);
-                }
+            if (lanDiscovery == null || !lanDiscovery.isActive()) {
+                lanDiscovery = new AddressAwareNetherNetDiscovery(ThreadLocalRandom.current().nextLong());
+                lanDiscovery.bind(new InetSocketAddress(0));
+            }
 
-                final AddressAwareNetherNetDiscovery activeDiscovery = discovery;
-                discovery.sendDiscoveryRequest(target.broadcastAddress(), (networkId, data) -> {
-                    try {
-                        final InetSocketAddress sender = activeDiscovery.sender();
-                        if (sender != null) {
-                            worlds.put(networkId, parseLanAdvertisement(data, sender));
-                        }
-                    } catch (final Throwable ignored) {
-                        // Invalid or outdated advertisements are ignored while other hosts remain discoverable.
-                    } finally {
-                        data.release();
+            final Map<Long, BedrockWorld> worlds = new ConcurrentHashMap<>();
+            final java.util.function.BiConsumer<Long, ByteBuf> callback = (networkId, data) -> {
+                try {
+                    final InetSocketAddress sender = lanDiscovery.sender();
+                    if (sender != null) {
+                        worlds.put(networkId, parseLanAdvertisement(data, sender));
                     }
-                });
+                } catch (final Throwable ignored) {
+                    // Invalid or outdated advertisements are ignored while other hosts remain discoverable.
+                } finally {
+                    data.release();
+                }
+            };
+
+            for (final InetSocketAddress broadcast : broadcastAddresses()) {
+                lanDiscovery.sendDiscoveryRequest(broadcast, callback);
             }
             Thread.sleep(2_500L);
             return worlds.values().stream().sorted(Comparator.comparing(BedrockWorld::name, String.CASE_INSENSITIVE_ORDER)).toList();
@@ -298,8 +297,8 @@ public final class BedrockWorldDiscovery {
         return buffer.readCharSequence(length, StandardCharsets.UTF_8).toString();
     }
 
-    private static List<BroadcastTarget> broadcastTargets() {
-        final List<BroadcastTarget> targets = new ArrayList<>();
+    private static List<InetSocketAddress> broadcastAddresses() {
+        final Set<InetAddress> broadcasts = new HashSet<>();
         try {
             final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
@@ -309,25 +308,17 @@ public final class BedrockWorldDiscovery {
                 }
                 for (final InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
                     if (interfaceAddress.getBroadcast() != null) {
-                        targets.add(new BroadcastTarget(
-                            interfaceAddress.getAddress(),
-                            new InetSocketAddress(interfaceAddress.getBroadcast(), NETHERNET_DISCOVERY_PORT)
-                        ));
+                        broadcasts.add(interfaceAddress.getBroadcast());
                     }
                 }
             }
         } catch (final IOException ignored) {
         }
-        if (targets.isEmpty()) {
-            try {
-                targets.add(new BroadcastTarget(
-                    InetAddress.getByName("0.0.0.0"),
-                    new InetSocketAddress(InetAddress.getByName("255.255.255.255"), NETHERNET_DISCOVERY_PORT)
-                ));
-            } catch (final IOException ignored) {
-            }
+        try {
+            broadcasts.add(InetAddress.getByName("255.255.255.255"));
+        } catch (final IOException ignored) {
         }
-        return targets;
+        return broadcasts.stream().map(address -> new InetSocketAddress(address, NETHERNET_DISCOVERY_PORT)).toList();
     }
 
     private static JsonObject sendJson(final HttpRequest request) throws IOException, InterruptedException {
@@ -397,9 +388,6 @@ public final class BedrockWorldDiscovery {
             return this.sender.get();
         }
 
-    }
-
-    private record BroadcastTarget(InetAddress localAddress, InetSocketAddress broadcastAddress) {
     }
 
     private BedrockWorldDiscovery() {
