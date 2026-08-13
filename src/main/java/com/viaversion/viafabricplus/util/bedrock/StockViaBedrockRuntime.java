@@ -12,9 +12,14 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.api.connection.StorableObject;
 import com.viaversion.viaversion.api.connection.UserConnection;
+import com.viaversion.viaversion.api.protocol.Protocol;
+import com.viaversion.viaversion.api.protocol.packet.PacketType;
+import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import com.viaversion.viaversion.api.type.Type;
+import com.viaversion.viaversion.api.type.Types;
 import com.viaversion.viaversion.platform.ViaDecodeHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
@@ -128,6 +133,44 @@ public final class StockViaBedrockRuntime {
             connection.put((StorableObject) authData);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Failed to create stock ViaBedrock auth data", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void sendOpenInventory(final UserConnection connection) {
+        if (classLoader == null) {
+            throw new IllegalStateException("Stock ViaBedrock runtime has not been initialized");
+        }
+
+        try {
+            final Class<?> entityTrackerClass = classLoader.loadClass("net.raphimc.viabedrock.protocol.storage.EntityTracker");
+            final Object entityTracker = connection.getStoredObjects().get(entityTrackerClass);
+            if (entityTracker == null) {
+                return;
+            }
+            final Object clientPlayer = entityTrackerClass.getMethod("getClientPlayer").invoke(entityTracker);
+            if (clientPlayer == null) {
+                return;
+            }
+            final long runtimeId = ((Number) clientPlayer.getClass().getMethod("runtimeId").invoke(clientPlayer)).longValue();
+
+            final PacketType interactPacket = (PacketType) classLoader.loadClass("net.raphimc.viabedrock.protocol.ServerboundBedrockPackets")
+                .getField("INTERACT").get(null);
+            final Object openInventoryAction = classLoader.loadClass("net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.InteractPacket_Action")
+                .getField("OpenInventory").get(null);
+            final short actionValue = ((Number) openInventoryAction.getClass().getMethod("getValue").invoke(openInventoryAction)).shortValue();
+            final Class<?> bedrockTypes = classLoader.loadClass("net.raphimc.viabedrock.protocol.types.BedrockTypes");
+            final Type<Long> unsignedVarLong = (Type<Long>) bedrockTypes.getField("UNSIGNED_VAR_LONG").get(null);
+            final Type<Object> optionalPosition = (Type<Object>) bedrockTypes.getField("OPTIONAL_POSITION_3F").get(null);
+            final Class<? extends Protocol> protocolClass = (Class<? extends Protocol>) classLoader.loadClass("net.raphimc.viabedrock.protocol.BedrockProtocol");
+
+            final PacketWrapper interact = PacketWrapper.create(interactPacket, connection);
+            interact.write(Types.UNSIGNED_BYTE, actionValue);
+            interact.write(unsignedVarLong, runtimeId);
+            interact.write(optionalPosition, null);
+            interact.sendToServer(protocolClass);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not send stock ViaBedrock inventory interaction", e);
         }
     }
 
