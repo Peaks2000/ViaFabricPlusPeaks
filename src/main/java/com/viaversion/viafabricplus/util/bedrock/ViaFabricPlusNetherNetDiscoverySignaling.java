@@ -64,14 +64,26 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
                 removedCandidates++;
                 continue;
             }
-            validLines.add(line);
+            validLines.add(normalizeConnectionLine(line));
         }
-        if (removedCandidates == 0) {
-            return signal;
+        if (removedCandidates > 0) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Moved {} ICE candidate(s) out of the NetherNet LAN SDP answer; waiting for trickled IPv4 candidates", removedCandidates);
         }
-
-        ViaFabricPlusImpl.INSTANCE.getLogger().warn("Moved {} ICE candidate(s) out of the NetherNet LAN SDP answer; waiting for trickled IPv4 candidates", removedCandidates);
         return String.join("\r\n", validLines);
+    }
+
+    private static String normalizeConnectionLine(final String line) {
+        if (line.startsWith("c=IN IP4 ")) {
+            return "c=IN IP4 0.0.0.0";
+        }
+        if (line.startsWith("o=")) {
+            final String[] fields = line.split(" ");
+            if (fields.length == 6 && "IN".equals(fields[3]) && "IP4".equals(fields[4])) {
+                fields[5] = "127.0.0.1";
+                return String.join(" ", fields);
+            }
+        }
+        return line;
     }
 
     private static boolean isSupportedCandidate(final String line) {
