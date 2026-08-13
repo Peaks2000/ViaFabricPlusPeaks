@@ -12,6 +12,7 @@ allprojects {
     setupViaPublishing()
 
     repositories {
+        maven(rootProject.file("vendor/maven"))
         // Keep them in sync with docs/DEVELOPER_API.md
         maven("https://repo.viaversion.com")
         maven("https://maven.lenni0451.net/everything")
@@ -82,10 +83,10 @@ fun configureBedrockDependencies() {
         jij("dev.kastle.netty:netty-transport-nethernet:1.7.3") {
             exclude(group = "io.netty")
             exclude(group = "org.bitbucket.b_c", module = "jose4j")
+            exclude(group = "dev.kastle.webrtc", module = "webrtc-java")
         }
-        arrayOf("windows-x86_64", "windows-aarch64", "linux-x86_64", "linux-aarch64", "macos-aarch64").forEach {
-            jij("dev.kastle.webrtc:webrtc-java:1.0.3:$it")
-        }
+        jij("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152")
+        jij("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:linux-x86_64")
     }
 }
 
@@ -95,7 +96,10 @@ fun Project.configureVVDependencies(configuration: String) {
         configuration("com.viaversion:viabackwards-common:5.11.1-SNAPSHOT")
         configuration("com.viaversion:viaaprilfools-common:4.2.2")
         configuration("net.raphimc:ViaLegacy:3.0.16")
-        configuration("net.raphimc:ViaBedrock:0.0.29-SNAPSHOT") {
+        configuration("net.raphimc:ViaBedrock") {
+            version {
+                branch = "update/1.26.40"
+            }
             exclude(group = "com.mojang", module = "brigadier")
             exclude(group = "at.yawk.lz4", module = "lz4-java")
             exclude(group = "io.netty")

@@ -23,14 +23,19 @@ package com.viaversion.viafabricplus.injection.mixin.core.connection.bedrock;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import com.viaversion.viafabricplus.util.bedrock.NetherNetDiscoveryPacketFixer;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetDiscovery;
 import io.netty.bootstrap.AbstractBootstrap;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = NetherNetDiscovery.class, remap = false)
 public abstract class MixinNetherNetDiscovery {
@@ -44,6 +49,14 @@ public abstract class MixinNetherNetDiscovery {
     private AbstractBootstrap<?, ?> increaseSignalReceiveBuffer(Bootstrap instance, ChannelHandler handler, Operation<AbstractBootstrap<?, ?>> original) {
         instance.option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(MAX_UDP_PACKET_SIZE));
         return original.call(instance, handler);
+    }
+
+    @Inject(method = "handleMessage", at = @At("HEAD"))
+    private void repairTruncatedConnectResponse(ByteBuf buffer, long senderNetworkId, CallbackInfo ci) {
+        final int omittedBytes = NetherNetDiscoveryPacketFixer.repairTruncatedConnectResponseLength(buffer);
+        if (omittedBytes > 0) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Repaired a malformed NetherNet LAN response with {} omitted byte(s)", omittedBytes);
+        }
     }
 
 }

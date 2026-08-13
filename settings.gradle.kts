@@ -18,5 +18,11 @@ plugins {
 
 rootProject.name = "viafabricplus"
 
+sourceControl {
+    gitRepository(uri("https://github.com/RaphiMC/ViaBedrock.git")) {
+        producesModule("net.raphimc:ViaBedrock")
+    }
+}
+
 include("viafabricplus-api")
 include("viafabricplus-visuals")

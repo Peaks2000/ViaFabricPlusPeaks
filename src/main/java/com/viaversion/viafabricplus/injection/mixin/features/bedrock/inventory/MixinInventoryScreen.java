@@ -29,7 +29,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import net.raphimc.viabedrock.protocol.BedrockProtocol;
 import net.raphimc.viabedrock.protocol.ServerboundBedrockPackets;
-import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.InteractPacket_Action;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.InteractPacket_Action;
 import net.raphimc.viabedrock.protocol.storage.EntityTracker;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import org.spongepowered.asm.mixin.Mixin;

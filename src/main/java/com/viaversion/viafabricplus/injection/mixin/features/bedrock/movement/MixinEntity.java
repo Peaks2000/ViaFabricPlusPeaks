@@ -26,7 +26,7 @@ import com.viaversion.viaversion.api.connection.UserConnection;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
-import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputPacket_InputData;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputPacketPayload_InputData;
 import net.raphimc.viabedrock.protocol.storage.EntityTracker;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -53,7 +53,7 @@ public abstract class MixinEntity {
 
         final UserConnection connection = ProtocolTranslator.getPlayNetworkUserConnection();
         if (connection != null && swimming != isSwimming()) {
-            connection.get(EntityTracker.class).getClientPlayer().addAuthInputData(swimming ? PlayerAuthInputPacket_InputData.StartSwimming : PlayerAuthInputPacket_InputData.StopSwimming);
+            connection.get(EntityTracker.class).getClientPlayer().addAuthInputData(swimming ? PlayerAuthInputPacketPayload_InputData.StartSwimming : PlayerAuthInputPacketPayload_InputData.StopSwimming);
         }
     }
 

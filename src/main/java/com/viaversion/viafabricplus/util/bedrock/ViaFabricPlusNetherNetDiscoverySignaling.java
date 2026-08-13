@@ -16,8 +16,6 @@ package com.viaversion.viafabricplus.util.bedrock;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetDiscoverySignaling;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetSignaling;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Makes LAN signaling tolerant of incomplete ICE candidates emitted by some
@@ -56,34 +54,31 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
             return signal;
         }
 
-        final String[] lines = signal.split("\\r?\\n", -1);
-        final List<String> validLines = new ArrayList<>(lines.length);
+        final StringBuilder validSignal = new StringBuilder(signal.length());
         int removedCandidates = 0;
-        for (final String line : lines) {
-            if (line.startsWith("a=candidate:")) {
+        int retainedCandidates = 0;
+        int lineStart = 0;
+        while (lineStart < signal.length()) {
+            final int newline = signal.indexOf('\n', lineStart);
+            final int nextLine = newline == -1 ? signal.length() : newline + 1;
+            if (signal.startsWith("a=candidate:", lineStart)
+                && !isSupportedCandidate(signal.substring(lineStart, nextLine))) {
                 removedCandidates++;
-                continue;
+            } else {
+                if (signal.startsWith("a=candidate:", lineStart)) {
+                    retainedCandidates++;
+                }
+                validSignal.append(signal, lineStart, nextLine);
             }
-            validLines.add(normalizeConnectionLine(line));
+            lineStart = nextLine;
         }
         if (removedCandidates > 0) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Moved {} ICE candidate(s) out of the NetherNet LAN SDP answer; waiting for trickled IPv4 candidates", removedCandidates);
+            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Removed {} unsupported ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
         }
-        return String.join("\r\n", validLines);
-    }
-
-    private static String normalizeConnectionLine(final String line) {
-        if (line.startsWith("c=IN IP4 ")) {
-            return "c=IN IP4 0.0.0.0";
+        if (retainedCandidates == 0) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().warn("The NetherNet LAN SDP answer contained no usable private IPv4 ICE candidate");
         }
-        if (line.startsWith("o=")) {
-            final String[] fields = line.split(" ");
-            if (fields.length == 6 && "IN".equals(fields[3]) && "IP4".equals(fields[4])) {
-                fields[5] = "127.0.0.1";
-                return String.join(" ", fields);
-            }
-        }
-        return line;
+        return validSignal.toString();
     }
 
     private static boolean isSupportedCandidate(final String line) {
