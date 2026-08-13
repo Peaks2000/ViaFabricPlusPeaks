@@ -75,7 +75,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
 
     private static boolean isSupportedCandidate(final String line) {
         final String[] fields = line.trim().split("\\s+");
-        if (fields.length < 8 || !"typ".equals(fields[6]) || fields[4].indexOf(':') >= 0) {
+        if (fields.length < 8 || !"typ".equals(fields[6]) || !isLanIpv4Address(fields[4])) {
             return false;
         }
         try {
@@ -84,6 +84,28 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
         } catch (final NumberFormatException ignored) {
             return false;
         }
+    }
+
+    private static boolean isLanIpv4Address(final String address) {
+        final String[] octets = address.split("\\.", -1);
+        if (octets.length != 4) {
+            return false;
+        }
+        final int[] values = new int[4];
+        try {
+            for (int i = 0; i < octets.length; i++) {
+                values[i] = Integer.parseInt(octets[i]);
+                if (values[i] < 0 || values[i] > 255) {
+                    return false;
+                }
+            }
+        } catch (final NumberFormatException ignored) {
+            return false;
+        }
+        return values[0] == 10
+            || values[0] == 172 && values[1] >= 16 && values[1] <= 31
+            || values[0] == 192 && values[1] == 168
+            || values[0] == 169 && values[1] == 254;
     }
 
 }

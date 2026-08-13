@@ -54,4 +54,19 @@ public final class ViaFabricPlusNetherNetDiscoverySignalingTest {
         ));
     }
 
+    @Test
+    public void removesIosTransitionAddressButKeepsWifiIpv4() {
+        final String answer = "CONNECTRESPONSE 42 v=0\r\n"
+            + "a=candidate:1 1 udp 2121473791 192.0.0.6 64074 typ host generation 0 network-id 8 network-cost 50\r\n"
+            + "a=candidate:2 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n";
+        assertEquals(
+            "CONNECTRESPONSE 42 v=0\r\n"
+                + "a=candidate:2 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n",
+            ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(answer)
+        );
+        assertNull(ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(
+            "CANDIDATEADD 42 candidate:1 1 udp 1 192.0.0.6 64074 typ host"
+        ));
+    }
+
 }
