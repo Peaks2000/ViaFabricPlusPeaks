@@ -12,6 +12,12 @@
   <p><strong>Minecraft Fabric mod that allows you to join <em>every</em> Minecraft server version (Classic, Alpha, Beta, Release, April Fools, Bedrock)</strong></p>
 </div>
 
+## Bedrock-maintained fork
+
+This is the dedicated [ViaFabricPlusBedrock](https://github.com/Peaks2000/ViaFabricPlusBedrock) fork. It retains and updates experimental Bedrock support as upstream ViaFabricPlus removes it, including RakNet LAN worlds, iOS NetherNet/WebRTC LAN worlds, and Xbox-friend discovery and session joins.
+
+Bedrock networking changes quickly and support remains experimental. When reporting a connection problem, include the Bedrock host version, whether it is LAN or an Xbox friend, and the first relevant error from `latest.log`—but remove account tokens, XUIDs, public addresses, and session identifiers.
+
 **ViaFabricPlus** is a Minecraft mod for [Fabric](https://fabricmc.net/) that builds on
 the [ViaVersion plugin](https://github.com/ViaVersion/ViaVersion).
 It lets you connect to servers from almost every Minecraft version while fixing issues that the original project
@@ -35,7 +41,7 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 ## How to use
 
 - [Step-by-step installation and usage guide](docs/USAGE.md)
-- Found a bug? Please report it on the [issue tracker](https://github.com/ViaVersion/ViaFabricPlus/issues)
+- Found a Bedrock fork bug? Please report it on the [fork issue tracker](https://github.com/Peaks2000/ViaFabricPlusBedrock/issues)
 - Got questions? Join the [ViaVersion Discord](https://discord.gg/viaversion)
 
 ### Supported Server versions
@@ -46,7 +52,7 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 - Classic (c0.0.15 – c0.30 including [CPE](https://wiki.vg/Classic_Protocol_Extension))
 - April Fools (3D Shareware, 20w14infinite, 25w14craftmine)
 - Combat Snapshots (Combat Test 8c)
-- Bedrock Edition 1.26.30 ([Some features are missing](https://github.com/RaphiMC/ViaBedrock#features))
+- Bedrock Edition 1.26.40/1.26.50 (experimental; [some features are missing](https://github.com/RaphiMC/ViaBedrock#features))
 
 *[Support for new Mojang releases is usually added within a few days](https://github.com/ViaVersion/ViaVersion#snapshot-support)
 
@@ -54,6 +60,7 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 
 - [Contribution guide & dev setup](CONTRIBUTING.md)
 - [API docs & integration examples](docs/DEVELOPER_API.md)
+- Codex can use the repository-maintained `$maintain-viafabricplus-bedrock` skill in `.codex/skills/` for log diagnosis and future Bedrock protocol updates.
 
 ## Credits
 
