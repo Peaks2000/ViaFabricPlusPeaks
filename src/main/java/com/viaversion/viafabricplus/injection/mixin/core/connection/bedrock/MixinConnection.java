@@ -72,7 +72,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = Connection.class, priority = 1001) // Apply after connection/MixinConnection
 public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet<?>> {
 
-    private static final int NETHERNET_HANDSHAKE_TIMEOUT_MS = 30_000;
+    private static final int NETHERNET_HANDSHAKE_TIMEOUT_MS = 20_000;
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -102,7 +102,7 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
         if (BedrockProtocolVersion.bedrockLatest.equals(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
                 instance.option(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
-                instance.option(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 1);
+                instance.option(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 0);
                 if (netherNetAddress.isDiscoveryAddress()) {
                     return instance.channelFactory(NetherNetChannelFactory.client(new PeerConnectionFactory(), new NetherNetDiscoverySignaling()));
                 }
