@@ -27,7 +27,6 @@ public final class ViaFabricPlusNetherNetDiscoverySignalingTest {
 
         assertEquals(
             "CONNECTRESPONSE 42 v=0\r\n"
-                + "a=candidate:1 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n"
                 + "a=ice-ufrag:test\r\n",
             ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(signal)
         );
@@ -45,8 +44,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignalingTest {
             + "a=candidate:1 1 udp 2121937663 fd74:6572:6d6e:7573:c:beb5:a989:471e 62511 typ host generation 0\r\n"
             + "a=candidate:2 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n";
         assertEquals(
-            "CONNECTRESPONSE 42 v=0\r\n"
-                + "a=candidate:2 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n",
+            "CONNECTRESPONSE 42 v=0\r\n",
             ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(answer)
         );
         assertNull(ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(
@@ -60,8 +58,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignalingTest {
             + "a=candidate:1 1 udp 2121473791 192.0.0.6 64074 typ host generation 0 network-id 8 network-cost 50\r\n"
             + "a=candidate:2 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n";
         assertEquals(
-            "CONNECTRESPONSE 42 v=0\r\n"
-                + "a=candidate:2 1 udp 2122260223 192.168.4.235 53555 typ host generation 0\r\n",
+            "CONNECTRESPONSE 42 v=0\r\n",
             ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(answer)
         );
         assertNull(ViaFabricPlusNetherNetDiscoverySignaling.sanitizeSignal(

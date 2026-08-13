@@ -49,6 +49,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
                 ViaFabricPlusImpl.INSTANCE.getLogger().warn("Ignored an unsupported NetherNet LAN ICE candidate");
                 return null;
             }
+            ViaFabricPlusImpl.INSTANCE.getLogger().info("Accepted a private IPv4 NetherNet LAN ICE candidate");
             return signal;
         }
         if (!signal.startsWith(CONNECT_RESPONSE)) {
@@ -59,7 +60,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
         final List<String> validLines = new ArrayList<>(lines.length);
         int removedCandidates = 0;
         for (final String line : lines) {
-            if (line.startsWith("a=candidate:") && !isSupportedCandidate(line)) {
+            if (line.startsWith("a=candidate:")) {
                 removedCandidates++;
                 continue;
             }
@@ -69,7 +70,7 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
             return signal;
         }
 
-        ViaFabricPlusImpl.INSTANCE.getLogger().warn("Removed {} unsupported ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
+        ViaFabricPlusImpl.INSTANCE.getLogger().warn("Moved {} ICE candidate(s) out of the NetherNet LAN SDP answer; waiting for trickled IPv4 candidates", removedCandidates);
         return String.join("\r\n", validLines);
     }
 
