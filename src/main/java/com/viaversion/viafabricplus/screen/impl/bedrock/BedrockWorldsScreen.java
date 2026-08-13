@@ -26,6 +26,7 @@ import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viafabricplus.util.bedrock.BedrockWorld;
 import com.viaversion.viafabricplus.util.bedrock.BedrockWorldDiscovery;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
@@ -178,6 +179,10 @@ public final class BedrockWorldsScreen extends VFPScreen {
     }
 
     private void connect(final BedrockWorld world) {
+        BedrockProtocolCompatibility.prepareConnection(world.protocolVersion());
+        if (world.protocolVersion() != BedrockProtocolCompatibility.UNKNOWN_PROTOCOL) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), world.protocolVersion());
+        }
         final BedrockWorld.Connection connection = world.connection();
         switch (connection.type()) {
             case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest);

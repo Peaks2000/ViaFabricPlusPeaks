@@ -35,6 +35,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public final class BedrockWorldDiscoveryTest {
 
     @Test
+    public void selectsWireProtocolFromAdvertisement() {
+        assertEquals(2168, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(4));
+        assertEquals(2169, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(5));
+        assertEquals(2169, BedrockProtocolCompatibility.protocolForGameVersion("1.26.50"));
+        assertEquals(2168, BedrockProtocolCompatibility.protocolForGameVersion("26.40"));
+    }
+
+    @Test
     public void parsesNetherNetJsonRpcConnection() {
         final JsonObject connection = new JsonObject();
         connection.addProperty("ConnectionType", 7);
@@ -99,6 +107,7 @@ public final class BedrockWorldDiscoveryTest {
             assertEquals("Hardcore", world.gameMode());
             assertEquals(2, world.playerCount());
             assertEquals(8, world.maxPlayerCount());
+            assertEquals(BedrockProtocolCompatibility.VIA_BEDROCK_ROUTE_PROTOCOL, world.protocolVersion());
             assertEquals(sender, world.connection().discoveryAddress());
         } finally {
             response.release();
@@ -123,6 +132,7 @@ public final class BedrockWorldDiscoveryTest {
         assertEquals("Survival World", world.name());
         assertEquals("Cool Server", world.owner());
         assertEquals("26.40", world.version());
+        assertEquals(2168, world.protocolVersion());
         assertEquals("Survival", world.gameMode());
         assertEquals(2, world.playerCount());
         assertEquals(20, world.maxPlayerCount());

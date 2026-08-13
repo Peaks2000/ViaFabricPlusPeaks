@@ -28,6 +28,7 @@ public record BedrockWorld(
     String owner,
     Source source,
     String version,
+    int protocolVersion,
     String gameMode,
     int playerCount,
     int maxPlayerCount,
