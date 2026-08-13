@@ -153,7 +153,7 @@ public final class BlockConnectionsEmulation1_12_2 {
 
     private static boolean isApplicable() {
         if (GeneralSettings.INSTANCE.experimentalBlockConnections.getValue()) {
-            return ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2) || ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest);
+            return ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2) || ProtocolTranslator.isBedrock();
         } else {
             return false;
         }

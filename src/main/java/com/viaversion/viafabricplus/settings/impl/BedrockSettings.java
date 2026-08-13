@@ -25,12 +25,12 @@ import com.viaversion.viafabricplus.api.settings.SettingGroup;
 import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
 import com.viaversion.viafabricplus.api.settings.type.ButtonSetting;
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IConfirmScreen;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.save.impl.AccountsSave;
 import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.screen.impl.SettingsScreen;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
-import java.util.Objects;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmScreen;
@@ -43,7 +43,6 @@ import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.msa.model.MsaDeviceCode;
 import net.raphimc.minecraftauth.msa.service.impl.DeviceCodeMsaAuthService;
 import net.raphimc.minecraftauth.util.holder.listener.ChangeListener;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import net.raphimc.viabedrock.protocol.data.ProtocolConstants;
 
 public final class BedrockSettings extends SettingGroup {
@@ -149,7 +148,7 @@ public final class BedrockSettings extends SettingGroup {
     public static String replaceDefaultPort(final String address, final ProtocolVersion version) {
         // If the default port for this entry should be replaced, check if the address already contains a port
         // We can't just replace vanilla's default port because a bedrock server might be running on the same port
-        if (BedrockSettings.INSTANCE.replaceDefaultPort.getValue() && Objects.equals(version, BedrockProtocolVersion.bedrockLatest) && !address.contains(":")) {
+        if (BedrockSettings.INSTANCE.replaceDefaultPort.getValue() && ProtocolTranslator.isBedrock(version) && !address.contains(":")) {
             return address + ":" + ProtocolConstants.BEDROCK_RAKNET_DEFAULT_PORT;
         } else {
             return address;

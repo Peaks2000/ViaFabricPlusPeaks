@@ -214,7 +214,7 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
 
     @Redirect(method = {"handleEntityPositionSync", "handleMoveEntity"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;isLocalInstanceAuthoritative()Z"))
     private boolean allowPlayerToBeMovedByEntityPackets(Entity instance) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_19_3) || ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_19_3) || ProtocolTranslator.isBedrock()) {
             return instance.getControllingPassenger() instanceof Player player ? player.isLocalPlayer() : !instance.level().isClientSide();
         } else {
             return instance.isLocalInstanceAuthoritative();

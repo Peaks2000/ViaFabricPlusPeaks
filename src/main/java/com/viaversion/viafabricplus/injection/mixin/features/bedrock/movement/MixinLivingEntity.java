@@ -45,13 +45,13 @@ public abstract class MixinLivingEntity {
 
     @Redirect(method = "getFluidFallingAdjustedMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSprinting()Z"))
     private boolean changeFluidGravityCondition(LivingEntity instance) {
-        return ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) ? instance.isSwimming() : instance.isSprinting();
+        return ProtocolTranslator.isBedrock() ? instance.isSwimming() : instance.isSprinting();
     }
 
     @Inject(method = "getFluidFallingAdjustedMovement", at = @At("HEAD"), cancellable = true)
     private void applyLevitationVelocity(double baseGravity, boolean isFalling, Vec3 movement, CallbackInfoReturnable<Vec3> ci) {
         final MobEffectInstance effect = this.getEffect(MobEffects.LEVITATION);
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) && effect != null) {
+        if (ProtocolTranslator.isBedrock() && effect != null) {
             ci.setReturnValue(new Vec3(movement.x, movement.y + (((effect.getAmplifier() + 1) * 0.05) - movement.y) * 0.2, movement.z));
         }
     }

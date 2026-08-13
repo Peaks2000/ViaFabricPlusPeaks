@@ -44,7 +44,7 @@ public abstract class MixinLecternBlock {
 
     @Inject(method = "getCollisionShape", at = @At("RETURN"), cancellable = true)
     private void changeCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             cir.setReturnValue(viaFabricPlus$shape_bedrock);
         }
     }

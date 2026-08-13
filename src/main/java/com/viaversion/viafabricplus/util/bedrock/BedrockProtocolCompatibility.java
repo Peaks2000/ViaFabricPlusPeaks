@@ -11,7 +11,11 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
 /**
  * Selects the Bedrock wire version independently of ViaVersion's internal
@@ -26,6 +30,7 @@ public final class BedrockProtocolCompatibility {
     public static final String CURRENT_GAME_VERSION = "1.26.50";
 
     private static final AtomicInteger NEXT_CONNECTION_PROTOCOL = new AtomicInteger(UNKNOWN_PROTOCOL);
+    private static final AtomicBoolean NEXT_CONNECTION_USES_MAINTAINED_ROUTE = new AtomicBoolean();
 
     private BedrockProtocolCompatibility() {
     }
@@ -53,6 +58,25 @@ public final class BedrockProtocolCompatibility {
 
     public static void prepareConnection(final int protocolVersion) {
         NEXT_CONNECTION_PROTOCOL.set(initialProtocol(protocolVersion));
+        NEXT_CONNECTION_USES_MAINTAINED_ROUTE.set(true);
+    }
+
+    /**
+     * Keeps the normal multiplayer menu on stock ViaBedrock while the dedicated LAN/friends
+     * menu opts into the maintained 1.26.40 route through {@link #prepareConnection(int)}.
+     */
+    public static ProtocolVersion routeForConnection(final ProtocolVersion requestedVersion) {
+        if (!BedrockProtocolVersion.bedrockLatest.equals(requestedVersion)) {
+            return requestedVersion;
+        }
+        if (NEXT_CONNECTION_USES_MAINTAINED_ROUTE.getAndSet(false)) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected maintained Bedrock route for LAN/friends menu: {}", requestedVersion.getName());
+            return requestedVersion;
+        }
+        NEXT_CONNECTION_PROTOCOL.set(UNKNOWN_PROTOCOL);
+        final ProtocolVersion stockVersion = StockViaBedrockRuntime.stockVersion();
+        ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected stock Bedrock route for normal server menu: {}", stockVersion.getName());
+        return stockVersion;
     }
 
     public static int consumeConnectionProtocol(final int fallbackProtocolVersion) {

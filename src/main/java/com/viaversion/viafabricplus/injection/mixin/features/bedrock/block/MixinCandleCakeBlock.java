@@ -55,14 +55,14 @@ public abstract class MixinCandleCakeBlock extends Block {
 
     @Inject(method = "getShape", at = @At(value = "HEAD"), cancellable = true)
     private void changeOutlineShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             cir.setReturnValue(viaFabricPlus$shape_bedrock);
         }
     }
 
     @Override
     public @NonNull VoxelShape getOcclusionShape(@NonNull BlockState state) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             return SHAPE;
         } else {
             return super.getOcclusionShape(state);

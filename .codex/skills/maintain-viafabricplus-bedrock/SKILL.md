@@ -39,6 +39,8 @@ When the server returns `LoginFailed_ClientOld` or `LoginFailed_ServerOld`, add 
 
 For packet decoder errors, identify the packet and the first incorrect field from the stack trace. Compare the checked-out ViaBedrock handler with a protocol schema for both the last working and target versions. Patch upstream ViaBedrock when practical; use a focused mixin only when the fork must carry a small temporary correction. Every mixin targeting a synthetic `lambda$...` method needs a development-client startup check because upstream recompilation can change the target.
 
+If Java reports that a translated packet was "larger than expected", inspect the ViaBedrock handler at the first `wrapper.send(...)`. Unread Bedrock input can leak into the Java packet. Do not merely clear the input buffer: verify whether Mojang changed an earlier field's encoding or converted the packet to Cereal. For 1.26.40, `AddItemActor` and `AddPlayer` must read their item with `ItemRewriter.newItemType()` (`NetworkItemStackDescriptor`), not the legacy `itemType()`.
+
 ## Xbox friends
 
 Follow the MPSD request schema exactly. If a session enables `connectionRequiredForActiveMembers`, an active member PUT needs a stable per-process connection GUID at `members.me.properties.system.connection`. Keep contract header and template semantics distinct. Do not print authorization headers, XSTS tokens, Minecraft multiplayer tokens, or full response bodies that can contain personal data.
@@ -53,6 +55,8 @@ Run, in order:
 4. `./gradlew runClient`, wait for the main menu and ViaBedrock initialization, then stop it; treat missing optional narrator libraries as unrelated unless startup aborts.
 
 Inspect `git diff --check`, the resulting JAR contents, and its SHA-256. The distributable is the remapped main JAR under `build/libs/`; exclude `-sources`, `-dev`, and submodule JARs. If the user wants it installed, locate the exact launcher instance and replace only the matching prior mod JAR.
+
+This fork deliberately uses two ViaBedrock runtimes in one Fabric instance: ordinary server-list joins use the isolated embedded stock runtime, while the dedicated LAN/friends screen selects the maintained current runtime. Preserve this route boundary. A LAN codec fix must not alter the stock server route, and validation must cover one ordinary Bedrock server plus the affected LAN/friends transport.
 
 If a real host remains available, have the user retry once with the new JAR and immediately re-run the log collector. Record the next first causal error; Bedrock version updates commonly reveal packet changes one at a time.
 

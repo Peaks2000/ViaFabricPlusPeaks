@@ -65,14 +65,14 @@ public abstract class MixinAbstractCauldronBlock extends Block {
             viaFabricPlus$requireOriginalShape = false;
         } else if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2)) {
             cir.setReturnValue(Shapes.block());
-        } else if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        } else if (ProtocolTranslator.isBedrock()) {
             cir.setReturnValue(viaFabricPlus$collision_shape_r1_12_2_bedrock);
         }
     }
 
     @Override
     protected @NonNull VoxelShape getCollisionShape(final @NonNull BlockState blockState, final @NonNull BlockGetter blockGetter, final @NonNull BlockPos blockPos, final @NonNull CollisionContext collisionContext) {
-        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2) || ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2) || ProtocolTranslator.isBedrock()) {
             return viaFabricPlus$collision_shape_r1_12_2_bedrock;
         } else {
             return super.getCollisionShape(blockState, blockGetter, blockPos, collisionContext);

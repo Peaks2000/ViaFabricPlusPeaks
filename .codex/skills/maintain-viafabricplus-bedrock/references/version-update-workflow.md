@@ -22,6 +22,10 @@ For each changed packet record:
 
 Do not infer a schema change solely from a buffer-overrun offset. Use the offset to identify the first suspect field, then verify it against both schemas.
 
+Check Mojang's release changelog for packets converted to Cereal. Cereal conversions are wire-format changes even when the packet ID and conceptual fields are unchanged. Audit nested types too: in protocol 2168/1.26.40, `AddActor`, `AddItemActor`, and `AddPlayer` use tagged entity-data payloads, while `AddItemActor` and `AddPlayer` carry `NetworkItemStackDescriptor` rather than the legacy Bedrock item encoding. A wrong nested item decoder can appear to succeed and leave hundreds of bytes unread.
+
+Audit generated enum storage width separately from its use on the wire. `PacketCompressionAlgorithm.None` is `65535` in the uint16 `NetworkSettings` field but is `255` in the uint8 per-batch header. Likewise, do not keep a hand-written legacy enum when the target protocol generated a replacement with new values, as happened with `InteractPacketPayload_Action` in 1.26.40.
+
 ## Decide where to patch
 
 Prefer, in order:
@@ -65,5 +69,7 @@ Record:
 - final artifact name, size, and SHA-256;
 - commit and remote branch;
 - real-host result for LAN RakNet, LAN NetherNet/iOS, and Xbox friend connection separately.
+
+For this fork, also verify an ordinary server-list Bedrock join still selects the isolated stock route. Do not treat a successful maintained LAN join as coverage for the stock route, or vice versa.
 
 Never add launcher logs or account files to Git. Sanitize XUIDs, session names, public IPs, tokens, and authorization headers in issues or commit messages.

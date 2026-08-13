@@ -44,7 +44,7 @@ public abstract class MixinServerNameResolver {
 
     @Inject(method = "resolveAddress", at = @At("HEAD"), cancellable = true)
     private void oldResolveBehaviour(ServerAddress address, CallbackInfoReturnable<Optional<ResolvedServerAddress>> cir) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             cir.setReturnValue(this.resolver.resolve(address));
         }
     }

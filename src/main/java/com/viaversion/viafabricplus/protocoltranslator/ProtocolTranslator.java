@@ -37,6 +37,7 @@ import com.viaversion.viafabricplus.protocoltranslator.netty.NoReadFlowControlHa
 import com.viaversion.viafabricplus.protocoltranslator.netty.ViaFabricPlusDecoder;
 import com.viaversion.viafabricplus.protocoltranslator.protocol.ViaFabricPlusProtocol;
 import com.viaversion.viafabricplus.protocoltranslator.util.NoPacketSendChannel;
+import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viaversion.ViaManagerImpl;
 import com.viaversion.viaversion.api.Via;
 import com.viaversion.viaversion.api.connection.ProtocolInfo;
@@ -153,7 +154,7 @@ public final class ProtocolTranslator {
         channel.attr(ProtocolTranslator.CLIENT_CONNECTION_ATTRIBUTE_KEY).set(connection);
         channel.attr(ProtocolTranslator.TARGET_VERSION_ATTRIBUTE_KEY).set(serverVersion);
 
-        if (serverVersion.equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (StockViaBedrockRuntime.isBedrock(serverVersion)) {
             final ChannelConfig config = channel.config();
             // RakNet config
             config.setOption(RakChannelOption.RAK_PROTOCOL_VERSION, ProtocolConstants.BEDROCK_RAKNET_PROTOCOL_VERSION);
@@ -182,6 +183,8 @@ public final class ProtocolTranslator {
             // ViaLegacy
             pipeline.addBefore(HandlerNames.SPLITTER, PreNettyLengthPrepender.NAME, new PreNettyLengthPrepender(user));
             pipeline.addBefore(HandlerNames.PREPENDER, PreNettyLengthRemover.NAME, new PreNettyLengthRemover(user));
+        } else if (StockViaBedrockRuntime.isStock(serverVersion)) {
+            StockViaBedrockRuntime.installStockPipeline(pipeline);
         } else if (serverVersion.equals(BedrockProtocolVersion.bedrockLatest)) {
             // ViaBedrock
             pipeline.addBefore(HandlerNames.SPLITTER, DisconnectHandler.NAME, new DisconnectHandler());
@@ -197,6 +200,14 @@ public final class ProtocolTranslator {
 
     public static ProtocolVersion getTargetVersion() {
         return targetVersion;
+    }
+
+    public static boolean isBedrock() {
+        return StockViaBedrockRuntime.isBedrock(targetVersion);
+    }
+
+    public static boolean isBedrock(final ProtocolVersion version) {
+        return StockViaBedrockRuntime.isBedrock(version);
     }
 
     public static ProtocolVersion getTargetVersion(final Channel channel) {
@@ -311,6 +322,7 @@ public final class ProtocolTranslator {
                     new ViaFabricPlusViaLegacyPlatform();
                     new ViaAprilFoolsPlatformImpl();
                     new ViaBedrockPlatformImpl();
+                    StockViaBedrockRuntime.initialize(path);
                 }
             );
             ProtocolVersion.register(AUTO_DETECT_PROTOCOL);

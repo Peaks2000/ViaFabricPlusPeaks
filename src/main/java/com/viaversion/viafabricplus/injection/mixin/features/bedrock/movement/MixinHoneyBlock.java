@@ -55,7 +55,7 @@ public abstract class MixinHoneyBlock extends Block {
 
     @Inject(method = "entityInside", at = @At("HEAD"), cancellable = true)
     private void applyBedrockHoneyCollision(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise, CallbackInfo ci) {
-        if (!ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (!ProtocolTranslator.isBedrock()) {
             return;
         }
 
@@ -70,7 +70,7 @@ public abstract class MixinHoneyBlock extends Block {
 
     @Override
     public void stepOn(final @NonNull Level world, final @NonNull BlockPos pos, final @NonNull BlockState state, final @NonNull Entity entity) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             final double absoluteY = Math.abs(entity.getDeltaMovement().y);
             if (absoluteY < 0.1 && !entity.isSteppingCarefully()) {
                 final double frictionFactor = 0.4 + absoluteY * 0.2;
@@ -83,17 +83,17 @@ public abstract class MixinHoneyBlock extends Block {
 
     @Override
     public float getFriction() {
-        return ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) ? 0.8F : super.getFriction();
+        return ProtocolTranslator.isBedrock() ? 0.8F : super.getFriction();
     }
 
     @Override
     public float getSpeedFactor() {
-        return ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) ? 1F : super.getSpeedFactor();
+        return ProtocolTranslator.isBedrock() ? 1F : super.getSpeedFactor();
     }
 
     @Override
     public float getJumpFactor() {
-        return ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) ? 0.6F : super.getJumpFactor();
+        return ProtocolTranslator.isBedrock() ? 0.6F : super.getJumpFactor();
     }
 
     @Inject(method = {"getOldDeltaY", "getNewDeltaY"}, at = @At("HEAD"), cancellable = true)

@@ -73,14 +73,14 @@ public abstract class MixinSeaPickleBlock extends Block {
 
     @Inject(method = "getShape", at = @At("HEAD"), cancellable = true)
     private void changeOutlineShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             cir.setReturnValue(viaFabricPlus$shape_bedrock);
         }
     }
 
     @Override
     public @NonNull VoxelShape getCollisionShape(@NonNull BlockState state, @NonNull BlockGetter world, @NonNull BlockPos pos, @NonNull CollisionContext context) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             return Shapes.empty();
         } else {
             return super.getCollisionShape(state, world, pos, context);
@@ -89,7 +89,7 @@ public abstract class MixinSeaPickleBlock extends Block {
 
     @Override
     public @NonNull VoxelShape getOcclusionShape(@NonNull BlockState state) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             return switch (state.getValue(PICKLES)) {
                 case 2 -> SHAPE_TWO;
                 case 3 -> SHAPE_THREE;

@@ -54,7 +54,7 @@ public abstract class MixinFont {
     // TODO 26.2
 //    @Inject(method = "prepareText(Ljava/lang/String;FFIZI)Lnet/minecraft/client/gui/Font$PreparedText;", at = @At("HEAD"), cancellable = true)
 //    private void allowNewLines_String(String text, float x, float y, int originalColor, boolean drawShadow, int backgroundColor, CallbackInfoReturnable<Font.PreparedText> cir) {
-//        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+//        if (ProtocolTranslator.isBedrock()) {
 //            final List<FormattedCharSequence> lines = split(FormattedText.of(isBidirectional() ? this.bidirectionalShaping(text) : text), Integer.MAX_VALUE);
 //            if (!lines.isEmpty()) {
 //                ci.cancel();
@@ -67,7 +67,7 @@ public abstract class MixinFont {
 //
 //    @Inject(method = "prepareText(Lnet/minecraft/util/FormattedCharSequence;FFIZZI)Lnet/minecraft/client/gui/Font$PreparedText;", at = @At("HEAD"), cancellable = true)
 //    private void allowNewLines_Text(FormattedCharSequence text, float x, float y, int originalColor, boolean drawShadow, boolean includeEmpty, int backgroundColor, CallbackInfoReturnable<Font.PreparedText> cir) {
-//        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+//        if (ProtocolTranslator.isBedrock()) {
 //            final List<FormattedCharSequence> lines = split(str, Integer.MAX_VALUE);
 //            if (!lines.isEmpty()) {
 //                ci.cancel();
@@ -80,7 +80,7 @@ public abstract class MixinFont {
 //
 //    @Inject(method = "width(Lnet/minecraft/network/chat/FormattedText;)I", at = @At("HEAD"), cancellable = true)
 //    private void allowNewLines_getWidth(FormattedText text, CallbackInfoReturnable<Integer> cir) {
-//        if (Minecraft.getInstance().level != null && ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+//        if (Minecraft.getInstance().level != null && ProtocolTranslator.isBedrock()) {
 //            int i = 0;
 //            for (FormattedCharSequence wrapLine : this.split(text, Integer.MAX_VALUE)) {
 //                if (width(wrapLine) >= i) i = width(wrapLine);

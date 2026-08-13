@@ -45,7 +45,7 @@ public abstract class MixinMinecraft {
 
     @ModifyExpressionValue(method = "pick(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;raycastHitResult(FLnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/HitResult;"))
     private HitResult bedrockReachAroundRaycast(HitResult hitResult) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             final Entity entity = this.getCameraEntity();
             if (hitResult.getType() != HitResult.Type.MISS) return hitResult;
             if (!this.viaFabricPlus$canReachAround(entity)) return hitResult;

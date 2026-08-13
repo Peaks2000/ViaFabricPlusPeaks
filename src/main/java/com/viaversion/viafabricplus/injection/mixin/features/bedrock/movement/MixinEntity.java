@@ -47,7 +47,7 @@ public abstract class MixinEntity {
 
     @Inject(method = "setSwimming", at = @At("HEAD"))
     private void cancelSwimming(boolean swimming, CallbackInfo ci) {
-        if (!ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (!ProtocolTranslator.isBedrock()) {
             return;
         }
 
@@ -59,7 +59,7 @@ public abstract class MixinEntity {
 
     @Redirect(method = "makeStuckInBlock", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;stuckSpeedMultiplier:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
     private void prioritySlowestMovementMultiplier(Entity instance, Vec3 value) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest) && this.stuckSpeedMultiplier != Vec3.ZERO) {
+        if (ProtocolTranslator.isBedrock() && this.stuckSpeedMultiplier != Vec3.ZERO) {
             this.stuckSpeedMultiplier = new Vec3(Math.min(this.stuckSpeedMultiplier.x, value.x), Math.min(this.stuckSpeedMultiplier.y, value.y), Math.min(this.stuckSpeedMultiplier.z, value.z));
         } else {
             this.stuckSpeedMultiplier = value;

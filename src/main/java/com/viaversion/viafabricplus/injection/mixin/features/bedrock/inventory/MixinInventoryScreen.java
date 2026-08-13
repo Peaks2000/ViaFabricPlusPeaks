@@ -42,7 +42,7 @@ public abstract class MixinInventoryScreen {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void sendBedrockPacket(CallbackInfo ci) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             final UserConnection connection = ProtocolTranslator.getPlayNetworkUserConnection();
 
             final PacketWrapper interact = PacketWrapper.create(ServerboundBedrockPackets.INTERACT, connection);

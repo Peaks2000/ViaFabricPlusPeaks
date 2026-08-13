@@ -26,6 +26,7 @@ import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
+import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.io.IOException;
 import java.security.KeyPair;
@@ -47,14 +48,18 @@ public abstract class MixinConnectScreen_1 {
     private void setupBedrockAccount(CallbackInfo ci, @Local Connection clientConnection) throws IOException {
         final UserConnection connection = ((IConnection) clientConnection).viaFabricPlus$getUserConnection();
 
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             final BedrockAuthManager bedrockSession = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
             if (bedrockSession != null) {
                 final MinecraftMultiplayerToken multiplayerToken = bedrockSession.getMinecraftMultiplayerToken().refresh();
                 final KeyPair sessionKeyPair = bedrockSession.getSessionKeyPair();
                 final UUID deviceId = bedrockSession.getDeviceId();
 
-                connection.put(new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId));
+                if (StockViaBedrockRuntime.isStock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
+                    StockViaBedrockRuntime.putAuthData(connection, multiplayerToken.getToken(), sessionKeyPair, deviceId);
+                } else {
+                    connection.put(new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId));
+                }
             } else {
                 ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not get Bedrock account. Joining online mode servers will not work!");
             }

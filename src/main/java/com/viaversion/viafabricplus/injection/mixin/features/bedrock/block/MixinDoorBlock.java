@@ -65,7 +65,7 @@ public abstract class MixinDoorBlock extends Block {
 
     @Redirect(method = "getShape", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/block/DoorBlock;SHAPES:Ljava/util/Map;", opcode = Opcodes.GETSTATIC))
     private Map<Direction, VoxelShape> changeOutlineShape() {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             return viaFabricPlus$shape_bedrock;
         }
         return SHAPES;
@@ -73,7 +73,7 @@ public abstract class MixinDoorBlock extends Block {
 
     @Override
     public @NonNull VoxelShape getOcclusionShape(@NonNull BlockState state) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             return SHAPES.get(state.getValue(FACING));
         } else {
             return super.getOcclusionShape(state);

@@ -4,8 +4,9 @@
 
 - Upstream source remote: `ViaVersion/ViaFabricPlus`.
 - Dedicated Bedrock fork: maintained separately because upstream ViaFabricPlus is removing Bedrock support.
-- ViaBedrock is resolved as a Gradle VCS dependency in `settings.gradle.kts`; the selected branch is in `build.gradle.kts`. At the time this reference was written it is `update/1.26.40`.
+- ViaBedrock is resolved as a Gradle VCS dependency in `settings.gradle.kts`; the selected maintained branch is in `build.gradle.kts`. At the time this reference was written it is `peaks/1.26.40-fixes` from `Peaks2000/ViaBedrock`.
 - Vendored `webrtc-java-m152test` artifacts under `vendor/maven/` provide the NetherNet/WebRTC runtime and native library needed by iOS-hosted LAN worlds.
+- `StockViaBedrockRuntime` loads the embedded stock 1.26.30 ViaBedrock JAR in a child-first class loader. Ordinary server-list connections use that runtime; `BedrockProtocolCompatibility.prepareConnection` marks only dedicated LAN/friends connections for the maintained 1.26.40 route. This separation is intentional and must remain within one Prism instance.
 
 ## User-facing flow
 
@@ -25,6 +26,7 @@
 ## Protocol and translation compatibility
 
 - `BedrockProtocolCompatibility` is the single registry for accepted Bedrock wire protocols and game-version strings. Unknown NetherNet advertisements currently start at the ViaBedrock route version and may retry only after an explicit PlayStatus mismatch.
+- `ProtocolTranslator.isBedrock()` covers both the maintained and isolated-stock routes for client behavior. Do not replace route selection with a single global target protocol.
 - `MixinHandshakeStorage` substitutes the selected wire protocol into the Bedrock login payload without changing ViaVersion's route identity.
 - `MixinSkinProvider` keeps the advertised game-version string aligned with that wire protocol.
 - `MixinJoinPackets` suppresses the vanilla-looking version disconnect only while scheduling a verified adjacent-protocol retry.
@@ -38,6 +40,11 @@
 - `PlayStatus LoginFailed_ClientOld` / `LoginFailed_ServerOld`: inspect protocol discovery and the bounded retry; do not remove the check.
 - `RESOURCE_PACKS_INFO`, `RESOURCE_PACK_PUSH`, `LongLE`, and an index overrun: verify the resource-pack array count type first.
 - `ResourcePackClientResponse`, packet 8, and `wrong const value for member "Response Type"`: for protocol 2168 verify the leading status is an unsigned varint in `0-3`, the next field is the matching lowercase response-name string, and only `downloading` carries a varint-counted pack-ID array. Cloudburst's `ResourcePackClientResponseSerializer_v2168` is the known-good primary implementation.
+- Java `ClientboundAddEntityPacket was larger than I expected` from `EntityPackets` line containing `wrapper.send`, especially with about 348 trailing bytes: inspect Bedrock `AddItemActor` packet 15. In 1.26.40 it is Cereal and its item is `NetworkItemStackDescriptor`; use `ItemRewriter.newItemType()`.
+- `Received truncated synthetic ADD_PLAYER payload` with hundreds of bytes remaining: first verify that `AddPlayer` uses `ItemRewriter.newItemType()`. A legacy held-item decoder shifts all following fields and makes valid payloads look truncated.
+- Repeated `Dropping packet with unknown PacketCompressionAlgorithm: 255`, followed by an inventory-only/invisible world: the generated enum stores `None` as uint16 `65535`, but the per-batch header carries its low byte `0xFF`. Normalize header `255` to `PacketCompressionAlgorithm.None` in `CompressionCodec`; otherwise uncompressed chunks and movement batches are discarded.
+- `Packet violation warning: PacketMalformed`, `Violating Packet: Interact`, and `invalid enum value`: 1.26.40 uses `InteractPacketPayload_Action` values (`InteractUpdate = 4`, `OpenInventory = 6`), not the legacy `InteractPacket_Action` values (`2`, `4`). Check both `JoinPackets` and `InventoryPackets`.
+- Unknown clientbound packet 337 is the optional Cereal `VoxelShapesPacket`. It can be ignored while unsupported and is not, by itself, evidence that configuration failed.
 - SDP set-local/set-remote errors: inspect normalization before candidate networking.
 - ICE candidate timeout with omitted candidates: inspect candidate filtering, interface address discovery, and trickle ordering.
 - Missing biome/entity/sound mapping: repair mapping data separately from transport and packet framing.

@@ -42,7 +42,7 @@ public abstract class MixinClientSuggestionProvider {
 
     @Inject(method = {"getOnlinePlayerNames", "getCustomTabSuggestions"}, at = @At("HEAD"), cancellable = true)
     private void returnChatSuggestions(CallbackInfoReturnable<Collection<String>> cir) {
-        if (ProtocolTranslator.getTargetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
+        if (ProtocolTranslator.isBedrock()) {
             cir.setReturnValue(this.customCompletionSuggestions);
         }
     }
