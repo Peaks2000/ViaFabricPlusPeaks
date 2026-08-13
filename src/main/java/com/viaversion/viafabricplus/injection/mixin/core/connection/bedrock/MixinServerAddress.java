@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.injection.mixin.core.connection.bedrock;
 
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IServerAddress;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
+import java.net.InetSocketAddress;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -33,6 +34,9 @@ public abstract class MixinServerAddress implements IServerAddress {
     @Unique
     private NetherNetAddress viaFabricPlus$netherNetAddress;
 
+    @Unique
+    private InetSocketAddress viaFabricPlus$netherNetDiscoveryAddress;
+
     @Override
     public NetherNetAddress viaFabricPlus$getNetherNetAddress() {
         return this.viaFabricPlus$netherNetAddress;
@@ -41,6 +45,16 @@ public abstract class MixinServerAddress implements IServerAddress {
     @Override
     public void viaFabricPlus$setNetherNetAddress(final NetherNetAddress address) {
         this.viaFabricPlus$netherNetAddress = address;
+    }
+
+    @Override
+    public InetSocketAddress viaFabricPlus$getNetherNetDiscoveryAddress() {
+        return this.viaFabricPlus$netherNetDiscoveryAddress;
+    }
+
+    @Override
+    public void viaFabricPlus$setNetherNetDiscoveryAddress(final InetSocketAddress address) {
+        this.viaFabricPlus$netherNetDiscoveryAddress = address;
     }
 
 }

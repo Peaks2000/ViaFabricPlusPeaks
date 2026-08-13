@@ -76,11 +76,12 @@ fun configureBedrockDependencies() {
         jij("net.raphimc:MinecraftAuth:5.0.1") {
             exclude(group = "com.google.code.gson", module = "gson")
         }
-        jij("dev.kastle.netty:netty-transport-raknet:1.7.0") {
+        jij("dev.kastle.netty:netty-transport-raknet:1.7.3") {
             exclude(group = "io.netty")
         }
-        jij("dev.kastle.netty:netty-transport-nethernet:1.7.0") {
+        jij("dev.kastle.netty:netty-transport-nethernet:1.7.3") {
             exclude(group = "io.netty")
+            exclude(group = "org.bitbucket.b_c", module = "jose4j")
         }
         arrayOf("windows-x86_64", "windows-aarch64", "linux-x86_64", "linux-aarch64", "macos-aarch64").forEach {
             jij("dev.kastle.webrtc:webrtc-java:1.0.3:$it")

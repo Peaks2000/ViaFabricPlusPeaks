@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.screen.impl;
 
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPScreen;
+import com.viaversion.viafabricplus.screen.impl.bedrock.BedrockWorldsScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.BetaCraftScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeLoginScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeServerListScreen;
@@ -53,7 +54,7 @@ public final class ServerListScreen extends VFPScreen {
                 return;
             }
             ClassiCubeServerListScreen.INSTANCE.open(this);
-        }).pos(this.width / 2 - 100, this.height / 2 - 25).size(200, 20);
+        }).pos(this.width / 2 - 100, this.height / 2 - 38).size(200, 20);
         if (!loggedIn) {
             classiCubeBuilder.tooltip(Tooltip.create(Component.translatable("classicube.viafabricplus.warning")));
         }
@@ -61,16 +62,24 @@ public final class ServerListScreen extends VFPScreen {
 
         final Button.Builder betaCraftBuilder = Button.builder(BetaCraftScreen.INSTANCE.getTitle(), _ -> {
             BetaCraftScreen.INSTANCE.open(this);
-        }).pos(this.width / 2 - 100, this.height / 2 - 25 + 20 + 3).size(200, 20);
+        }).pos(this.width / 2 - 100, this.height / 2 - 38 + 20 + 3).size(200, 20);
         if (BetaCraftScreen.SERVER_LIST == null) {
             betaCraftBuilder.tooltip(Tooltip.create(Component.translatable("betacraft.viafabricplus.warning")));
         }
         this.addRenderableWidget(betaCraftBuilder.build());
 
+        final boolean missingAccount = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount() == null; // Only check for presence, later validate
+        final Button.Builder bedrockWorldsBuilder = Button.builder(BedrockWorldsScreen.INSTANCE.getTitle(), _ -> {
+            BedrockWorldsScreen.INSTANCE.open(this);
+        }).pos(this.width / 2 - 100, this.height / 2 - 38 + 40 + 6).size(200, 20);
+        if (missingAccount) {
+            bedrockWorldsBuilder.tooltip(Tooltip.create(Component.translatable("bedrock_worlds.viafabricplus.button_warning")));
+        }
+        this.addRenderableWidget(bedrockWorldsBuilder.build());
+
         final Button.Builder bedrockRealmsBuilder = Button.builder(BedrockRealmsScreen.INSTANCE.getTitle(), _ -> {
             BedrockRealmsScreen.INSTANCE.open(this);
-        }).pos(this.width / 2 - 100, this.height / 2 - 25 + 40 + 6).size(200, 20);
-        final boolean missingAccount = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount() == null; // Only check for presence, later validate
+        }).pos(this.width / 2 - 100, this.height / 2 - 38 + 60 + 9).size(200, 20);
         if (missingAccount) {
             bedrockRealmsBuilder.tooltip(Tooltip.create(Component.translatable("bedrock_realms.viafabricplus.warning")));
         }

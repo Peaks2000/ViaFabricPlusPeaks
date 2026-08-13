@@ -40,27 +40,28 @@ public abstract class MixinServerNameResolver {
 
     @Inject(method = "resolveAddress", at = @At("HEAD"), cancellable = true)
     private void returnNetherNetAddressEarly(ServerAddress address, CallbackInfoReturnable<Optional<ResolvedServerAddress>> cir) {
-        if ((Object) address instanceof IServerAddress mixinServerAddress && mixinServerAddress.viaFabricPlus$getNetherNetAddress() != null) {
+        if ((Object) address instanceof IServerAddress mixinServerAddress && (mixinServerAddress.viaFabricPlus$getNetherNetAddress() != null || mixinServerAddress.viaFabricPlus$getNetherNetDiscoveryAddress() != null)) {
             final NetherNetAddress netherNetAddress = mixinServerAddress.viaFabricPlus$getNetherNetAddress();
+            final InetSocketAddress discoveryAddress = mixinServerAddress.viaFabricPlus$getNetherNetDiscoveryAddress();
             cir.setReturnValue(Optional.of(new ResolvedServerAddress() {
                 @Override
                 public @NonNull String getHostName() {
-                    return netherNetAddress.getNetworkId();
+                    return netherNetAddress != null ? netherNetAddress.getNetworkId() : discoveryAddress.getHostString();
                 }
 
                 @Override
                 public @NonNull String getHostIp() {
-                    return netherNetAddress.getNetworkId();
+                    return netherNetAddress != null ? netherNetAddress.getNetworkId() : discoveryAddress.getAddress().getHostAddress();
                 }
 
                 @Override
                 public int getPort() {
-                    return 0;
+                    return discoveryAddress != null ? discoveryAddress.getPort() : 0;
                 }
 
                 @Override
                 public @NonNull InetSocketAddress asInetSocketAddress() {
-                    return new NetherNetInetSocketAddress(netherNetAddress);
+                    return netherNetAddress != null ? new NetherNetInetSocketAddress(netherNetAddress) : new NetherNetInetSocketAddress(discoveryAddress);
                 }
             }));
         }

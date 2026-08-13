@@ -22,11 +22,16 @@
 package com.viaversion.viafabricplus.injection.access.core.bedrock;
 
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
+import java.net.InetSocketAddress;
 
 public interface IServerAddress {
 
     NetherNetAddress viaFabricPlus$getNetherNetAddress();
 
     void viaFabricPlus$setNetherNetAddress(final NetherNetAddress address);
+
+    InetSocketAddress viaFabricPlus$getNetherNetDiscoveryAddress();
+
+    void viaFabricPlus$setNetherNetDiscoveryAddress(final InetSocketAddress address);
 
 }

@@ -25,6 +25,7 @@ import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IServerAddress;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
+import java.net.InetSocketAddress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.multiplayer.ServerData;
@@ -52,10 +53,25 @@ public final class ConnectionUtil {
     }
 
     public static void connectNetherNet(final NetherNetAddress address) {
+        connectNetherNet("Bedrock world " + address.getNetworkId(), address);
+    }
+
+    public static void connectNetherNet(final String name, final NetherNetAddress address) {
         final ServerAddress serverAddress = ServerAddress.parseString(address.getNetworkId() + ".nethernet.viafabricplus.localhost");
         ((IServerAddress) (Object) serverAddress).viaFabricPlus$setNetherNetAddress(address);
 
-        final ServerData entry = new ServerData("Bedrock Realm " + address.getNetworkId(), serverAddress.getHost(), ServerData.Type.OTHER);
+        connectNetherNet(name, serverAddress);
+    }
+
+    public static void connectNetherNet(final String name, final InetSocketAddress discoveryAddress) {
+        final ServerAddress serverAddress = ServerAddress.parseString("lan.nethernet.viafabricplus.localhost");
+        ((IServerAddress) (Object) serverAddress).viaFabricPlus$setNetherNetDiscoveryAddress(discoveryAddress);
+
+        connectNetherNet(name, serverAddress);
+    }
+
+    private static void connectNetherNet(final String name, final ServerAddress serverAddress) {
+        final ServerData entry = new ServerData(name, serverAddress.getHost(), ServerData.Type.OTHER);
         ((IServerData) entry).viaFabricPlus$forceVersion(BedrockProtocolVersion.bedrockLatest);
 
         ConnectScreen.startConnecting(Minecraft.getInstance().gui.screen(), Minecraft.getInstance(), serverAddress, entry, false, null);

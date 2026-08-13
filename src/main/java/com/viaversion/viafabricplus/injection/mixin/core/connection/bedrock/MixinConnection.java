@@ -35,6 +35,8 @@ import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import dev.kastle.netty.channel.nethernet.NetherNetChannelFactory;
+import dev.kastle.netty.channel.nethernet.config.NetherChannelOption;
+import dev.kastle.netty.channel.nethernet.signaling.NetherNetDiscoverySignaling;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetXboxRpcSignaling;
 import dev.kastle.netty.channel.nethernet.signaling.NetherNetXboxSignaling;
 import dev.kastle.webrtc.PeerConnectionFactory;
@@ -70,6 +72,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = Connection.class, priority = 1001) // Apply after connection/MixinConnection
 public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet<?>> {
 
+    private static final int NETHERNET_HANDSHAKE_TIMEOUT_MS = 30_000;
+
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         super.channelRegistered(ctx);
@@ -97,6 +101,12 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     private static AbstractBootstrap<?, ?> useRakNetChannelFactory(Bootstrap instance, Class<? extends Channel> channelTypeClass, Operation<AbstractBootstrap<Bootstrap, Channel>> original, @Local(argsOnly = true) InetSocketAddress address, @Local(argsOnly = true) Connection clientConnection) {
         if (BedrockProtocolVersion.bedrockLatest.equals(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
+                instance.option(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
+                instance.option(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 1);
+                if (netherNetAddress.isDiscoveryAddress()) {
+                    return instance.channelFactory(NetherNetChannelFactory.client(new PeerConnectionFactory(), new NetherNetDiscoverySignaling()));
+                }
+
                 final String authorizationHeader = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount().getMinecraftSession().getUpToDateUnchecked().getAuthorizationHeader();
                 if (netherNetAddress.getNetherNetAddress() instanceof NetherNetJsonRpcAddress) {
                     return instance.channelFactory(NetherNetChannelFactory.client(new PeerConnectionFactory(), new NetherNetXboxRpcSignaling(authorizationHeader)));
@@ -122,7 +132,10 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     private static ChannelFuture useRakNetPingHandlers(Bootstrap instance, InetAddress inetHost, int inetPort, Operation<ChannelFuture> original, @Local(argsOnly = true) InetSocketAddress address, @Local(argsOnly = true) Connection clientConnection, @Local(argsOnly = true) EventLoopGroupHolder eventLoopGroupHolder) {
         if (BedrockProtocolVersion.bedrockLatest.equals(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
-                return instance.connect(netherNetAddress.getNetherNetAddress()).addListeners(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE, (ChannelFutureListener) f -> {
+                final ChannelFuture future = netherNetAddress.isDiscoveryAddress()
+                    ? original.call(instance, inetHost, inetPort)
+                    : instance.connect(netherNetAddress.getNetherNetAddress());
+                return future.addListeners(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE, (ChannelFutureListener) f -> {
                     if (f.isSuccess()) {
                         f.channel().pipeline().remove(MessageCodec.NAME);
                     }

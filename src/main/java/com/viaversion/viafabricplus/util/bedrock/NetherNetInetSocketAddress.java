@@ -33,8 +33,17 @@ public final class NetherNetInetSocketAddress extends InetSocketAddress {
         this.netherNetAddress = netherNetAddress;
     }
 
+    public NetherNetInetSocketAddress(final InetSocketAddress discoveryAddress) {
+        super(discoveryAddress.getAddress(), discoveryAddress.getPort());
+        this.netherNetAddress = null;
+    }
+
     public NetherNetAddress getNetherNetAddress() {
         return this.netherNetAddress;
+    }
+
+    public boolean isDiscoveryAddress() {
+        return this.netherNetAddress == null;
     }
 
 }

@@ -45,6 +45,7 @@
   "screen.viafabricplus.classicube_mfa": "Classicube MFA",
   "screen.viafabricplus.settings": "Settings",
   "screen.viafabricplus.bedrock_realms": "Bedrock Realms",
+  "screen.viafabricplus.bedrock_worlds": "Bedrock Friends & LAN",
   "screen.viafabricplus.accept_invite": "Accept Invite",
 
   "general_settings.viafabricplus.save_selected_protocol_version": "Save selected protocol version",
@@ -168,5 +169,15 @@
   "bedrock_realms.viafabricplus.invite": "Accept invite code",
   "bedrock_realms.viafabricplus.expired": "The Realm is expired",
   "bedrock_realms.viafabricplus.incompatible": "The Realms Minecraft version is either too old or too new",
-  "bedrock_realms.viafabricplus.unsupported_protocol": "Realms via the %s protocol is not supported. You can't join this realm."
+  "bedrock_realms.viafabricplus.unsupported_protocol": "Realms via the %s protocol is not supported. You can't join this realm.",
+
+  "bedrock_worlds.viafabricplus.loading": "Looking for Xbox friend and LAN worlds...",
+  "bedrock_worlds.viafabricplus.no_worlds": "No joinable Xbox friend or LAN worlds found :(",
+  "bedrock_worlds.viafabricplus.no_worlds_account": "No LAN worlds found. Link a Bedrock account to also see Xbox friend worlds.",
+  "bedrock_worlds.viafabricplus.account_warning": "Link a Bedrock account to also see Xbox friend worlds.",
+  "bedrock_worlds.viafabricplus.button_warning": "LAN works without an account; Xbox friends require a linked Bedrock account.",
+  "bedrock_worlds.viafabricplus.error": "Some worlds could not be loaded; see the logs for more information.",
+  "bedrock_worlds.viafabricplus.join": "Join world",
+  "bedrock_worlds.viafabricplus.source_xbox": "Xbox friend",
+  "bedrock_worlds.viafabricplus.source_lan": "LAN"
 }
