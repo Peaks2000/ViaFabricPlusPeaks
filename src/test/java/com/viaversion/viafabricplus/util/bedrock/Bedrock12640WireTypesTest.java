@@ -76,6 +76,7 @@ public final class Bedrock12640WireTypesTest {
             new InventoryStackRequest.Consume(1, new InventoryStackRequest.Slot(
                 new FullContainerName(ContainerEnumName.CraftingInputContainer, null), 32, 7
             )),
+            new InventoryStackRequest.Create(32),
             new InventoryStackRequest.Take(4,
                 new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CreatedOutputContainer, null), 50, -1),
                 new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.InventoryContainer, null), 9, 0)
@@ -86,7 +87,7 @@ public final class Bedrock12640WireTypesTest {
             new InventoryStackRequestType(id -> id == 1 ? "minecraft:stone" : null).write(buffer, request);
 
             assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
-            assertEquals(4, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(5, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
 
             assertEquals(10, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(12, buffer.readUnsignedByte());
@@ -113,6 +114,10 @@ public final class Bedrock12640WireTypesTest {
             assertEquals(5, buffer.readUnsignedByte());
             assertEquals(1, buffer.readUnsignedByte());
             assertSlot(buffer, ContainerEnumName.CraftingInputContainer, 32, 7);
+
+            assertEquals(6, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(6, buffer.readUnsignedByte());
+            assertEquals(32, buffer.readUnsignedByte());
 
             assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(0, buffer.readUnsignedByte());
