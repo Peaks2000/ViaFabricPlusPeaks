@@ -48,6 +48,11 @@ public final class ConnectionUtil {
     }
 
     public static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol) {
+        connect(name, address, version, bedrockWireProtocol, true);
+    }
+
+    public static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol,
+                               final boolean useBedrockAccount) {
         final ServerAddress serverAddress = ServerAddress.parseString(address);
         final ServerData entry = new ServerData(name, serverAddress.getHost(), ServerData.Type.OTHER);
 
@@ -55,6 +60,7 @@ public final class ConnectionUtil {
             ((IServerData) entry).viaFabricPlus$forceVersion(version);
         }
         ((IServerData) entry).viaFabricPlus$setBedrockWireProtocol(bedrockWireProtocol);
+        ((IServerData) entry).viaFabricPlus$setUseBedrockAccount(useBedrockAccount);
         ConnectScreen.startConnecting(Minecraft.getInstance().gui.screen(), Minecraft.getInstance(), serverAddress, entry, false, null);
     }
 
@@ -67,10 +73,15 @@ public final class ConnectionUtil {
     }
 
     public static void connectNetherNet(final String name, final NetherNetAddress address, final int bedrockWireProtocol) {
+        connectNetherNet(name, address, bedrockWireProtocol, true);
+    }
+
+    public static void connectNetherNet(final String name, final NetherNetAddress address, final int bedrockWireProtocol,
+                                        final boolean useBedrockAccount) {
         final ServerAddress serverAddress = ServerAddress.parseString(address.getNetworkId() + ".nethernet.viafabricplus.localhost");
         ((IServerAddress) (Object) serverAddress).viaFabricPlus$setNetherNetAddress(address);
 
-        connectNetherNet(name, serverAddress, bedrockWireProtocol);
+        connectNetherNet(name, serverAddress, bedrockWireProtocol, useBedrockAccount);
     }
 
     public static void connectNetherNet(final String name, final InetSocketAddress discoveryAddress) {
@@ -78,16 +89,23 @@ public final class ConnectionUtil {
     }
 
     public static void connectNetherNet(final String name, final InetSocketAddress discoveryAddress, final int bedrockWireProtocol) {
+        connectNetherNet(name, discoveryAddress, bedrockWireProtocol, true);
+    }
+
+    public static void connectNetherNet(final String name, final InetSocketAddress discoveryAddress, final int bedrockWireProtocol,
+                                        final boolean useBedrockAccount) {
         final ServerAddress serverAddress = ServerAddress.parseString("lan.nethernet.viafabricplus.localhost");
         ((IServerAddress) (Object) serverAddress).viaFabricPlus$setNetherNetDiscoveryAddress(discoveryAddress);
 
-        connectNetherNet(name, serverAddress, bedrockWireProtocol);
+        connectNetherNet(name, serverAddress, bedrockWireProtocol, useBedrockAccount);
     }
 
-    private static void connectNetherNet(final String name, final ServerAddress serverAddress, final int bedrockWireProtocol) {
+    private static void connectNetherNet(final String name, final ServerAddress serverAddress, final int bedrockWireProtocol,
+                                         final boolean useBedrockAccount) {
         final ServerData entry = new ServerData(name, serverAddress.getHost(), ServerData.Type.OTHER);
         ((IServerData) entry).viaFabricPlus$forceVersion(BedrockProtocolVersion.bedrockLatest);
         ((IServerData) entry).viaFabricPlus$setBedrockWireProtocol(bedrockWireProtocol);
+        ((IServerData) entry).viaFabricPlus$setUseBedrockAccount(useBedrockAccount);
 
         ConnectScreen.startConnecting(Minecraft.getInstance().gui.screen(), Minecraft.getInstance(), serverAddress, entry, false, null);
     }

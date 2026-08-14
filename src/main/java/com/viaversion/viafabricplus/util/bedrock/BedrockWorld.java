@@ -35,6 +35,10 @@ public record BedrockWorld(
     Connection connection
 ) {
 
+    public boolean useBedrockAccount() {
+        return this.source != Source.LAN;
+    }
+
     public enum Source {
         XBOX_FRIEND,
         LAN

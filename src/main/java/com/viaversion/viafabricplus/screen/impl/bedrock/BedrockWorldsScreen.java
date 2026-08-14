@@ -201,10 +201,10 @@ public final class BedrockWorldsScreen extends VFPScreen {
         ViaFabricPlusImpl.INSTANCE.getLogger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), protocolVersion);
         final BedrockWorld.Connection connection = world.connection();
         switch (connection.type()) {
-            case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest, protocolVersion);
-            case NETHERNET -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetAddress(connection.address()), protocolVersion);
-            case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address(), connection.signalingId()), protocolVersion);
-            case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress(), protocolVersion);
+            case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest, protocolVersion, world.useBedrockAccount());
+            case NETHERNET -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetAddress(connection.address()), protocolVersion, world.useBedrockAccount());
+            case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address(), connection.signalingId()), protocolVersion, world.useBedrockAccount());
+            case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress(), protocolVersion, world.useBedrockAccount());
         }
     }
 

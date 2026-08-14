@@ -41,4 +41,8 @@ public interface IServerData {
 
     void viaFabricPlus$setBedrockWireProtocol(final int protocolVersion);
 
+    boolean viaFabricPlus$useBedrockAccount();
+
+    void viaFabricPlus$setUseBedrockAccount(final boolean useBedrockAccount);
+
 }

@@ -54,6 +54,9 @@ public abstract class MixinServerData implements IServerData {
     @Unique
     private int viaFabricPlus$bedrockWireProtocol = BedrockProtocolCompatibility.UNKNOWN_PROTOCOL;
 
+    @Unique
+    private boolean viaFabricPlus$useBedrockAccount = true;
+
     @Inject(method = "write", at = @At("TAIL"))
     private void saveForcedVersion(CallbackInfoReturnable<CompoundTag> cir, @Local(name = "tag") CompoundTag tag) {
         if (viaFabricPlus$forcedVersion != null) {
@@ -75,6 +78,7 @@ public abstract class MixinServerData implements IServerData {
     private void syncForcedVersion(ServerData other, CallbackInfo ci) {
         viaFabricPlus$forceVersion(((IServerData) other).viaFabricPlus$forcedVersion());
         viaFabricPlus$setBedrockWireProtocol(((IServerData) other).viaFabricPlus$bedrockWireProtocol());
+        viaFabricPlus$setUseBedrockAccount(((IServerData) other).viaFabricPlus$useBedrockAccount());
     }
 
     @Override
@@ -115,6 +119,16 @@ public abstract class MixinServerData implements IServerData {
     @Override
     public void viaFabricPlus$setBedrockWireProtocol(final int protocolVersion) {
         viaFabricPlus$bedrockWireProtocol = protocolVersion;
+    }
+
+    @Override
+    public boolean viaFabricPlus$useBedrockAccount() {
+        return viaFabricPlus$useBedrockAccount;
+    }
+
+    @Override
+    public void viaFabricPlus$setUseBedrockAccount(final boolean useBedrockAccount) {
+        viaFabricPlus$useBedrockAccount = useBedrockAccount;
     }
 
 }

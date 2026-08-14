@@ -33,8 +33,20 @@ import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class BedrockWorldDiscoveryTest {
+
+    @Test
+    public void selectsAuthenticationByWorldSource() {
+        final BedrockWorld.Connection connection = BedrockWorld.Connection.rakNet("192.168.1.30:19132");
+        final BedrockWorld lan = new BedrockWorld("LAN", "Host", BedrockWorld.Source.LAN, "26.40", 2168, "Survival", 1, 8, connection);
+        final BedrockWorld friend = new BedrockWorld("Friend", "Host", BedrockWorld.Source.XBOX_FRIEND, "26.40", 2168, "Survival", 1, 8, connection);
+
+        assertFalse(lan.useBedrockAccount());
+        assertTrue(friend.useBedrockAccount());
+    }
 
     @Test
     public void selectsWireProtocolFromAdvertisement() {

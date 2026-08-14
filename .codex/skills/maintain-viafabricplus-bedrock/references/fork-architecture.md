@@ -11,7 +11,7 @@
 ## User-facing flow
 
 - `ServerListScreen` opens `screen/impl/bedrock/BedrockWorldsScreen`.
-- `BedrockWorldsScreen` combines LAN and Xbox-friend discovery, joins the selected Xbox MPSD session when necessary, selects the initial wire protocol, and performs one bounded adjacent-version retry when the host explicitly reports client-old/server-old.
+- `BedrockWorldsScreen` combines LAN and Xbox-friend discovery, joins the selected Xbox MPSD session when necessary, selects the initial wire protocol, and performs one bounded adjacent-version retry when the host explicitly reports client-old/server-old. It marks LAN entries to use ViaBedrock's local self-signed identity while Xbox-friend entries retain the configured Microsoft account; this choice is stored on `ServerData` and survives reconnects.
 - `util/bedrock/BedrockWorld` carries display metadata, discovered protocol metadata, source, and connection type.
 - `util/network/ConnectionUtil` dispatches RakNet, direct NetherNet, Xbox JSON-RPC NetherNet, and LAN-discovery NetherNet connections.
 
@@ -37,6 +37,7 @@
 
 - Xbox HTTP 400 mentioning `connectionRequiredForActiveMembers`: inspect `xboxJoinBody` and the stable connection GUID.
 - `PlayStatus LoginFailed_ClientOld` / `LoginFailed_ServerOld`: inspect protocol discovery and the bounded retry; do not remove the check.
+- `ServerIdConflict` (disconnect reason 44) when joining a LAN world hosted by another device on the configured Microsoft account: do not inject that account's `AuthData` into the LAN connection. Let ViaBedrock generate its self-signed local identity so the host and guest have distinct player IDs. Keep authenticated identity for Xbox friends, Realms, and ordinary servers, and persist the choice on `ServerData` so reconnects do not regress it.
 - `RESOURCE_PACKS_INFO`, `RESOURCE_PACK_PUSH`, `LongLE`, and an index overrun: verify the resource-pack array count type first.
 - `ResourcePackClientResponse`, packet 8, and `wrong const value for member "Response Type"`: for protocol 2168 verify the leading status is an unsigned varint in `0-3`, the next field is the matching lowercase response-name string, and only `downloading` carries a varint-counted pack-ID array. Cloudburst's `ResourcePackClientResponseSerializer_v2168` is the known-good primary implementation.
 - Java `ClientboundAddEntityPacket was larger than I expected` from `EntityPackets` line containing `wrapper.send`, especially with about 348 trailing bytes: inspect Bedrock `AddItemActor` packet 15. In 1.26.40 it is Cereal and its item is `NetworkItemStackDescriptor`; use `ItemRewriter.newItemType()`.

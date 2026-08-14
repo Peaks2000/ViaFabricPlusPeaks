@@ -24,6 +24,7 @@ package com.viaversion.viafabricplus.injection.mixin.core.integration.bedrock;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
+import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
@@ -31,12 +32,15 @@ import com.viaversion.viaversion.api.connection.UserConnection;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.util.UUID;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.Connection;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.bedrock.model.MinecraftMultiplayerToken;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import net.raphimc.viabedrock.protocol.storage.AuthData;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -44,13 +48,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "net.minecraft.client.gui.screens.ConnectScreen$1")
 public abstract class MixinConnectScreen_1 {
 
+    @Shadow
+    @Final
+    ServerData val$server;
+
     @Inject(method = "run", at = @At(value = "INVOKE", target = "Lio/netty/channel/ChannelFuture;syncUninterruptibly()Lio/netty/channel/ChannelFuture;", remap = false, shift = At.Shift.AFTER))
     private void setupBedrockAccount(CallbackInfo ci, @Local Connection clientConnection) throws IOException {
         final UserConnection connection = ((IConnection) clientConnection).viaFabricPlus$getUserConnection();
 
         if (ProtocolTranslator.isBedrock()) {
             final BedrockAuthManager bedrockSession = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
-            if (bedrockSession != null) {
+            if (bedrockSession != null && ((IServerData) this.val$server).viaFabricPlus$useBedrockAccount()) {
                 final MinecraftMultiplayerToken multiplayerToken = bedrockSession.getMinecraftMultiplayerToken().refresh();
                 final KeyPair sessionKeyPair = bedrockSession.getSessionKeyPair();
                 final UUID deviceId = bedrockSession.getDeviceId();
@@ -61,7 +69,11 @@ public abstract class MixinConnectScreen_1 {
                     connection.put(new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId));
                 }
             } else {
-                ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not get Bedrock account. Joining online mode servers will not work!");
+                if (bedrockSession == null) {
+                    ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not get Bedrock account. Joining online mode servers will not work!");
+                } else {
+                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Using a local self-signed Bedrock identity for the LAN world");
+                }
             }
         }
     }
