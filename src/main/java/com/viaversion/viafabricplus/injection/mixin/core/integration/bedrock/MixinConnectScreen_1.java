@@ -27,6 +27,7 @@ import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
+import com.viaversion.viafabricplus.util.bedrock.BedrockLanIdentity;
 import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.io.IOException;
@@ -68,11 +69,17 @@ public abstract class MixinConnectScreen_1 {
                 } else {
                     connection.put(new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId));
                 }
+            } else if (!((IServerData) this.val$server).viaFabricPlus$useBedrockAccount()) {
+                final BedrockLanIdentity identity = connection.getChannel().attr(BedrockLanIdentity.CHANNEL_ATTRIBUTE).get();
+                if (identity != null) {
+                    connection.put(identity.authData());
+                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Using a transport-bound self-signed Bedrock identity for the LAN world");
+                } else {
+                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Using a local self-signed Bedrock identity for the LAN world");
+                }
             } else {
                 if (bedrockSession == null) {
                     ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not get Bedrock account. Joining online mode servers will not work!");
-                } else {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Using a local self-signed Bedrock identity for the LAN world");
                 }
             }
         }

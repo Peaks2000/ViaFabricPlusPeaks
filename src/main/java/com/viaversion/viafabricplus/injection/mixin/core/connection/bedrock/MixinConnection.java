@@ -33,6 +33,7 @@ import com.viaversion.viafabricplus.protocoltranslator.netty.RakNetPingEncapsula
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
+import com.viaversion.viafabricplus.util.bedrock.BedrockLanIdentity;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetDiscoverySignaling;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetXboxRpcSignaling;
 import com.viaversion.viaversion.api.connection.UserConnection;
@@ -59,6 +60,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.Connection;
 import net.minecraft.network.HandlerNames;
 import net.minecraft.network.protocol.Packet;
@@ -105,7 +107,8 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
         if (ProtocolTranslator.isBedrock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
                 if (netherNetAddress.isDiscoveryAddress()) {
-                    return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetDiscoverySignaling()));
+                    final BedrockLanIdentity identity = BedrockLanIdentity.create(Minecraft.getInstance().getUser().getName());
+                    return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetDiscoverySignaling(identity), identity));
                 }
 
                 final String authorizationHeader = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount().getMinecraftSession().getUpToDateUnchecked().getAuthorizationHeader();
@@ -163,9 +166,16 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     }
 
     private static ChannelFactory<NetherNetClientChannel> configuredNetherNetClientFactory(final NetherNetClientSignaling signaling) {
+        return configuredNetherNetClientFactory(signaling, null);
+    }
+
+    private static ChannelFactory<NetherNetClientChannel> configuredNetherNetClientFactory(final NetherNetClientSignaling signaling, final BedrockLanIdentity identity) {
         final ChannelFactory<NetherNetClientChannel> factory = NetherNetChannelFactory.client(new PeerConnectionFactory(), signaling);
         return () -> {
             final NetherNetClientChannel channel = factory.newChannel();
+            if (identity != null) {
+                channel.attr(BedrockLanIdentity.CHANNEL_ATTRIBUTE).set(identity);
+            }
             channel.config().setOption(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
             channel.config().setOption(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 0);
             return channel;
