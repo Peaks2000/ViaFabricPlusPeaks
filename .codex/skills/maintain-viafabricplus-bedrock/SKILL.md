@@ -1,6 +1,6 @@
 ---
 name: maintain-viafabricplus-bedrock
-description: Diagnose, update, build, and validate the ViaFabricPlus Bedrock-maintenance fork. Use for Bedrock LAN discovery, iOS NetherNet/WebRTC, RakNet, Xbox friends/MPSD sessions, ViaBedrock protocol bumps, packet decoder failures, mapping-data regressions, Fabric JAR builds, or reviewing what this fork changes after upstream ViaFabricPlus removes Bedrock support.
+description: Diagnose, update, build, validate, and coordinate the three repositories in the ViaFabricPlus Bedrock-maintenance fork. Use for cross-repository work in Peaks2000/ViaFabricPlusPeaks, Peaks2000/ViaBedrock, and Peaks2000/maintain-viafabricplus-bedrock; Bedrock LAN discovery; iOS NetherNet/WebRTC; RakNet; Xbox friends/MPSD sessions; ViaBedrock protocol bumps; packet decoder failures; mapping-data regressions; Fabric JAR builds; or reviewing what this fork changes after upstream ViaFabricPlus removes Bedrock support.
 ---
 
 # Maintain ViaFabricPlus Bedrock
@@ -8,6 +8,10 @@ description: Diagnose, update, build, and validate the ViaFabricPlus Bedrock-mai
 ## Purpose
 
 Keep the fork's Bedrock transports and ViaBedrock translation layer working across Minecraft Bedrock releases. Base each change on a fresh runtime failure and the packet schema for the host's actual game protocol; do not bypass version checks without updating the corresponding codec.
+
+## Coordinate the repositories
+
+Read `references/repository-coordination.md` before cloning, branching, changing dependencies, synchronizing the skill, committing, pushing, or building a release across repositories. Treat ViaFabricPlus, ViaBedrock, and the standalone skill as independent Git repositories with distinct ownership and histories. Keep the standalone skill canonical and mirror its files exactly under ViaFabricPlus's `.codex/skills/maintain-viafabricplus-bedrock/` directory.
 
 ## Start with evidence
 
@@ -60,4 +64,4 @@ This fork deliberately uses two ViaBedrock runtimes in one Fabric instance: ordi
 
 If a real host remains available, have the user retry once with the new JAR and immediately re-run the log collector. Record the next first causal error; Bedrock version updates commonly reveal packet changes one at a time.
 
-Only commit, push, create repositories, or mutate Xbox sessions when the user authorizes those actions. Keep the project skill under `.codex/skills/maintain-viafabricplus-bedrock` so the maintenance knowledge travels with the fork.
+Only commit, push, create repositories, or mutate Xbox sessions when the user authorizes those actions. Follow the repository-specific commit and push order in `references/repository-coordination.md` so the dependency branch, consuming fork, distributable JAR, and both skill copies remain consistent.
