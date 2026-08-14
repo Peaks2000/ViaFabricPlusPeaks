@@ -38,6 +38,8 @@ Treat `Exterminate5573/ViaBedrock` PR #3 as a behavioral reference, not a merge 
 
 For protocol 2168 terrain, compare against Cloudburst's `LevelChunkSerializer_v2168` and `SubChunkSerializer_v2168`. `LevelChunk` no longer uses negative subchunk-count sentinels: read the unsigned-varint section count, optional request-limit presence and signed-varint value, cache-enabled flag, always-present cache-metadata vector, then data. `SubChunk` reads its center as fixed little-endian x/y/z ints and its response count as an unsigned varint. Each response independently carries presence bytes for data, heightmap data, render-heightmap data, and blob ID; consume present values regardless of the result enum or cache-enabled flag. A stale fixed-width response count can decode as zero and leave the world invisible without logging a decoder exception.
 
+Request-mode `LevelChunk` packets commonly embed zero sections and provide the usable vertical range through `requestSectionCount`. Initialize the chunk tracker's mergeable section prefix with `requestSubChunks ? requestSectionCount : sectionCount`; otherwise every valid `SubChunk` response targets a section constructed as already complete and fails with `This section already has been merged with another section`. Preserve the pending state so block updates queue until the response arrives. Do not suppress the merge exception or treat the first response as a network duplicate.
+
 ## Decide where to patch
 
 Prefer, in order:
