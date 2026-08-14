@@ -15,6 +15,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
 import net.raphimc.viabedrock.protocol.model.GameRule;
+import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,17 @@ public final class Bedrock12640WireTypesTest {
         } finally {
             buffer.release();
         }
+    }
+
+    @Test
+    public void craftingActionsKeepMappedIdsSeparateFromCerealDiscriminators() {
+        final InventoryStackRequest.CraftRecipe craftRecipe = new InventoryStackRequest.CraftRecipe(123, 1);
+        assertEquals(10, craftRecipe.mappedType());
+        assertEquals(12, craftRecipe.type().getValue());
+
+        final InventoryStackRequest.CraftResults craftResults = new InventoryStackRequest.CraftResults(java.util.List.of(), 1);
+        assertEquals(17, craftResults.mappedType());
+        assertEquals(19, craftResults.type().getValue());
     }
 
 }
