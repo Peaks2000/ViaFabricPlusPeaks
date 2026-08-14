@@ -37,4 +37,8 @@ public interface IServerData {
 
     void viaFabricPlus$setTranslatingVersion(final ProtocolVersion version);
 
+    int viaFabricPlus$bedrockWireProtocol();
+
+    void viaFabricPlus$setBedrockWireProtocol(final int protocolVersion);
+
 }

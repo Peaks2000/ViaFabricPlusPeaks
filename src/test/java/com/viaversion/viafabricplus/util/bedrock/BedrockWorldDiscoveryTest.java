@@ -29,6 +29,7 @@ import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,6 +46,21 @@ public final class BedrockWorldDiscoveryTest {
         assertEquals(2169, BedrockProtocolCompatibility.adjacentProtocol(2168, true));
         assertEquals(2168, BedrockProtocolCompatibility.adjacentProtocol(2169, false));
         assertEquals(-1, BedrockProtocolCompatibility.adjacentProtocol(2168, false));
+    }
+
+    @Test
+    public void maintainedRouteCanBeSelectedForEveryReconnect() {
+        assertEquals(
+            BedrockProtocolVersion.bedrockLatest,
+            BedrockProtocolCompatibility.routeForConnection(BedrockProtocolVersion.bedrockLatest, 2168)
+        );
+        assertEquals(2168, BedrockProtocolCompatibility.consumeConnectionProtocol(2167));
+
+        assertEquals(
+            BedrockProtocolVersion.bedrockLatest,
+            BedrockProtocolCompatibility.routeForConnection(BedrockProtocolVersion.bedrockLatest, 2168)
+        );
+        assertEquals(2168, BedrockProtocolCompatibility.consumeConnectionProtocol(2167));
     }
 
     @Test

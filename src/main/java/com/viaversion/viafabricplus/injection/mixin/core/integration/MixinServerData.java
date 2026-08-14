@@ -24,6 +24,7 @@ package com.viaversion.viafabricplus.injection.mixin.core.integration;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.save.impl.SettingsSave;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.nbt.CompoundTag;
@@ -50,6 +51,9 @@ public abstract class MixinServerData implements IServerData {
     @Unique
     private ProtocolVersion viaFabricPlus$translatingVersion;
 
+    @Unique
+    private int viaFabricPlus$bedrockWireProtocol = BedrockProtocolCompatibility.UNKNOWN_PROTOCOL;
+
     @Inject(method = "write", at = @At("TAIL"))
     private void saveForcedVersion(CallbackInfoReturnable<CompoundTag> cir, @Local(name = "tag") CompoundTag tag) {
         if (viaFabricPlus$forcedVersion != null) {
@@ -70,6 +74,7 @@ public abstract class MixinServerData implements IServerData {
     @Inject(method = "copyNameIconFrom", at = @At("RETURN"))
     private void syncForcedVersion(ServerData other, CallbackInfo ci) {
         viaFabricPlus$forceVersion(((IServerData) other).viaFabricPlus$forcedVersion());
+        viaFabricPlus$setBedrockWireProtocol(((IServerData) other).viaFabricPlus$bedrockWireProtocol());
     }
 
     @Override
@@ -100,6 +105,16 @@ public abstract class MixinServerData implements IServerData {
     @Override
     public void viaFabricPlus$setTranslatingVersion(ProtocolVersion version) {
         viaFabricPlus$translatingVersion = version;
+    }
+
+    @Override
+    public int viaFabricPlus$bedrockWireProtocol() {
+        return viaFabricPlus$bedrockWireProtocol;
+    }
+
+    @Override
+    public void viaFabricPlus$setBedrockWireProtocol(final int protocolVersion) {
+        viaFabricPlus$bedrockWireProtocol = protocolVersion;
     }
 
 }

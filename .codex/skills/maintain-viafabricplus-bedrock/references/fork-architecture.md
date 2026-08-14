@@ -6,7 +6,7 @@
 - Dedicated Bedrock fork: maintained separately because upstream ViaFabricPlus is removing Bedrock support.
 - ViaBedrock is resolved as a Gradle VCS dependency in `settings.gradle.kts`; the selected maintained branch is in `build.gradle.kts`. At the time this reference was written it is `peaks/1.26.40-fixes` from `Peaks2000/ViaBedrock`.
 - Vendored `webrtc-java-m152test` artifacts under `vendor/maven/` provide the NetherNet/WebRTC runtime and native library needed by iOS-hosted LAN worlds.
-- `StockViaBedrockRuntime` loads the embedded stock 1.26.30 ViaBedrock JAR in a child-first class loader. Ordinary server-list connections use that runtime; `BedrockProtocolCompatibility.prepareConnection` marks only dedicated LAN/friends connections for the maintained 1.26.40 route. This separation is intentional and must remain within one Prism instance.
+- `StockViaBedrockRuntime` loads the embedded stock 1.26.30 ViaBedrock JAR in a child-first class loader. Ordinary server-list connections use that runtime. Dedicated LAN/friends `ServerData` entries carry their maintained Bedrock wire protocol through `IServerData`; `MixinConnectScreen_1` uses that durable marker to select and prepare the maintained route on every attempt, including Peakeor/manual reconnects. Do not replace this with one-shot global route identity. This separation is intentional and must remain within one Prism instance.
 
 ## User-facing flow
 

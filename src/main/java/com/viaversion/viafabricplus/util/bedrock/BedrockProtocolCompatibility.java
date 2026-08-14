@@ -13,7 +13,6 @@ package com.viaversion.viafabricplus.util.bedrock;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicBoolean;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
@@ -30,7 +29,6 @@ public final class BedrockProtocolCompatibility {
     public static final String CURRENT_GAME_VERSION = "1.26.50";
 
     private static final AtomicInteger NEXT_CONNECTION_PROTOCOL = new AtomicInteger(UNKNOWN_PROTOCOL);
-    private static final AtomicBoolean NEXT_CONNECTION_USES_MAINTAINED_ROUTE = new AtomicBoolean();
 
     private BedrockProtocolCompatibility() {
     }
@@ -58,19 +56,24 @@ public final class BedrockProtocolCompatibility {
 
     public static void prepareConnection(final int protocolVersion) {
         NEXT_CONNECTION_PROTOCOL.set(initialProtocol(protocolVersion));
-        NEXT_CONNECTION_USES_MAINTAINED_ROUTE.set(true);
     }
 
     /**
      * Keeps the normal multiplayer menu on stock ViaBedrock while the dedicated LAN/friends
-     * menu opts into the maintained 1.26.40 route through {@link #prepareConnection(int)}.
+     * menu opts into the maintained route by carrying its wire protocol on the server entry.
+     * Keeping that identity on the entry is important because Minecraft's reconnect button starts
+     * a fresh connection after the one-shot handshake state has already been consumed.
      */
-    public static ProtocolVersion routeForConnection(final ProtocolVersion requestedVersion) {
+    public static ProtocolVersion routeForConnection(final ProtocolVersion requestedVersion, final int maintainedWireProtocol) {
         if (!BedrockProtocolVersion.bedrockLatest.equals(requestedVersion)) {
             return requestedVersion;
         }
-        if (NEXT_CONNECTION_USES_MAINTAINED_ROUTE.getAndSet(false)) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected maintained Bedrock route for LAN/friends menu: {}", requestedVersion.getName());
+        if (isSupported(maintainedWireProtocol)) {
+            prepareConnection(maintainedWireProtocol);
+            ViaFabricPlusImpl.INSTANCE.getLogger().info(
+                "Selected maintained Bedrock route for LAN/friends menu: {} (wire protocol {})",
+                requestedVersion.getName(), maintainedWireProtocol
+            );
             return requestedVersion;
         }
         NEXT_CONNECTION_PROTOCOL.set(UNKNOWN_PROTOCOL);
