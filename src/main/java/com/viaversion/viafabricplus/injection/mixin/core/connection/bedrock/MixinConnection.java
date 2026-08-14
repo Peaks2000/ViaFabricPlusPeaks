@@ -26,6 +26,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IEventLoopGroupHolder;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
@@ -155,7 +156,13 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
                     : instance.connect(netherNetAddress.getNetherNetAddress());
                 return future.addListeners(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE, (ChannelFutureListener) f -> {
                     if (f.isSuccess()) {
+                        ViaFabricPlusImpl.INSTANCE.getLogger().info("NetherNet transport connected; starting Bedrock login");
                         f.channel().pipeline().remove(MessageCodec.NAME);
+                    } else {
+                        ViaFabricPlusImpl.INSTANCE.getLogger().warn(
+                            "NetherNet transport failed before Bedrock login: {}",
+                            f.cause() != null ? f.cause().getMessage() : "connection cancelled"
+                        );
                     }
                 });
             } else if (!((IEventLoopGroupHolder) eventLoopGroupHolder).viaFabricPlus$isConnecting()) {

@@ -41,11 +41,14 @@ public final class BedrockWorldDiscoveryTest {
 
     @Test
     public void selectsAuthenticationByWorldSource() {
-        final BedrockWorld.Connection connection = BedrockWorld.Connection.rakNet("192.168.1.30:19132");
-        final BedrockWorld lan = new BedrockWorld("LAN", "Host", BedrockWorld.Source.LAN, "26.40", 2168, "Survival", 1, 8, connection);
-        final BedrockWorld friend = new BedrockWorld("Friend", "Host", BedrockWorld.Source.XBOX_FRIEND, "26.40", 2168, "Survival", 1, 8, connection);
+        final BedrockWorld.Connection netherNet = BedrockWorld.Connection.discovery(new InetSocketAddress("192.168.1.30", 7551));
+        final BedrockWorld.Connection rakNet = BedrockWorld.Connection.rakNet("192.168.1.30:19132");
+        final BedrockWorld clientHostedLan = new BedrockWorld("LAN", "Host", BedrockWorld.Source.LAN, "26.40", 2168, "Survival", 1, 8, netherNet);
+        final BedrockWorld rakNetLan = new BedrockWorld("Server", "Host", BedrockWorld.Source.LAN, "26.40", 2168, "Survival", 1, 8, rakNet);
+        final BedrockWorld friend = new BedrockWorld("Friend", "Host", BedrockWorld.Source.XBOX_FRIEND, "26.40", 2168, "Survival", 1, 8, netherNet);
 
-        assertFalse(lan.useBedrockAccount());
+        assertFalse(clientHostedLan.useBedrockAccount());
+        assertTrue(rakNetLan.useBedrockAccount());
         assertTrue(friend.useBedrockAccount());
     }
 
@@ -163,16 +166,19 @@ public final class BedrockWorldDiscoveryTest {
     @Test
     public void parsesLanAdvertisement() {
         final ByteBuf advertisement = Unpooled.buffer();
-        advertisement.writeByte(4);
+        advertisement.writeByte(6);
         writeString(advertisement, "Host");
         writeString(advertisement, "Survival World");
-        advertisement.writeByte(0);
+        writeSignedVarInt(advertisement, 0);
         advertisement.writeIntLE(2);
         advertisement.writeIntLE(8);
         advertisement.writeBoolean(false);
         advertisement.writeBoolean(true);
-        advertisement.writeByte(0);
-        advertisement.writeByte(0);
+        advertisement.writeBoolean(true);
+        advertisement.writeBoolean(true);
+        writeString(advertisement, "0123456789abcdef");
+        writeSignedVarInt(advertisement, 2);
+        writeSignedVarInt(advertisement, 4);
 
         final String hex = ByteBufUtil.hexDump(advertisement);
         advertisement.release();
@@ -189,6 +195,31 @@ public final class BedrockWorldDiscoveryTest {
             assertEquals(8, world.maxPlayerCount());
             assertEquals(BedrockProtocolCompatibility.UNKNOWN_PROTOCOL, world.protocolVersion());
             assertEquals(sender, world.connection().discoveryAddress());
+            assertEquals("0123456789abcdef", world.connection().clientHostedNonce());
+        } finally {
+            response.release();
+        }
+    }
+
+    @Test
+    public void parsesLegacyLanAdvertisementWithoutNonce() {
+        final ByteBuf advertisement = Unpooled.buffer();
+        advertisement.writeByte(4);
+        writeString(advertisement, "Host");
+        writeString(advertisement, "Legacy World");
+        writeSignedVarInt(advertisement, 1);
+        advertisement.writeIntLE(1);
+        advertisement.writeIntLE(8);
+        advertisement.writeBoolean(false);
+        advertisement.writeBoolean(false);
+        advertisement.writeBoolean(true);
+        advertisement.writeBoolean(true);
+
+        final ByteBuf response = wrapLanAdvertisement(advertisement);
+        try {
+            final BedrockWorld world = BedrockWorldDiscovery.parseLanAdvertisement(response, new InetSocketAddress("192.168.1.30", 7551));
+            assertEquals("Creative", world.gameMode());
+            assertNull(world.connection().clientHostedNonce());
         } finally {
             response.release();
         }
@@ -229,8 +260,29 @@ public final class BedrockWorldDiscoveryTest {
 
     private static void writeString(final ByteBuf buffer, final String value) {
         final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-        buffer.writeByte(bytes.length);
+        writeUnsignedVarInt(buffer, bytes.length);
         buffer.writeBytes(bytes);
+    }
+
+    private static void writeSignedVarInt(final ByteBuf buffer, final int value) {
+        writeUnsignedVarInt(buffer, (value << 1) ^ (value >> 31));
+    }
+
+    private static void writeUnsignedVarInt(final ByteBuf buffer, int value) {
+        while ((value & ~0x7F) != 0) {
+            buffer.writeByte((value & 0x7F) | 0x80);
+            value >>>= 7;
+        }
+        buffer.writeByte(value);
+    }
+
+    private static ByteBuf wrapLanAdvertisement(final ByteBuf advertisement) {
+        final String hex = ByteBufUtil.hexDump(advertisement);
+        advertisement.release();
+        final ByteBuf response = Unpooled.buffer();
+        response.writeIntLE(hex.length());
+        response.writeCharSequence(hex, StandardCharsets.UTF_8);
+        return response;
     }
 
 }

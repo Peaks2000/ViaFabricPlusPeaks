@@ -40,7 +40,10 @@ public record BedrockWorld(
     }
 
     public boolean useBedrockAccount() {
-        return this.source != Source.LAN;
+        // Modern client-hosted LAN worlds use self-signed identities over
+        // NetherNet. A RakNet advertisement, however, is a normal Bedrock
+        // server (including Geyser) and generally expects Xbox authentication.
+        return this.source != Source.LAN || this.connection.type() == Connection.Type.RAKNET;
     }
 
     public enum Source {

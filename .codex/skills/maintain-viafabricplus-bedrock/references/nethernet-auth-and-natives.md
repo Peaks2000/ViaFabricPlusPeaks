@@ -20,6 +20,7 @@ Use the first failure in the connection attempt. NetherNet failures often cascad
 | set-local/set-remote SDP error | WebRTC/SDP | Inspect SDP normalization, M152 compatibility, and identity placement. |
 | ICE timeout | Candidate/network path | Inspect candidate families, reachability, filtering, and trickle order. |
 | Xbox signaling succeeds, then `SIGNAL_CONNECT_ERROR` before `CONNECTRESPONSE` | Client offer authentication | Add the authenticated account's transport-bound `a=identity`; this is earlier than Bedrock login. |
+| Xbox TURN and outbound JSON-RPC requests succeed, but no inbound signaling method or connect result arrives | Remote host signaling | Wait for the bounded transport timeout and report the host as non-responsive. Login, nonce, inventory, and crafting paths have not executed. |
 | `ServerIdConflict` | Game login identity | Stop reusing the host/configured Microsoft identity for a LAN guest. |
 | `NotAuthenticated` after a distinct local identity was introduced | Transport/login binding | Reuse one identity object for the offer assertion and login `AuthData`. |
 | `NonceMissing` after MPSD membership and signaling succeed | Client-hosted game login | Resolve the joining XUID's MPSD nonce and put it in the signed client-data `Nonce` claim. |
@@ -103,6 +104,10 @@ Runtime evidence can establish the behavior independently of that ambiguous file
 6. Add it as the `Nonce` claim when ViaBedrock signs the client/skin data JWT. If a cached skin JWT exists and the nonce changes, invalidate and regenerate that JWT.
 7. Keep the normal Minecraft multiplayer token in outer `AuthenticationInfo.Token` and keep its existing Full-versus-SelfSigned calculation. The nonce is not a replacement bearer token.
 8. Preserve the nonce on verified adjacent-protocol retries for the same joined MPSD membership. Resolve a fresh value after a new membership join.
+
+For LAN discovery, revision 6 carries the same host-generated nonce directly in its binary advertisement. Decode the fields in this order: revision byte; server and level names as unsigned-varint-length UTF-8; game type as signed zigzag varint; little-endian player counts; editor, hardcore, online-auth, and self-signed-auth booleans; nonce as an unsigned-varint-length UTF-8 string; transport layer and connection type as signed zigzag varints. Reject truncated, oversized, or trailing data, keep the nonce ephemeral, and attach it to the discovered connection before starting NetherNet. Revisions 4 and 5 do not establish a nonce and must remain compatible without inventing one.
+
+Do not apply the client-hosted self-signed rule to RakNet LAN advertisements. A Geyser or other ordinary Bedrock server discovered by RakNet typically expects the configured online Bedrock identity and does not publish the revision-6 nonce envelope.
 
 The source split is intentional: ViaFabricPlus owns Xbox membership, polling, secret lifetime, and connection propagation; ViaBedrock owns the signed client-data `Nonce` claim. Add tests for exact-XUID selection and rejection of missing, non-string, blank, or oversized values. Do not use a live nonce as a fixture.
 

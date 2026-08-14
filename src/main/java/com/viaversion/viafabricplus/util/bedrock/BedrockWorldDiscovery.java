@@ -67,6 +67,9 @@ public final class BedrockWorldDiscovery {
     private static final int RAKNET_DISCOVERY_PORT = 19132;
     private static final byte[] RAKNET_MAGIC = ByteBufUtil.decodeHexDump("00ffff00fefefefefdfdfdfd12345678");
     private static final int XBOX_CONTRACT_VERSION = 107;
+    private static final int NETHERNET_ADVERTISEMENT_WITH_NONCE = 6;
+    private static final int MAX_ADVERTISEMENT_STRING_BYTES = 16_384;
+    private static final int MAX_CLIENT_HOSTED_NONCE_BYTES = 1_024;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(12);
     private static final Duration CLIENT_HOSTED_NONCE_TIMEOUT = Duration.ofSeconds(10);
     private static final long CLIENT_HOSTED_NONCE_POLL_MILLIS = 250L;
@@ -343,11 +346,25 @@ public final class BedrockWorldDiscovery {
             final int advertisementVersion = decoded.readUnsignedByte();
             final String serverName = readString(decoded);
             final String levelName = readString(decoded);
-            final int gameMode = decoded.readUnsignedByte() >> 1;
+            final int gameMode = readSignedVarInt(decoded);
             final int playerCount = decoded.readIntLE();
             final int maxPlayerCount = decoded.readIntLE();
             final boolean editor = decoded.readBoolean();
             final boolean hardcore = decoded.readBoolean();
+            String clientHostedNonce = null;
+            if (advertisementVersion >= NETHERNET_ADVERTISEMENT_WITH_NONCE) {
+                decoded.readBoolean(); // Accepts online-authenticated identities.
+                decoded.readBoolean(); // Accepts self-signed identities.
+                clientHostedNonce = readString(decoded);
+                if (clientHostedNonce.isBlank() || clientHostedNonce.getBytes(StandardCharsets.UTF_8).length > MAX_CLIENT_HOSTED_NONCE_BYTES) {
+                    throw new IllegalArgumentException("Invalid client-hosted nonce");
+                }
+                readSignedVarInt(decoded); // Transport layer.
+                readSignedVarInt(decoded); // Connection type.
+                if (decoded.isReadable()) {
+                    throw new IllegalArgumentException("Unexpected trailing advertisement data");
+                }
+            }
             final String gameModeName = switch (gameMode) {
                 case 0 -> "Survival";
                 case 1 -> "Creative";
@@ -365,7 +382,7 @@ public final class BedrockWorldDiscovery {
                 flags,
                 playerCount,
                 maxPlayerCount,
-                BedrockWorld.Connection.discovery(sender)
+                BedrockWorld.Connection.discovery(sender).withClientHostedNonce(clientHostedNonce)
             );
         } finally {
             decoded.release();
@@ -464,14 +481,34 @@ public final class BedrockWorldDiscovery {
     }
 
     private static String readString(final ByteBuf buffer) {
-        if (!buffer.isReadable()) {
-            return "";
-        }
-        final int length = buffer.readUnsignedByte();
-        if (buffer.readableBytes() < length) {
+        final int length = readUnsignedVarInt(buffer);
+        if (length > MAX_ADVERTISEMENT_STRING_BYTES || buffer.readableBytes() < length) {
             throw new IllegalArgumentException("Invalid string length");
         }
         return buffer.readCharSequence(length, StandardCharsets.UTF_8).toString();
+    }
+
+    private static int readSignedVarInt(final ByteBuf buffer) {
+        final int value = readUnsignedVarInt(buffer);
+        return (value >>> 1) ^ -(value & 1);
+    }
+
+    private static int readUnsignedVarInt(final ByteBuf buffer) {
+        int value = 0;
+        for (int position = 0; position < Integer.SIZE; position += 7) {
+            if (!buffer.isReadable()) {
+                throw new IllegalArgumentException("Truncated varint");
+            }
+            final int current = buffer.readUnsignedByte();
+            if (position == 28 && (current & 0xF0) != 0) {
+                throw new IllegalArgumentException("Varint is too large");
+            }
+            value |= (current & 0x7F) << position;
+            if ((current & 0x80) == 0) {
+                return value;
+            }
+        }
+        throw new IllegalArgumentException("Varint is too large");
     }
 
     private static List<InetSocketAddress> broadcastAddresses(final int port) {

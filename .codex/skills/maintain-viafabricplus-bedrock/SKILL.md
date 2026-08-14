@@ -37,6 +37,8 @@ Read the references selectively:
 
 If Xbox TURN/signaling requests succeed and the next inbound message is `SIGNAL_CONNECT_ERROR`, check whether the outgoing `CONNECTREQUEST` offer carries the authenticated account's `a=identity` assertion. This rejection happens before Bedrock login, so do not patch protocol, crafting, or inventory code for it.
 
+If TURN and every outbound Xbox JSON-RPC request succeed but there is no inbound `Signaling_ReceiveMessage_v1_0`, `CONNECTRESPONSE`, or `CONNECTERROR`, the remote host has not answered signaling. Wait for the bounded NetherNet handshake timeout and report that stage accurately; nonce, login, inventory, and crafting code have not run yet. Do not restore automatic handshake retries merely to hide this state because reusing a host-side connection can revive `ServerIdConflict`.
+
 ## Update a Bedrock version
 
 Read `references/version-update-workflow.md` before changing any protocol number, packet field, ViaBedrock revision, or mapping resource.
@@ -46,6 +48,8 @@ Treat these identifiers separately:
 - RakNet MOTD protocol number is a Bedrock game protocol and is usable evidence.
 - Xbox session custom game version is usable evidence after normalization.
 - NetherNet LAN advertisement revision is a transport/discovery format. It is not a Bedrock game protocol.
+
+NetherNet LAN advertisement revision 6 uses unsigned-varint UTF-8 lengths, signed zigzag varints, and includes `AcceptsOnlineAuth`, `AcceptsSelfSignedAuth`, a host-generated `Nonce`, transport layer, and connection type after the shared world fields. Parse the full revision-6 payload and carry its nonce only in memory into the signed client-data claim. A one-byte string-length parser silently corrupts names longer than 127 bytes and must not be used.
 - `BedrockProtocolVersion.bedrockLatest` is ViaVersion's route identity and can differ from the wire protocol placed in `HandshakeStorage`.
 
 When the server returns `LoginFailed_ClientOld` or `LoginFailed_ServerOld`, add only verified adjacent supported protocols to `BedrockProtocolCompatibility`. Never loop over arbitrary integers. A successful login version check does not prove subsequent packet layouts are compatible.
