@@ -48,7 +48,7 @@ After the ViaBedrock commit is pushed, rebuild ViaFabricPlus against the remote 
 ./gradlew --refresh-dependencies clean build
 ```
 
-Treat this remote-backed build as the release build. Confirm that it contains the pushed ViaBedrock fix rather than only uncommitted sibling changes. Run the remaining validation from the main skill, identify the remapped main JAR, and record its SHA-256.
+Treat this remote-backed build as the release build. Gradle labels its source-control checkout `:ViaBedrock`, so that task name alone does not prove sibling substitution. Locate the newest `ViaFabricPlus/.gradle/vcs-1/*/ViaBedrock` checkout and run `git -C <checkout> rev-parse HEAD`; require the pushed ViaBedrock commit. Then run the remaining validation from the main skill, identify the remapped main JAR, and record its SHA-256.
 
 ## Synchronize the skill
 

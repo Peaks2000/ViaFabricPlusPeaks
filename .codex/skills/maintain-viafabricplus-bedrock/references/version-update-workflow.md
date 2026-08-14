@@ -6,6 +6,8 @@
 2. Capture the first decoder/login error with packet name, packet ID, reader index, writer index, expected type, and ViaBedrock handler line.
 3. Check the current ViaBedrock VCS branch and resolved commit. Inspect its source from the Gradle VCS checkout rather than assuming the published artifact matches.
 
+For protocol 2168/1.26.40, use ViaBedrock's merged `Update to 1.26.40` PR #389 and its `update/1.26.40` branch as the official baseline. Compare the maintained `peaks/1.26.40-fixes` branch from that merge commit forward; do not replace already-native support with a second parallel implementation.
+
 ## Compare schemas
 
 Use primary technical sources when browsing: Mojang/Microsoft documentation where it specifies the field, the checked-out ViaBedrock source, or the canonical protocol-data repository used by the implementation. Compare the last working and target schemas field by field.
@@ -28,7 +30,7 @@ Audit generated enum storage width separately from its use on the wire. `PacketC
 
 For protocol 2168 `PlayerAuthInputPacket`, use Cloudburst's `PlayerAuthInputSerializer_v2168` as the executable reference; the older Mojang graph and the optional JSON view do not expose the complete Cereal framing. After head yaw, write a field-presence `true`, an unsigned-varint input-flag count, and every flag as a signed varint; do not write the pre-2168 bitmask. Write input mode and play mode as unsigned varints and interaction model as a signed varint. Item-use, item-stack-request, block-actions, vehicle rotation, and predicted vehicle each have two booleans: field presence, then value presence. Block-action count is unsigned varint, and each record always includes action, position, and facing; use default position/facing for `StopDestroyBlock`.
 
-For protocol 2168 crafting, parse the leading shaped and shapeless arrays in `CraftingData` so Java result-slot clicks can recover the Bedrock recipe network ID. A manual craft request is ordered as `CraftRecipe`, `CraftResultsDeprecated`, one `Consume` per matched grid input, then `Take` from `CreatedOutputContainer` slot 50. Cereal preserves the generated action discriminator byte (12 for craft recipe and 19 for craft results), while the mapped action IDs are 10 and 17 because the deprecated item-container actions were removed from the mapping.
+For protocol 2168 crafting, parse the leading shaped and shapeless arrays in `CraftingData` so Java result-slot clicks can recover the Bedrock recipe network ID. A manual craft request is ordered as `CraftRecipe`, `CraftResultsDeprecated`, one `Consume` per matched grid input, then `Take` from `CreatedOutputContainer` slot 50. Cereal writes each mapped action ID as an unsigned varint and then a separate generated action-discriminator byte: mapped IDs 10 and 17 pair with discriminator bytes 12 and 19 because the deprecated item-container actions were removed only from the mapping. Encode every craft result as a nonempty `ItemStackRequestNetworkItemInstanceDescriptor`, including the descriptor discriminator and user-data length. Enforce Mojang's request constraints before sending: negative odd request ID, 1-100 actions, transfer counts 1-64, nonzero recipe ID, nonempty craft results, and craft counts 1-255. Add a byte-level regression test that decodes the complete request and finishes with zero readable bytes.
 
 For protocol 2168 terrain, compare against Cloudburst's `LevelChunkSerializer_v2168` and `SubChunkSerializer_v2168`. `LevelChunk` no longer uses negative subchunk-count sentinels: read the unsigned-varint section count, optional request-limit presence and signed-varint value, cache-enabled flag, always-present cache-metadata vector, then data. `SubChunk` reads its center as fixed little-endian x/y/z ints and its response count as an unsigned varint. Each response independently carries presence bytes for data, heightmap data, render-heightmap data, and blob ID; consume present values regardless of the result enum or cache-enabled flag. A stale fixed-width response count can decode as zero and leave the world invisible without logging a decoder exception.
 
@@ -37,8 +39,10 @@ For protocol 2168 terrain, compare against Cloudburst's `LevelChunkSerializer_v2
 Prefer, in order:
 
 1. update the ViaBedrock dependency to a revision that fully supports the target version;
-2. contribute/fork ViaBedrock and select that revision;
-3. add a small ViaFabricPlus mixin for a verified isolated defect while the dependency catches up.
+2. patch the selected dedicated ViaBedrock fork for remaining codec, serializer, packet-handler, or inventory defects;
+3. add a small ViaFabricPlus mixin only for a verified integration defect the dependency cannot own.
+
+When ViaBedrock gains native target-version support, establish that implementation as the baseline, retain only independently justified fork fixes, and move any equivalent temporary ViaFabricPlus protocol mixins into ViaBedrock source. Never carry the same wire override in both repositories.
 
 If a mixin changes a `PacketWrapper.read(Type)` argument, document the invocation ordinal and confirm the surrounding bytecode with `javap -c -p`. Start the development client so Mixin validates the target at runtime.
 
