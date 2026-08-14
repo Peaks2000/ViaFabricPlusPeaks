@@ -60,6 +60,8 @@ For packet decoder errors, identify the packet and the first incorrect field fro
 
 If Java reports that a translated packet was "larger than expected", inspect the ViaBedrock handler at the first `wrapper.send(...)`. Unread Bedrock input can leak into the Java packet. Do not merely clear the input buffer: verify whether Mojang changed an earlier field's encoding or converted the packet to Cereal. For 1.26.40, `AddItemActor` and `AddPlayer` must read their item with `ItemRewriter.newItemType()` (`NetworkItemStackDescriptor`), not the legacy `itemType()`.
 
+For a pickup animation with a stale Java inventory, trace authoritative inventory packets before changing refresh logic. Some 1.26.40 client-hosted worlds rely on Bedrock-side pickup prediction and send only `AddItemActor` plus local-player `TakeItemActor`; in that verified packet pattern, retain the item actor's decoded stack and predict the normal merge/empty-slot insertion locally. Never infer an item from `TakeItemActor` alone, and always let a later authoritative correction replace predicted state. Read the complete decision tree in `references/version-update-workflow.md`.
+
 ## Xbox friends
 
 Follow the MPSD request schema exactly. If a session enables `connectionRequiredForActiveMembers`, an active member PUT needs a stable per-process connection GUID at `members.me.properties.system.connection`. Keep contract header and template semantics distinct. Do not print authorization headers, XSTS tokens, Minecraft multiplayer tokens, or full response bodies that can contain personal data.
