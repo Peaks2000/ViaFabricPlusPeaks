@@ -30,6 +30,7 @@ import io.jsonwebtoken.io.Serializer;
 import io.netty.util.AttributeKey;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.time.Instant;
@@ -40,18 +41,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import net.raphimc.minecraftauth.bedrock.model.MinecraftMultiplayerToken;
 import net.raphimc.viabedrock.api.util.CryptUtil;
 import net.raphimc.viabedrock.api.util.FNV1;
 import net.raphimc.viabedrock.protocol.storage.AuthData;
 
 /**
- * A local Bedrock identity shared by the NetherNet transport assertion and
- * ViaBedrock's login packet. Client-hosted 1.26.40 worlds reject self-signed
- * logins unless the transport proves possession of the same private key.
+ * A Bedrock identity shared by the NetherNet transport assertion and
+ * ViaBedrock's login packet. It may contain either an authenticated Minecraft
+ * multiplayer token or the local self-signed token used by LAN discovery.
  */
-public final class BedrockLanIdentity {
+public final class BedrockNetherNetIdentity {
 
-    public static final AttributeKey<BedrockLanIdentity> CHANNEL_ATTRIBUTE = AttributeKey.valueOf("viafabricplus-bedrock-lan-identity");
+    public static final AttributeKey<BedrockNetherNetIdentity> CHANNEL_ATTRIBUTE = AttributeKey.valueOf("viafabricplus-bedrock-nethernet-identity");
     private static final String CONNECT_REQUEST = "CONNECTREQUEST ";
     private static final String IDENTITY_ATTRIBUTE = "a=identity:";
     private static final int TOKEN_LIFETIME_DAYS = 365;
@@ -75,12 +77,14 @@ public final class BedrockLanIdentity {
     };
 
     private final AuthData authData;
+    private final String identityProviderDomain;
 
-    private BedrockLanIdentity(final AuthData authData) {
+    private BedrockNetherNetIdentity(final AuthData authData, final String identityProviderDomain) {
         this.authData = authData;
+        this.identityProviderDomain = identityProviderDomain;
     }
 
-    public static BedrockLanIdentity create(final String username) {
+    public static BedrockNetherNetIdentity createSelfSigned(final String username) {
         Objects.requireNonNull(username, "username");
         if (username.isBlank()) {
             throw new IllegalArgumentException("A Bedrock LAN identity requires a non-blank username");
@@ -90,7 +94,7 @@ public final class BedrockLanIdentity {
         final KeyPair sessionKeyPair = CryptUtil.generateEcdsa384KeyPair();
         final String encodedPublicKey = Base64.getEncoder().encodeToString(sessionKeyPair.getPublic().getEncoded());
         final long rawXuid = FNV1.fnv1_64(username.getBytes(StandardCharsets.UTF_8));
-        final String xuid = String.valueOf(Math.abs(rawXuid));
+        final String xuid = Long.toUnsignedString(rawXuid);
         final UUID identity = UUID.nameUUIDFromBytes(("pocket-auth-1-xuid:" + xuid).getBytes(StandardCharsets.UTF_8));
         final String multiplayerToken = Jwts.builder()
             .json(JWT_SERIALIZER)
@@ -113,7 +117,31 @@ public final class BedrockLanIdentity {
         final AuthData authData = new AuthData(multiplayerToken, sessionKeyPair);
         authData.setSelfSignedId(identity);
         authData.setClientRandomId(FNV1.fnv1_64(identity.toString().getBytes(StandardCharsets.UTF_8)));
-        return new BedrockLanIdentity(authData);
+        return new BedrockNetherNetIdentity(authData, "self");
+    }
+
+    public static BedrockNetherNetIdentity createAuthenticated(final MinecraftMultiplayerToken multiplayerToken,
+                                                                final KeyPair sessionKeyPair,
+                                                                final UUID deviceId) {
+        Objects.requireNonNull(multiplayerToken, "multiplayerToken");
+        Objects.requireNonNull(sessionKeyPair, "sessionKeyPair");
+        Objects.requireNonNull(deviceId, "deviceId");
+
+        final String encodedPublicKey = Base64.getEncoder().encodeToString(sessionKeyPair.getPublic().getEncoded());
+        final String tokenPublicKey = multiplayerToken.getParsedToken().getPayload().reqString("cpk");
+        if (!encodedPublicKey.equals(tokenPublicKey)) {
+            throw new IllegalArgumentException("Minecraft multiplayer token is not bound to the current session key");
+        }
+
+        final URI issuer = URI.create(multiplayerToken.getParsedToken().getPayload().reqString("iss"));
+        final String identityProviderDomain = issuer.getHost();
+        if (!"https".equalsIgnoreCase(issuer.getScheme()) || identityProviderDomain == null || identityProviderDomain.isBlank()) {
+            throw new IllegalArgumentException("Minecraft multiplayer token has an invalid issuer");
+        }
+        return new BedrockNetherNetIdentity(
+            new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId),
+            identityProviderDomain
+        );
     }
 
     public AuthData authData() {
@@ -153,7 +181,7 @@ public final class BedrockLanIdentity {
         assertion.addProperty("token", this.authData.getMultiplayerToken());
         assertion.addProperty("fingerprints", signedFingerprints.substring(0, firstDot + 1) + signedFingerprints.substring(lastDot));
         final JsonObject idp = new JsonObject();
-        idp.addProperty("domain", "self");
+        idp.addProperty("domain", this.identityProviderDomain);
         idp.addProperty("protocol", "default");
         final JsonObject identity = new JsonObject();
         identity.add("idp", idp);

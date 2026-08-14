@@ -32,11 +32,22 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.DeserializationException;
 import io.jsonwebtoken.io.Deserializer;
+import io.jsonwebtoken.io.SerializationException;
+import io.jsonwebtoken.io.Serializer;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
 import java.security.PublicKey;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
+import net.raphimc.minecraftauth.bedrock.model.MinecraftMultiplayerToken;
+import net.raphimc.viabedrock.api.util.CryptUtil;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public final class BedrockLanIdentityTest {
+public final class BedrockNetherNetIdentityTest {
 
     private static final String OFFER = "v=0\r\n"
         + "o=- 1 2 IN IP4 127.0.0.1\r\n"
@@ -57,6 +68,21 @@ public final class BedrockLanIdentityTest {
         .getBytes(StandardCharsets.UTF_8);
     private static final Gson GSON = new Gson();
     private static final TypeToken<Map<String, ?>> JWT_MAP_TYPE = new TypeToken<>() {
+    };
+    private static final Serializer<Map<String, ?>> JWT_SERIALIZER = new Serializer<>() {
+        @Override
+        public byte[] serialize(final Map<String, ?> value) throws SerializationException {
+            return GSON.toJson(value).getBytes(StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public void serialize(final Map<String, ?> value, final OutputStream outputStream) throws SerializationException {
+            try {
+                outputStream.write(serialize(value));
+            } catch (final IOException e) {
+                throw new SerializationException("Could not serialize JWT JSON", e);
+            }
+        }
     };
     private static final Deserializer<Map<String, ?>> JWT_DESERIALIZER = new Deserializer<>() {
         @Override
@@ -84,7 +110,7 @@ public final class BedrockLanIdentityTest {
 
     @Test
     public void bindsLoginTokenToNetherNetOffer() {
-        final BedrockLanIdentity identity = BedrockLanIdentity.create("LanPlayer");
+        final BedrockNetherNetIdentity identity = BedrockNetherNetIdentity.createSelfSigned("LanPlayer");
         final String signal = identity.augmentConnectRequest("CONNECTREQUEST 42 " + OFFER);
         final String offer = signal.split(" ", 3)[2];
         final String identityLine = offer.lines().filter(line -> line.startsWith("a=identity:")).findFirst().orElseThrow();
@@ -113,7 +139,7 @@ public final class BedrockLanIdentityTest {
 
     @Test
     public void retainsIdentityForLoginAndDoesNotTouchOtherSignals() {
-        final BedrockLanIdentity identity = BedrockLanIdentity.create("LanPlayer");
+        final BedrockNetherNetIdentity identity = BedrockNetherNetIdentity.createSelfSigned("LanPlayer");
 
         assertSame(identity.authData(), identity.authData());
         assertEquals("CANDIDATEADD 42 candidate", identity.augmentConnectRequest("CANDIDATEADD 42 candidate"));
@@ -123,11 +149,58 @@ public final class BedrockLanIdentityTest {
     }
 
     @Test
-    public void rejectsMalformedIdentityInputs() {
-        assertThrows(NullPointerException.class, () -> BedrockLanIdentity.create(null));
-        assertThrows(IllegalArgumentException.class, () -> BedrockLanIdentity.create("  "));
+    public void bindsAuthenticatedAccountTokenToOfferAndLogin() {
+        final Instant now = Instant.now();
+        final KeyPair sessionKeyPair = CryptUtil.generateEcdsa384KeyPair();
+        final String encodedPublicKey = Base64.getEncoder().encodeToString(sessionKeyPair.getPublic().getEncoded());
+        final String token = Jwts.builder()
+            .json(JWT_SERIALIZER)
+            .signWith(sessionKeyPair.getPrivate(), Jwts.SIG.ES384)
+            .claim("iss", "https://authorization.franchise.minecraft-services.net/")
+            .claim("aud", "api://auth-minecraft-services/multiplayer")
+            .claim("cpk", encodedPublicKey)
+            .claim("xid", "123456789")
+            .claim("xname", "XboxPlayer")
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(now.plus(1, ChronoUnit.HOURS)))
+            .compact();
+        final MinecraftMultiplayerToken multiplayerToken = new MinecraftMultiplayerToken(
+            now.plus(1, ChronoUnit.HOURS).toEpochMilli(),
+            token
+        );
+        final BedrockNetherNetIdentity identity = BedrockNetherNetIdentity.createAuthenticated(
+            multiplayerToken,
+            sessionKeyPair,
+            UUID.randomUUID()
+        );
 
-        final BedrockLanIdentity identity = BedrockLanIdentity.create("LanPlayer");
+        final String offer = identity.augmentConnectRequest("CONNECTREQUEST 42 " + OFFER).split(" ", 3)[2];
+        final String identityLine = offer.lines().filter(line -> line.startsWith("a=identity:")).findFirst().orElseThrow();
+        final JsonObject envelope = JsonParser.parseString(new String(
+            Base64.getDecoder().decode(identityLine.substring("a=identity:".length())),
+            StandardCharsets.UTF_8
+        )).getAsJsonObject();
+        final JsonObject assertion = JsonParser.parseString(envelope.get("assertion").getAsString()).getAsJsonObject();
+
+        assertEquals("authorization.franchise.minecraft-services.net", envelope.getAsJsonObject("idp").get("domain").getAsString());
+        assertEquals(token, assertion.get("token").getAsString());
+        assertEquals(token, identity.authData().getMultiplayerToken());
+        assertSame(sessionKeyPair, identity.authData().getSessionKeyPair());
+
+        final KeyPair unrelatedKeyPair = CryptUtil.generateEcdsa384KeyPair();
+        assertThrows(IllegalArgumentException.class, () -> BedrockNetherNetIdentity.createAuthenticated(
+            multiplayerToken,
+            unrelatedKeyPair,
+            UUID.randomUUID()
+        ));
+    }
+
+    @Test
+    public void rejectsMalformedIdentityInputs() {
+        assertThrows(NullPointerException.class, () -> BedrockNetherNetIdentity.createSelfSigned(null));
+        assertThrows(IllegalArgumentException.class, () -> BedrockNetherNetIdentity.createSelfSigned("  "));
+
+        final BedrockNetherNetIdentity identity = BedrockNetherNetIdentity.createSelfSigned("LanPlayer");
         assertThrows(IllegalArgumentException.class, () -> identity.augmentConnectRequest("CONNECTREQUEST missing-offer"));
         assertThrows(IllegalArgumentException.class, () -> identity.augmentOffer("v=0\r\na=fingerprint:sha-256 AA:BB\r\n"));
         assertThrows(IllegalArgumentException.class, () -> identity.augmentOffer(

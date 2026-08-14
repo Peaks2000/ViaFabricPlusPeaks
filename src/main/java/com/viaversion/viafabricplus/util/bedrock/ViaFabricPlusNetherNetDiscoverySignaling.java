@@ -26,16 +26,6 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
 
     private static final String CONNECT_RESPONSE = "CONNECTRESPONSE ";
     private static final String CANDIDATE_ADD = "CANDIDATEADD ";
-    private final BedrockLanIdentity identity;
-
-    public ViaFabricPlusNetherNetDiscoverySignaling(final BedrockLanIdentity identity) {
-        this.identity = identity;
-    }
-
-    @Override
-    public void sendSignal(final String targetNetworkId, final String data) {
-        super.sendSignal(targetNetworkId, this.identity.augmentConnectRequest(data));
-    }
 
     @Override
     public void setSignalHandler(final long connectionId, final NetherNetSignaling.SignalHandler handler) {

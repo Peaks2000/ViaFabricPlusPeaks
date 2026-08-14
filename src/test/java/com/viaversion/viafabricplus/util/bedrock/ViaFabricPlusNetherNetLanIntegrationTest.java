@@ -37,7 +37,10 @@ public final class ViaFabricPlusNetherNetLanIntegrationTest {
                 .group(eventLoopGroup)
                 .channelFactory(NetherNetChannelFactory.client(
                     new PeerConnectionFactory(),
-                    new ViaFabricPlusNetherNetDiscoverySignaling(BedrockLanIdentity.create("LanIntegrationTest"))
+                    new BedrockNetherNetIdentitySignaling(
+                        new ViaFabricPlusNetherNetDiscoverySignaling(),
+                        BedrockNetherNetIdentity.createSelfSigned("LanIntegrationTest")
+                    )
                 ))
                 .handler(new ChannelInboundHandlerAdapter())
                 .option(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, 20_000)

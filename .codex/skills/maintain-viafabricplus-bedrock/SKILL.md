@@ -35,6 +35,8 @@ Read the references selectively:
    - ViaBedrock mapping data or Java translation.
 5. Read `references/fork-architecture.md` for the relevant files and fork-only behavior.
 
+If Xbox TURN/signaling requests succeed and the next inbound message is `SIGNAL_CONNECT_ERROR`, check whether the outgoing `CONNECTREQUEST` offer carries the authenticated account's `a=identity` assertion. This rejection happens before Bedrock login, so do not patch protocol, crafting, or inventory code for it.
+
 ## Update a Bedrock version
 
 Read `references/version-update-workflow.md` before changing any protocol number, packet field, ViaBedrock revision, or mapping resource.

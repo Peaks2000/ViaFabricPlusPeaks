@@ -22,5 +22,5 @@ fi
 
 echo "Bedrock diagnostic log: $log_file"
 rg --line-number --context 5 --ignore-case \
-    '^\[[0-9]{2}:[0-9]{2}:[0-9]{2}\].*(Bedrock|NetherNet|WebRTC|RakNet|Xbox|MPSD|PlayStatus|RESOURCE_PACK|decoder exception|IndexOutOfBounds|failed to join|ServerIdConflict|NotAuthenticated|ExceptionInInitializerError|NoClassDefFoundError)|Packet Type:|Caused by:.*(IndexOutOfBounds|DecoderException|Load library|NullPointerException)|at .*(viabedrock|PeerConnectionFactory|NativeLoader)' \
+    '^\[[0-9]{2}:[0-9]{2}:[0-9]{2}\].*(Bedrock|NetherNet|WebRTC|RakNet|Xbox|MPSD|PlayStatus|RESOURCE_PACK|decoder exception|IndexOutOfBounds|failed to join|SIGNAL_CONNECT_ERROR|Remote peer sent connect error|ServerIdConflict|NotAuthenticated|ExceptionInInitializerError|NoClassDefFoundError)|Packet Type:|Caused by:.*(IndexOutOfBounds|DecoderException|Load library|NullPointerException)|at .*(viabedrock|PeerConnectionFactory|NativeLoader)' \
     "$log_file" || true

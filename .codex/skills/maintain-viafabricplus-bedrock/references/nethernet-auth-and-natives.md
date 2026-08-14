@@ -4,7 +4,7 @@
 
 1. [Classify the first failure](#classify-the-first-failure)
 2. [WebRTC native packaging](#webrtc-native-packaging)
-3. [LAN identity binding](#lan-identity-binding)
+3. [Transport identity binding](#transport-identity-binding)
 4. [Protocol 2168 versus the LAN-secret change](#protocol-2168-versus-the-lan-secret-change)
 5. [Code ownership](#code-ownership)
 6. [Regression and release checks](#regression-and-release-checks)
@@ -19,6 +19,7 @@ Use the first failure in the connection attempt. NetherNet failures often cascad
 | `NoClassDefFoundError: Could not initialize class PeerConnectionFactory` | Repeated native failure | Find the earlier initializer exception in the same process. Restart after replacing the JAR. |
 | set-local/set-remote SDP error | WebRTC/SDP | Inspect SDP normalization, M152 compatibility, and identity placement. |
 | ICE timeout | Candidate/network path | Inspect candidate families, reachability, filtering, and trickle order. |
+| Xbox signaling succeeds, then `SIGNAL_CONNECT_ERROR` before `CONNECTRESPONSE` | Client offer authentication | Add the authenticated account's transport-bound `a=identity`; this is earlier than Bedrock login. |
 | `ServerIdConflict` | Game login identity | Stop reusing the host/configured Microsoft identity for a LAN guest. |
 | `NotAuthenticated` after a distinct local identity was introduced | Transport/login binding | Reuse one identity object for the offer assertion and login `AuthData`. |
 | `LoginFailed_ClientOld` / `LoginFailed_ServerOld` | Game protocol | Use verified adjacent protocol retry; do not alter authentication as a workaround. |
@@ -50,7 +51,7 @@ Current fork coverage is Linux x86-64 and macOS arm64. When adding a platform:
 
 Do not solve a missing M152 macOS native by adding the published M138 classifier. Java/JNI symbols may appear compatible while SDP behavior regresses to the original iOS failure.
 
-## LAN identity binding
+## Transport identity binding
 
 Keep three concepts distinct:
 
@@ -58,7 +59,9 @@ Keep three concepts distinct:
 - A distinct self-signed LAN guest identity used to avoid colliding with the host's account/player ID.
 - The proof that binds the WebRTC transport to the game-login identity.
 
-For a self-signed LAN guest, create one ECDSA P-384 keypair and one multiplayer token. Store the resulting `BedrockLanIdentity` on the NetherNet channel and reuse its `AuthData` when ViaBedrock creates the game login. Never call the self-signed generator a second time during login.
+Create one `BedrockNetherNetIdentity` per connection and store it on the NetherNet channel. For Xbox/friends, refresh the account's Minecraft multiplayer token before creating the WebRTC channel, require its `cpk` to match the account's P-384 session key, and derive `idp.domain` from the token's HTTPS `iss` host. For direct LAN discovery, create a distinct self-signed P-384 keypair and multiplayer token with `idp.domain` set to `self`. In both cases, reuse the identity's exact `AuthData` when ViaBedrock creates the game login; never refresh or regenerate it between SDP and login.
+
+Apply the identity through `BedrockNetherNetIdentitySignaling`, a decorator around `NetherNetClientSignaling`. This keeps the assertion independent of Xbox JSON-RPC, legacy Xbox WebSocket, and LAN discovery transports. A transport-specific signaling subclass must not be the sole owner of client identity injection.
 
 The outgoing SDP offer needs a session-level `a=identity` attribute. Its base64-decoded envelope is:
 
@@ -100,7 +103,7 @@ Do not invent a random secret, derive one from the network ID, or reuse an Xbox 
 
 ## Code ownership
 
-- ViaFabricPlus owns classifier packaging, platform preflight, LAN-versus-account routing, channel attributes, discovery signaling, and injecting the transport-bound `AuthData` at the Fabric connection boundary.
+- ViaFabricPlus owns classifier packaging, platform preflight, LAN-versus-account routing, channel attributes, client-offer identity decoration across every signaling transport, discovery signaling, and injecting the transport-bound `AuthData` at the Fabric connection boundary.
 - ViaBedrock owns reusable login-chain generation, Bedrock auth fields, packet serialization, and protocol-specific LAN-secret fields once their schema is known.
 - NetworkCompatible/netty-transport-nethernet owns general WebRTC offer/answer and signaling behavior. Carry a small VFP override only while upstream lacks the required client assertion hook.
 
@@ -113,7 +116,8 @@ From the ViaFabricPlus checkout with the sibling ViaBedrock checkout available:
 ```bash
 ./gradlew --include-build ../ViaBedrock compileJava
 ./gradlew --include-build ../ViaBedrock test \
-  --tests com.viaversion.viafabricplus.util.bedrock.BedrockLanIdentityTest \
+  --tests com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentityTest \
+  --tests com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentitySignalingTest \
   --tests com.viaversion.viafabricplus.util.bedrock.WebRtcNativeLibraryTest \
   -I .codex/skills/maintain-viafabricplus-bedrock/scripts/enable-vfp-tests.gradle
 ./gradlew --include-build ../ViaBedrock build
@@ -124,7 +128,7 @@ Then require all of the following:
 - focused authentication, native-resource, signaling, discovery, protocol-wire, inventory, and crafting tests pass;
 - `runClient` reaches the main menu and reports both the isolated stock route and maintained route initialization;
 - starting a NetherNet attempt initializes `PeerConnectionFactory` on the reported client OS;
-- the final main JAR contains `WebRtcNativeLibrary`, `BedrockLanIdentity`, maintained ViaBedrock, and the target native classifier JAR;
+- the final main JAR contains `WebRtcNativeLibrary`, `BedrockNetherNetIdentity`, maintained ViaBedrock, and the target native classifier JAR;
 - the user tests one LAN discovery connection and, when relevant, one Xbox-friend NetherNet connection;
 - an ordinary Bedrock server-list join still uses the isolated stock route;
 - the final JAR size and SHA-256 are recorded.
