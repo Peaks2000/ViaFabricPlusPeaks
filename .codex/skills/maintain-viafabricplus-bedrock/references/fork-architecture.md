@@ -5,7 +5,7 @@
 - Upstream source remote: `ViaVersion/ViaFabricPlus`.
 - Dedicated Bedrock fork: maintained separately because upstream ViaFabricPlus is removing Bedrock support.
 - ViaBedrock is resolved as a Gradle VCS dependency in `settings.gradle.kts`; the selected maintained branch is in `build.gradle.kts`. At the time this reference was written it is `peaks/1.26.40-fixes` from `Peaks2000/ViaBedrock`.
-- Vendored `webrtc-java-m152test` artifacts under `vendor/maven/` provide the NetherNet/WebRTC runtime and native library needed by iOS-hosted LAN worlds.
+- Vendored `webrtc-java-m152test` artifacts under `vendor/maven/` provide the NetherNet/WebRTC runtime and platform natives needed by iOS-hosted LAN worlds. The M152 Java and native classifiers must come from one JNI commit; see `nethernet-auth-and-natives.md`.
 - `StockViaBedrockRuntime` loads the embedded stock 1.26.30 ViaBedrock JAR in a child-first class loader. Ordinary server-list connections use that runtime. Dedicated LAN/friends `ServerData` entries carry their maintained Bedrock wire protocol through `IServerData`; `MixinConnectScreen_1` uses that durable marker to select and prepare the maintained route on every attempt, including Peakeor/manual reconnects. Do not replace this with one-shot global route identity. This separation is intentional and must remain within one Prism instance.
 
 ## User-facing flow
@@ -21,6 +21,7 @@
 - Xbox connection selection prefers a public direct RakNet address, then a private direct address, while retaining NetherNet connection types.
 - `NetherNetJsonRpcAddress` and `ViaFabricPlusNetherNetXboxRpcSignaling` cover Xbox friend signaling.
 - `ViaFabricPlusNetherNetDiscoverySignaling` and `NetherNetDiscoveryPacketFixer` cover LAN discovery signaling, malformed announced lengths, candidate filtering, SDP normalization, and separately trickled ICE candidates.
+- `BedrockLanIdentity` creates one local self-signed identity whose key/token are shared by the outgoing NetherNet `a=identity` assertion and ViaBedrock's login `AuthData`. `WebRtcNativeLibrary` performs a preflight resource check before JNI initializes.
 - Connection/channel integration lives under `injection/mixin/core/connection/bedrock/`, especially `MixinNetherNetClientChannel`, `MixinNetherNetDiscovery`, `MixinConnection`, and the address/name-resolver mixins.
 
 ## Protocol and translation compatibility
@@ -37,7 +38,9 @@
 
 - Xbox HTTP 400 mentioning `connectionRequiredForActiveMembers`: inspect `xboxJoinBody` and the stable connection GUID.
 - `PlayStatus LoginFailed_ClientOld` / `LoginFailed_ServerOld`: inspect protocol discovery and the bounded retry; do not remove the check.
-- `ServerIdConflict` (disconnect reason 44) when joining a LAN world hosted by another device on the configured Microsoft account: do not inject that account's `AuthData` into the LAN connection. Let ViaBedrock generate its self-signed local identity so the host and guest have distinct player IDs. Keep authenticated identity for Xbox friends, Realms, and ordinary servers, and persist the choice on `ServerData` so reconnects do not regress it.
+- `ExceptionInInitializerError` at `PeerConnectionFactory`, `Load library 'webrtc-java' failed`, and `Files.copy` throwing `NullPointerException`: the expected platform native resource is absent. Inspect the mod list and final nested JARs, then add the matching M152 classifier from the same JNI build. A later `NoClassDefFoundError: Could not initialize class PeerConnectionFactory` is only a repeat of the first failure.
+- `ServerIdConflict` (disconnect reason 44) when joining a LAN world hosted by another device on the configured Microsoft account: do not inject that account's `AuthData` into the LAN connection. Create a distinct local self-signed identity for LAN while retaining authenticated identity for Xbox friends, Realms, and ordinary servers. Persist the choice on `ServerData` so reconnects do not regress it.
+- `NotAuthenticated` after switching LAN to a local identity: ensure the same keypair and multiplayer token are used in both the offer's session-level `a=identity` assertion and ViaBedrock's login `AuthData`. Creating the two identities independently proves possession of different keys and is rejected. Verify the token signature, `cpk`, canonical fingerprint payload, detached JWS, and placement before the first `m=` line.
 - `RESOURCE_PACKS_INFO`, `RESOURCE_PACK_PUSH`, `LongLE`, and an index overrun: verify the resource-pack array count type first.
 - `ResourcePackClientResponse`, packet 8, and `wrong const value for member "Response Type"`: for protocol 2168 verify the leading status is an unsigned varint in `0-3`, the next field is the matching lowercase response-name string, and only `downloading` carries a varint-counted pack-ID array. Cloudburst's `ResourcePackClientResponseSerializer_v2168` is the known-good primary implementation.
 - Java `ClientboundAddEntityPacket was larger than I expected` from `EntityPackets` line containing `wrapper.send`, especially with about 348 trailing bytes: inspect Bedrock `AddItemActor` packet 15. In 1.26.40 it is Cereal and its item is `NetworkItemStackDescriptor`; use `ItemRewriter.newItemType()`.

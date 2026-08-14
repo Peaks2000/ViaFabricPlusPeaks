@@ -8,6 +8,8 @@
 
 For protocol 2168/1.26.40, use ViaBedrock's merged `Update to 1.26.40` PR #389 and its `update/1.26.40` branch as the official baseline. Compare the maintained `peaks/1.26.40-fixes` branch from that merge commit forward; do not replace already-native support with a second parallel implementation.
 
+Do not trust a changelog filename more than its body. Mojang's current `changelog_2168_07_07_26.md` header says protocol 2169. Its LAN-secret requirement and packet list must be gated as 2169 evidence unless a protocol-2168 host trace independently proves otherwise. Keep transport identity binding, game-login authentication, and a future LAN-secret field as separate hypotheses.
+
 ## Compare schemas
 
 Use primary technical sources when browsing: Mojang/Microsoft documentation where it specifies the field, the checked-out ViaBedrock source, or the canonical protocol-data repository used by the implementation. Compare the last working and target schemas field by field.

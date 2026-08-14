@@ -31,11 +31,12 @@ import com.viaversion.viafabricplus.injection.access.core.bedrock.IEventLoopGrou
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.netty.RakNetPingEncapsulationCodec;
 import com.viaversion.viafabricplus.save.SaveManager;
+import com.viaversion.viafabricplus.util.bedrock.BedrockLanIdentity;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
-import com.viaversion.viafabricplus.util.bedrock.BedrockLanIdentity;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetDiscoverySignaling;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetXboxRpcSignaling;
+import com.viaversion.viafabricplus.util.bedrock.WebRtcNativeLibrary;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import dev.kastle.netty.channel.nethernet.NetherNetChannelFactory;
@@ -170,6 +171,7 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     }
 
     private static ChannelFactory<NetherNetClientChannel> configuredNetherNetClientFactory(final NetherNetClientSignaling signaling, final BedrockLanIdentity identity) {
+        WebRtcNativeLibrary.ensureAvailable();
         final ChannelFactory<NetherNetClientChannel> factory = NetherNetChannelFactory.client(new PeerConnectionFactory(), signaling);
         return () -> {
             final NetherNetClientChannel channel = factory.newChannel();

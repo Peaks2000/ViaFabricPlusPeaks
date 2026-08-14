@@ -1,0 +1,7 @@
+gradle.projectsEvaluated {
+    allprojects {
+        tasks.withType(Test).configureEach {
+            enabled = true
+        }
+    }
+}

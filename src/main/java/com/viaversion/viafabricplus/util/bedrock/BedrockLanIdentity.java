@@ -38,6 +38,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import net.raphimc.viabedrock.api.util.CryptUtil;
 import net.raphimc.viabedrock.api.util.FNV1;
@@ -52,7 +53,11 @@ public final class BedrockLanIdentity {
 
     public static final AttributeKey<BedrockLanIdentity> CHANNEL_ATTRIBUTE = AttributeKey.valueOf("viafabricplus-bedrock-lan-identity");
     private static final String CONNECT_REQUEST = "CONNECTREQUEST ";
+    private static final String IDENTITY_ATTRIBUTE = "a=identity:";
+    private static final int TOKEN_LIFETIME_DAYS = 365;
     private static final Gson GSON = new Gson();
+    // Supplying the serializer avoids JJWT's ServiceLoader, which is not
+    // reliable when Fabric has isolated and maintained dependency versions.
     private static final Serializer<Map<String, ?>> JWT_SERIALIZER = new Serializer<>() {
         @Override
         public byte[] serialize(final Map<String, ?> value) throws SerializationException {
@@ -76,6 +81,11 @@ public final class BedrockLanIdentity {
     }
 
     public static BedrockLanIdentity create(final String username) {
+        Objects.requireNonNull(username, "username");
+        if (username.isBlank()) {
+            throw new IllegalArgumentException("A Bedrock LAN identity requires a non-blank username");
+        }
+
         final Instant now = Instant.now();
         final KeyPair sessionKeyPair = CryptUtil.generateEcdsa384KeyPair();
         final String encodedPublicKey = Base64.getEncoder().encodeToString(sessionKeyPair.getPublic().getEncoded());
@@ -97,7 +107,7 @@ public final class BedrockLanIdentity {
             .claim("xid", xuid)
             .claim("xname", username)
             .issuedAt(Date.from(now))
-            .expiration(Date.from(now.plus(365, ChronoUnit.DAYS)))
+            .expiration(Date.from(now.plus(TOKEN_LIFETIME_DAYS, ChronoUnit.DAYS)))
             .compact();
 
         final AuthData authData = new AuthData(multiplayerToken, sessionKeyPair);
@@ -122,7 +132,8 @@ public final class BedrockLanIdentity {
     }
 
     String augmentOffer(final String offer) {
-        if (offer.contains("\na=identity:") || offer.startsWith("a=identity:")) {
+        Objects.requireNonNull(offer, "offer");
+        if (offer.contains("\n" + IDENTITY_ATTRIBUTE) || offer.startsWith(IDENTITY_ATTRIBUTE)) {
             return offer;
         }
 
@@ -147,12 +158,12 @@ public final class BedrockLanIdentity {
         final JsonObject identity = new JsonObject();
         identity.add("idp", idp);
         identity.addProperty("assertion", assertion.toString());
-        final String identityLine = "a=identity:" + Base64.getEncoder().encodeToString(identity.toString().getBytes(StandardCharsets.UTF_8));
+        final String identityLine = IDENTITY_ATTRIBUTE + Base64.getEncoder().encodeToString(identity.toString().getBytes(StandardCharsets.UTF_8));
 
         final String lineEnding = offer.contains("\r\n") ? "\r\n" : "\n";
         final int mediaLine = firstMediaLine(offer);
         if (mediaLine < 0) {
-            return offer + (offer.endsWith(lineEnding) ? "" : lineEnding) + identityLine + lineEnding;
+            throw new IllegalArgumentException("NetherNet offer has no media section");
         }
         return offer.substring(0, mediaLine) + identityLine + lineEnding + offer.substring(mediaLine);
     }
@@ -169,13 +180,18 @@ public final class BedrockLanIdentity {
             if (separator <= 0 || separator == value.length() - 1) {
                 throw new IllegalArgumentException("Malformed NetherNet fingerprint attribute");
             }
+            final String algorithm = value.substring(0, separator);
+            final String digest = value.substring(separator + 1).trim();
+            if (!algorithm.matches("[A-Za-z0-9-]+") || !digest.matches("[0-9A-Fa-f:]+")) {
+                throw new IllegalArgumentException("Malformed NetherNet fingerprint value");
+            }
             if (found) {
                 fingerprints.append(',');
             }
             fingerprints.append("{\"algorithm\":\"")
-                .append(value, 0, separator)
+                .append(algorithm)
                 .append("\",\"digest\":\"")
-                .append(value.substring(separator + 1).trim())
+                .append(digest)
                 .append("\"}");
             found = true;
         }

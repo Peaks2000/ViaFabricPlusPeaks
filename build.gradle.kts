@@ -73,6 +73,8 @@ dependencies {
 includeTransitiveJijDependencies()
 
 fun configureBedrockDependencies() {
+    val webrtcVersion = "1.0.4-m152"
+
     dependencies {
         jij("net.raphimc:MinecraftAuth:5.0.1") {
             exclude(group = "com.google.code.gson", module = "gson")
@@ -85,8 +87,9 @@ fun configureBedrockDependencies() {
             exclude(group = "org.bitbucket.b_c", module = "jose4j")
             exclude(group = "dev.kastle.webrtc", module = "webrtc-java")
         }
-        jij("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152")
-        jij("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:linux-x86_64")
+        jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion")
+        jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion:linux-x86_64")
+        jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion:macos-aarch64")
     }
 }
 

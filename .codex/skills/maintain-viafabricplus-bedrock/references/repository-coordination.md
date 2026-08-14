@@ -30,6 +30,8 @@ Use `gh repo clone OWNER/REPO <path>` for missing checkouts and `gh repo view OW
 
 Never add launcher logs, account data, tokens, build directories, Gradle caches, or generated JARs to Git. Do not push, open pull requests, create releases, or change remote sessions without user authorization.
 
+Vendored native dependencies are the exception to the generated-binary rule only when the repository already owns that reproducibility strategy and the user authorizes the code change. Record the upstream repository, exact commit/workflow run, original SHA-256, supported classifier, and license/source context. Never mix a Java JNI wrapper from one commit with native classifiers from another.
+
 ## Develop across the dependency boundary
 
 Make and validate ViaBedrock changes in the ViaBedrock checkout first. During the inner loop, run ViaFabricPlus tasks with the sibling checkout substituted explicitly:
@@ -61,6 +63,8 @@ diff -ru --exclude=.git \
 ```
 
 Validate both directories with the skill creator's `quick_validate.py`. Test changed scripts directly. Keep task-specific protocol knowledge in the skill update that accompanies the code, but avoid copying source code or build artifacts into the skill repository.
+
+After synchronization, update the installed copy under the active Codex skills directory when it is writable or the user authorizes that local change. Validate the canonical, project-mirror, and installed directories independently; an installed stale copy can silently omit new repository rules in the next maintenance session.
 
 ## Commit and push safely
 
