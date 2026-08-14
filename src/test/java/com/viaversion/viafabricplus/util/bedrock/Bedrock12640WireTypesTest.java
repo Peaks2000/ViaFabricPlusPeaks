@@ -142,6 +142,33 @@ public final class Bedrock12640WireTypesTest {
         ));
     }
 
+    @Test
+    public void playerCraftingGridPlacementMatchesProtocol2168CerealLayout() {
+        final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
+            new InventoryStackRequest.Place(1,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, 7),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CraftingInputContainer, null), 28, 0)
+            )
+        ));
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            new InventoryStackRequestType(id -> null).write(buffer, request);
+
+            assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, buffer.readUnsignedByte());
+            assertEquals(1, buffer.readUnsignedByte());
+            assertSlot(buffer, ContainerEnumName.CursorContainer, 0, 7);
+            assertSlot(buffer, ContainerEnumName.CraftingInputContainer, 28, 0);
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(-1, buffer.readIntLE());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
     private static void assertSlot(final ByteBuf buffer, final ContainerEnumName container, final int slot, final int stackNetworkId) {
         assertEquals(container, ContainerEnumName.getByValue(buffer.readByte()));
         assertEquals(false, buffer.readBoolean());

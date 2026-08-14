@@ -62,6 +62,8 @@ If Java reports that a translated packet was "larger than expected", inspect the
 
 For a pickup animation with a stale Java inventory, trace authoritative inventory packets before changing refresh logic. Some 1.26.40 client-hosted worlds rely on Bedrock-side pickup prediction and send only `AddItemActor` plus local-player `TakeItemActor`; in that verified packet pattern, retain the item actor's decoded stack and predict the normal merge/empty-slot insertion locally. Never infer an item from `TakeItemActor` alone, and always let a later authoritative correction replace predicted state. Read the complete decision tree in `references/version-update-workflow.md`.
 
+For 1.26.40 crafting, distinguish input placement from result crafting. Map Java's player crafting inputs 1-4 to player-only UI/HUD slots 28-31 and crafting-table inputs 1-9 to slots 32-40. After an accepted input click, predict output slot 50 from retained `CraftingData` and refresh the complete Java container; some client-hosted worlds accept the input request without sending an output preview. Read the request layout, recipe-matching rules, and regression requirements in `references/version-update-workflow.md`.
+
 ## Xbox friends
 
 Follow the MPSD request schema exactly. If a session enables `connectionRequiredForActiveMembers`, an active member PUT needs a stable per-process connection GUID at `members.me.properties.system.connection`. Keep contract header and template semantics distinct. Do not print authorization headers, XSTS tokens, Minecraft multiplayer tokens, or full response bodies that can contain personal data.
