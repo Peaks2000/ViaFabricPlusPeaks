@@ -45,4 +45,8 @@ public interface IServerData {
 
     void viaFabricPlus$setUseBedrockAccount(final boolean useBedrockAccount);
 
+    String viaFabricPlus$clientHostedNonce();
+
+    void viaFabricPlus$setClientHostedNonce(final String nonce);
+
 }

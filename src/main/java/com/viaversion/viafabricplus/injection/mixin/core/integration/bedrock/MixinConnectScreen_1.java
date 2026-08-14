@@ -59,10 +59,14 @@ public abstract class MixinConnectScreen_1 {
 
         if (ProtocolTranslator.isBedrock()) {
             final BedrockAuthManager bedrockSession = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
-            final boolean useBedrockAccount = ((IServerData) this.val$server).viaFabricPlus$useBedrockAccount();
+            final IServerData serverData = (IServerData) this.val$server;
+            final boolean useBedrockAccount = serverData.viaFabricPlus$useBedrockAccount();
+            final String clientHostedNonce = serverData.viaFabricPlus$clientHostedNonce();
             final BedrockNetherNetIdentity netherNetIdentity = connection.getChannel().attr(BedrockNetherNetIdentity.CHANNEL_ATTRIBUTE).get();
             if (netherNetIdentity != null) {
-                connection.put(netherNetIdentity.authData());
+                final AuthData authData = netherNetIdentity.authData();
+                authData.setClientHostedNonce(clientHostedNonce);
+                connection.put(authData);
                 ViaFabricPlusImpl.INSTANCE.getLogger().info(
                     useBedrockAccount
                         ? "Using the transport-bound authenticated Bedrock identity for the NetherNet world"
@@ -74,9 +78,14 @@ public abstract class MixinConnectScreen_1 {
                 final UUID deviceId = bedrockSession.getDeviceId();
 
                 if (StockViaBedrockRuntime.isStock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
+                    if (clientHostedNonce != null) {
+                        throw new IOException("Client-hosted nonce authentication is only available on the maintained Bedrock route");
+                    }
                     StockViaBedrockRuntime.putAuthData(connection, multiplayerToken.getToken(), sessionKeyPair, deviceId);
                 } else {
-                    connection.put(new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId));
+                    final AuthData authData = new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId);
+                    authData.setClientHostedNonce(clientHostedNonce);
+                    connection.put(authData);
                 }
             } else if (!useBedrockAccount) {
                 ViaFabricPlusImpl.INSTANCE.getLogger().info("Using a local self-signed Bedrock identity for the LAN world");

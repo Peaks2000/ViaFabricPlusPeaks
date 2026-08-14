@@ -5,7 +5,7 @@
 1. [Classify the first failure](#classify-the-first-failure)
 2. [WebRTC native packaging](#webrtc-native-packaging)
 3. [Transport identity binding](#transport-identity-binding)
-4. [Protocol 2168 versus the LAN-secret change](#protocol-2168-versus-the-lan-secret-change)
+4. [Client-hosted session nonce](#client-hosted-session-nonce)
 5. [Code ownership](#code-ownership)
 6. [Regression and release checks](#regression-and-release-checks)
 
@@ -22,6 +22,7 @@ Use the first failure in the connection attempt. NetherNet failures often cascad
 | Xbox signaling succeeds, then `SIGNAL_CONNECT_ERROR` before `CONNECTRESPONSE` | Client offer authentication | Add the authenticated account's transport-bound `a=identity`; this is earlier than Bedrock login. |
 | `ServerIdConflict` | Game login identity | Stop reusing the host/configured Microsoft identity for a LAN guest. |
 | `NotAuthenticated` after a distinct local identity was introduced | Transport/login binding | Reuse one identity object for the offer assertion and login `AuthData`. |
+| `NonceMissing` after MPSD membership and signaling succeed | Client-hosted game login | Resolve the joining XUID's MPSD nonce and put it in the signed client-data `Nonce` claim. |
 | `LoginFailed_ClientOld` / `LoginFailed_ServerOld` | Game protocol | Use verified adjacent protocol retry; do not alter authentication as a workaround. |
 
 Ignore unrelated rendering, shader, resource-pack metadata, Realms HTTP, and optional narrator warnings unless they abort startup before ViaBedrock initializes.
@@ -88,23 +89,29 @@ Fabric may expose more than one JJWT implementation through isolated runtimes. A
 
 Never log the multiplayer token, assertion envelope, authorization header, private key, device ID, XUID, Xbox session body, or full SDP. Safe logs may state that a transport-bound local identity was selected.
 
-## Protocol 2168 versus the LAN-secret change
+## Client-hosted session nonce
 
 Mojang's repository currently contains a file named `changelog_2168_07_07_26.md`, but its document header states network protocol 2169. The document says a LAN secret is required for self-signed authentication on client-hosted games. Do not assume that note applies to protocol 2168 merely because of the filename, and do not rename the SDP identity binding as a LAN-secret implementation.
 
-If a real host still returns `NotAuthenticated` after native loading and cryptographic identity binding are proven:
+Runtime evidence can establish the behavior independently of that ambiguous filename. A client-hosted protocol-2168 world has been observed returning `NonceMissing` only after MPSD membership, authenticated NetherNet signaling, and transport/login identity binding all succeeded. In that case, use this lifecycle:
 
-1. Capture its game protocol from RakNet/Xbox/login evidence.
-2. If it is 2169, update the codec/schema first and locate the verified source of the LAN secret.
-3. Capture a vanilla discovery/signaling/login trace or authoritative schema showing where the secret originates and how it is carried or derived.
-4. Implement it in the lowest owning layer and add a byte-level or cryptographic regression test.
+1. Join the advertised Xbox MPSD session with `members.me`, including the active member's XUID and the stable per-process connection GUID.
+2. Treat the successful membership PUT as asynchronous host coordination, not proof that the nonce already exists.
+3. Inspect the PUT response, then poll the same session resource for a bounded interval until `properties.custom.nonces[<joining-xuid>]` is a non-empty JSON string. Match the exact joining XUID; never select the first map entry.
+4. Keep the nonce ephemeral. Do not save it in Minecraft's server-list NBT, account storage, launcher logs, exception messages, or Git fixtures.
+5. Carry it through the selected `BedrockWorld.Connection` and transient `ServerData` into the exact `AuthData` bound to the NetherNet channel.
+6. Add it as the `Nonce` claim when ViaBedrock signs the client/skin data JWT. If a cached skin JWT exists and the nonce changes, invalidate and regenerate that JWT.
+7. Keep the normal Minecraft multiplayer token in outer `AuthenticationInfo.Token` and keep its existing Full-versus-SelfSigned calculation. The nonce is not a replacement bearer token.
+8. Preserve the nonce on verified adjacent-protocol retries for the same joined MPSD membership. Resolve a fresh value after a new membership join.
 
-Do not invent a random secret, derive one from the network ID, or reuse an Xbox token without evidence. Those approaches can hide the real version mismatch and weaken authentication.
+The source split is intentional: ViaFabricPlus owns Xbox membership, polling, secret lifetime, and connection propagation; ViaBedrock owns the signed client-data `Nonce` claim. Add tests for exact-XUID selection and rejection of missing, non-string, blank, or oversized values. Do not use a live nonce as a fixture.
+
+Do not invent a random secret, derive one from the network ID, substitute the nonce for the multiplayer token, or use the configured account's host identity. These approaches respectively fail host validation, regress Xbox authentication, or revive `ServerIdConflict`.
 
 ## Code ownership
 
-- ViaFabricPlus owns classifier packaging, platform preflight, LAN-versus-account routing, channel attributes, client-offer identity decoration across every signaling transport, discovery signaling, and injecting the transport-bound `AuthData` at the Fabric connection boundary.
-- ViaBedrock owns reusable login-chain generation, Bedrock auth fields, packet serialization, and protocol-specific LAN-secret fields once their schema is known.
+- ViaFabricPlus owns classifier packaging, platform preflight, LAN-versus-account routing, Xbox MPSD nonce retrieval and in-memory propagation, channel attributes, client-offer identity decoration across every signaling transport, discovery signaling, and injecting the transport-bound `AuthData` at the Fabric connection boundary.
+- ViaBedrock owns reusable login-chain generation, Bedrock auth fields, the signed client-data `Nonce` claim, packet serialization, and protocol-specific authentication fields.
 - NetworkCompatible/netty-transport-nethernet owns general WebRTC offer/answer and signaling behavior. Carry a small VFP override only while upstream lacks the required client assertion hook.
 
 Avoid implementing the same assertion in both VFP signaling and NetworkCompatible. If upstream adds an identity provider API, migrate the VFP code to it and keep only route-specific identity selection.

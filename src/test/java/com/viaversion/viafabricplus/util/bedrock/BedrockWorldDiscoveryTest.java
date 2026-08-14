@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class BedrockWorldDiscoveryTest {
@@ -83,6 +84,40 @@ public final class BedrockWorldDiscoveryTest {
         assertEquals("123456789", me.getAsJsonObject("constants").getAsJsonObject("system").get("xuid").getAsString());
         assertEquals(connectionId.toString(), me.getAsJsonObject("properties").getAsJsonObject("system").get("connection").getAsString());
         assertEquals(true, me.getAsJsonObject("properties").getAsJsonObject("system").get("active").getAsBoolean());
+    }
+
+    @Test
+    public void resolvesClientHostedNonceForJoinedXuid() {
+        final JsonObject nonces = new JsonObject();
+        nonces.addProperty("123456789", "0123456789abcdef");
+        final JsonObject custom = new JsonObject();
+        custom.add("nonces", nonces);
+        final JsonObject properties = new JsonObject();
+        properties.add("custom", custom);
+        final JsonObject session = new JsonObject();
+        session.add("properties", properties);
+
+        assertEquals("0123456789abcdef", BedrockWorldDiscovery.sessionNonce(session, "123456789"));
+        assertNull(BedrockWorldDiscovery.sessionNonce(session, "987654321"));
+    }
+
+    @Test
+    public void rejectsMalformedClientHostedNonce() {
+        final JsonObject nonces = new JsonObject();
+        nonces.addProperty("numeric", 1234);
+        nonces.addProperty("blank", "   ");
+        nonces.addProperty("oversized", "x".repeat(1_025));
+        final JsonObject custom = new JsonObject();
+        custom.add("nonces", nonces);
+        final JsonObject properties = new JsonObject();
+        properties.add("custom", custom);
+        final JsonObject session = new JsonObject();
+        session.add("properties", properties);
+
+        assertNull(BedrockWorldDiscovery.sessionNonce(session, "numeric"));
+        assertNull(BedrockWorldDiscovery.sessionNonce(session, "blank"));
+        assertNull(BedrockWorldDiscovery.sessionNonce(session, "oversized"));
+        assertNull(BedrockWorldDiscovery.sessionNonce(new JsonObject(), "missing"));
     }
 
     @Test

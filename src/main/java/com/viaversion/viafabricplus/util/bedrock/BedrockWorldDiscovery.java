@@ -68,6 +68,8 @@ public final class BedrockWorldDiscovery {
     private static final byte[] RAKNET_MAGIC = ByteBufUtil.decodeHexDump("00ffff00fefefefefdfdfdfd12345678");
     private static final int XBOX_CONTRACT_VERSION = 107;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(12);
+    private static final Duration CLIENT_HOSTED_NONCE_TIMEOUT = Duration.ofSeconds(10);
+    private static final long CLIENT_HOSTED_NONCE_POLL_MILLIS = 250L;
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).build();
     private static final UUID XBOX_CONNECTION_ID = UUID.randomUUID();
     private static final Object LAN_LOCK = new Object();
@@ -161,16 +163,21 @@ public final class BedrockWorldDiscovery {
         }
     }
 
-    public static void joinXboxSession(final BedrockAuthManager account, final String sessionName) throws IOException, InterruptedException {
+    public static String joinXboxSession(final BedrockAuthManager account, final String sessionName) throws IOException, InterruptedException {
         if (sessionName == null || sessionName.isBlank()) {
-            return;
+            throw new IllegalArgumentException("Xbox session name must not be blank");
         }
 
-        final JsonObject body = xboxJoinBody(account.getMinecraftMultiplayerToken().getUpToDate().getXuid(), XBOX_CONNECTION_ID);
+        final String xuid = account.getMinecraftMultiplayerToken().getUpToDate().getXuid();
+        if (xuid == null || xuid.isBlank()) {
+            throw new IOException("Minecraft multiplayer token did not contain an Xbox user ID");
+        }
+        final JsonObject body = xboxJoinBody(xuid, XBOX_CONNECTION_ID);
 
         final String authorization = account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader();
+        final URI sessionUri = xboxSessionUri(sessionName);
         final HttpResponse<String> response = HTTP_CLIENT.send(HttpRequest.newBuilder()
-            .uri(xboxSessionUri(sessionName))
+            .uri(sessionUri)
             .timeout(REQUEST_TIMEOUT)
             .header("Authorization", authorization)
             .header("x-xbl-contract-version", Integer.toString(XBOX_CONTRACT_VERSION))
@@ -180,6 +187,36 @@ public final class BedrockWorldDiscovery {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new IOException("Could not join Xbox multiplayer session: HTTP " + response.statusCode() + " - " + summarizeResponse(response.body()));
         }
+
+        String nonce = sessionNonce(parseJsonObject(response.body()), xuid);
+        final long deadline = System.nanoTime() + CLIENT_HOSTED_NONCE_TIMEOUT.toNanos();
+        while (nonce == null && System.nanoTime() < deadline) {
+            Thread.sleep(CLIENT_HOSTED_NONCE_POLL_MILLIS);
+            final JsonObject session = sendJson(HttpRequest.newBuilder()
+                .uri(sessionUri)
+                .timeout(REQUEST_TIMEOUT)
+                .header("Authorization", authorization)
+                .header("x-xbl-contract-version", Integer.toString(XBOX_CONTRACT_VERSION))
+                .GET()
+                .build());
+            nonce = sessionNonce(session, xuid);
+        }
+        if (nonce == null) {
+            throw new IOException("Xbox multiplayer session did not issue a client-hosted nonce within " + CLIENT_HOSTED_NONCE_TIMEOUT.toSeconds() + " seconds");
+        }
+        return nonce;
+    }
+
+    static String sessionNonce(final JsonObject session, final String xuid) {
+        final JsonObject properties = object(session, "properties");
+        final JsonObject custom = properties != null ? object(properties, "custom") : null;
+        final JsonObject nonces = custom != null ? object(custom, "nonces") : null;
+        final JsonElement value = nonces != null ? nonces.get(xuid) : null;
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+            return null;
+        }
+        final String nonce = value.getAsString();
+        return !nonce.isBlank() && nonce.length() <= 1_024 ? nonce : null;
     }
 
     static JsonObject xboxJoinBody(final String xuid, final UUID connectionId) {
@@ -472,6 +509,18 @@ public final class BedrockWorldDiscovery {
             throw new IOException("Xbox Live request failed with HTTP " + response.statusCode());
         }
         return JsonParser.parseString(response.body()).getAsJsonObject();
+    }
+
+    private static JsonObject parseJsonObject(final String body) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        try {
+            final JsonElement value = JsonParser.parseString(body);
+            return value.isJsonObject() ? value.getAsJsonObject() : null;
+        } catch (final RuntimeException ignored) {
+            return null;
+        }
     }
 
     private static JsonArray array(final JsonObject object, final String name) {

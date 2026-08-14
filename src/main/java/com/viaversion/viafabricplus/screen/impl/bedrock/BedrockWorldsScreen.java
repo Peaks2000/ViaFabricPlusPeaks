@@ -165,20 +165,23 @@ public final class BedrockWorldsScreen extends VFPScreen {
         if (world.source() == BedrockWorld.Source.XBOX_FRIEND && account != null && world.connection().xboxSessionName() != null) {
             this.joinButton.active = false;
             this.setupSubtitle(Component.literal("Joining Xbox multiplayer session..."));
-            CompletableFuture.runAsync(() -> {
+            CompletableFuture.supplyAsync(() -> {
                 try {
-                    BedrockWorldDiscovery.joinXboxSession(account, world.connection().xboxSessionName());
-                } catch (final IOException | InterruptedException throwable) {
+                    return BedrockWorldDiscovery.joinXboxSession(account, world.connection().xboxSessionName());
+                } catch (final InterruptedException throwable) {
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(throwable);
+                } catch (final IOException throwable) {
                     throw new CompletionException(throwable);
                 }
-            }, Util.nonCriticalIoPool()).whenComplete((_, throwable) -> Minecraft.getInstance().execute(() -> {
+            }, Util.nonCriticalIoPool()).whenComplete((clientHostedNonce, throwable) -> Minecraft.getInstance().execute(() -> {
                 if (throwable != null) {
                     ViaFabricPlusImpl.INSTANCE.getLogger().error("Failed to join Xbox multiplayer session", throwable);
                     this.setupSubtitle(Component.literal("Could not join the Xbox multiplayer session"));
                     this.joinButton.active = true;
                 } else {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Joined Xbox multiplayer session; starting game connection");
-                    this.connect(world);
+                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Joined Xbox multiplayer session and received its client-hosted nonce; starting game connection");
+                    this.connect(world.withConnection(world.connection().withClientHostedNonce(clientHostedNonce)));
                 }
             }));
             return;
@@ -201,10 +204,10 @@ public final class BedrockWorldsScreen extends VFPScreen {
         ViaFabricPlusImpl.INSTANCE.getLogger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), protocolVersion);
         final BedrockWorld.Connection connection = world.connection();
         switch (connection.type()) {
-            case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest, protocolVersion, world.useBedrockAccount());
-            case NETHERNET -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetAddress(connection.address()), protocolVersion, world.useBedrockAccount());
-            case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address(), connection.signalingId()), protocolVersion, world.useBedrockAccount());
-            case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress(), protocolVersion, world.useBedrockAccount());
+            case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest, protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
+            case NETHERNET -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetAddress(connection.address()), protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
+            case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address(), connection.signalingId()), protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
+            case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress(), protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
         }
     }
 

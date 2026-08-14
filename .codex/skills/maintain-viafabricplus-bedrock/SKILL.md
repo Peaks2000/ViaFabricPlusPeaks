@@ -16,7 +16,7 @@ Read `references/repository-coordination.md` before cloning, branching, changing
 Read the references selectively:
 
 - Read `references/fork-architecture.md` before changing routing, discovery, authentication, transport, or stock-runtime isolation.
-- Read `references/nethernet-auth-and-natives.md` for iOS NetherNet, `PeerConnectionFactory`, JNI/native loading, SDP `a=identity`, `ServerIdConflict`, or `NotAuthenticated` failures.
+- Read `references/nethernet-auth-and-natives.md` for iOS NetherNet, `PeerConnectionFactory`, JNI/native loading, SDP `a=identity`, `ServerIdConflict`, `NotAuthenticated`, or `NonceMissing` failures.
 - Read `references/version-update-workflow.md` before changing a protocol number, packet field, serializer, mapping resource, or ViaBedrock revision.
 
 ## Start with evidence
@@ -50,7 +50,7 @@ Treat these identifiers separately:
 
 When the server returns `LoginFailed_ClientOld` or `LoginFailed_ServerOld`, add only verified adjacent supported protocols to `BedrockProtocolCompatibility`. Never loop over arbitrary integers. A successful login version check does not prove subsequent packet layouts are compatible.
 
-Do not infer a protocol from a changelog filename. Mojang's file named `changelog_2168_07_07_26.md` currently declares network protocol 2169 in its header. Its note that client-hosted self-signed authentication requires a LAN secret therefore must not be silently treated as a protocol-2168 identity-only change. Capture the host's advertised/login protocol and obtain the secret's verified wire source before implementing it.
+Do not infer a protocol from a changelog filename. Mojang's file named `changelog_2168_07_07_26.md` currently declares network protocol 2169 in its header. Its note that client-hosted self-signed authentication requires a LAN secret therefore does not establish the first affected wire version. Capture the host's advertised/login protocol and its runtime disconnect reason. A protocol-2168 client-hosted world can return `NonceMissing`; handle the observed capability rather than widening every 2168 route.
 
 For packet decoder errors, identify the packet and the first incorrect field from the stack trace. Compare the checked-out ViaBedrock handler with a protocol schema for both the last working and target versions. Patch the dedicated ViaBedrock fork whenever it owns the codec, serializer, packet handler, or inventory model. Use a focused ViaFabricPlus mixin only when the dependency cannot reasonably own a small temporary correction, and delete the mixin after moving the fix into ViaBedrock. Every mixin targeting a synthetic `lambda$...` method needs a development-client startup check because upstream recompilation can change the target.
 
@@ -59,6 +59,8 @@ If Java reports that a translated packet was "larger than expected", inspect the
 ## Xbox friends
 
 Follow the MPSD request schema exactly. If a session enables `connectionRequiredForActiveMembers`, an active member PUT needs a stable per-process connection GUID at `members.me.properties.system.connection`. Keep contract header and template semantics distinct. Do not print authorization headers, XSTS tokens, Minecraft multiplayer tokens, or full response bodies that can contain personal data.
+
+For a client-hosted friend world, membership PUT and game connection are not one atomic step. After the successful PUT, read or poll the session until `properties.custom.nonces[<joining-xuid>]` is a non-empty string. Carry that ephemeral value only in memory and add it as the `Nonce` claim in ViaBedrock's signed client/skin JWT. Preserve the normal Xbox multiplayer token and its `AuthenticationType`; replacing the outer `AuthenticationInfo.Token` with the nonce causes authentication regressions. Never log or persist the nonce.
 
 ## Validate and deliver
 

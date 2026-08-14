@@ -35,6 +35,10 @@ public record BedrockWorld(
     Connection connection
 ) {
 
+    public BedrockWorld withConnection(final Connection connection) {
+        return new BedrockWorld(this.name, this.owner, this.source, this.version, this.protocolVersion, this.gameMode, this.playerCount, this.maxPlayerCount, connection);
+    }
+
     public boolean useBedrockAccount() {
         return this.source != Source.LAN;
     }
@@ -44,26 +48,30 @@ public record BedrockWorld(
         LAN
     }
 
-    public record Connection(Type type, String address, String signalingId, InetSocketAddress discoveryAddress, String xboxSessionName) {
+    public record Connection(Type type, String address, String signalingId, InetSocketAddress discoveryAddress, String xboxSessionName, String clientHostedNonce) {
 
         public static Connection rakNet(final String address) {
-            return new Connection(Type.RAKNET, address, null, null, null);
+            return new Connection(Type.RAKNET, address, null, null, null, null);
         }
 
         public static Connection netherNet(final String networkId) {
-            return new Connection(Type.NETHERNET, networkId, null, null, null);
+            return new Connection(Type.NETHERNET, networkId, null, null, null, null);
         }
 
         public static Connection netherNetJsonRpc(final String networkId, final String signalingId) {
-            return new Connection(Type.NETHERNET_JSON_RPC, networkId, signalingId, null, null);
+            return new Connection(Type.NETHERNET_JSON_RPC, networkId, signalingId, null, null, null);
         }
 
         public static Connection discovery(final InetSocketAddress address) {
-            return new Connection(Type.NETHERNET_DISCOVERY, null, null, address, null);
+            return new Connection(Type.NETHERNET_DISCOVERY, null, null, address, null, null);
         }
 
         public Connection withXboxSession(final String sessionName) {
-            return new Connection(this.type, this.address, this.signalingId, this.discoveryAddress, sessionName);
+            return new Connection(this.type, this.address, this.signalingId, this.discoveryAddress, sessionName, this.clientHostedNonce);
+        }
+
+        public Connection withClientHostedNonce(final String nonce) {
+            return new Connection(this.type, this.address, this.signalingId, this.discoveryAddress, this.xboxSessionName, nonce);
         }
 
         public enum Type {

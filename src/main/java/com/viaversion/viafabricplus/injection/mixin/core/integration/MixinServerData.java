@@ -57,6 +57,9 @@ public abstract class MixinServerData implements IServerData {
     @Unique
     private boolean viaFabricPlus$useBedrockAccount = true;
 
+    @Unique
+    private String viaFabricPlus$clientHostedNonce;
+
     @Inject(method = "write", at = @At("TAIL"))
     private void saveForcedVersion(CallbackInfoReturnable<CompoundTag> cir, @Local(name = "tag") CompoundTag tag) {
         if (viaFabricPlus$forcedVersion != null) {
@@ -79,6 +82,7 @@ public abstract class MixinServerData implements IServerData {
         viaFabricPlus$forceVersion(((IServerData) other).viaFabricPlus$forcedVersion());
         viaFabricPlus$setBedrockWireProtocol(((IServerData) other).viaFabricPlus$bedrockWireProtocol());
         viaFabricPlus$setUseBedrockAccount(((IServerData) other).viaFabricPlus$useBedrockAccount());
+        viaFabricPlus$setClientHostedNonce(((IServerData) other).viaFabricPlus$clientHostedNonce());
     }
 
     @Override
@@ -129,6 +133,16 @@ public abstract class MixinServerData implements IServerData {
     @Override
     public void viaFabricPlus$setUseBedrockAccount(final boolean useBedrockAccount) {
         viaFabricPlus$useBedrockAccount = useBedrockAccount;
+    }
+
+    @Override
+    public String viaFabricPlus$clientHostedNonce() {
+        return viaFabricPlus$clientHostedNonce;
+    }
+
+    @Override
+    public void viaFabricPlus$setClientHostedNonce(final String nonce) {
+        viaFabricPlus$clientHostedNonce = nonce;
     }
 
 }
