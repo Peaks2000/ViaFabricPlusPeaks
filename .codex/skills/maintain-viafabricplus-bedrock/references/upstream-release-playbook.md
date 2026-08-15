@@ -31,6 +31,7 @@ Classify the event:
 - **ViaBedrock native support:** use the new native implementation as the baseline and retire equivalent fork codecs or mixins.
 - **ViaFabricPlus/Minecraft/Fabric-only:** preserve Bedrock behavior while adapting integration points, mappings, mixin targets, and build configuration.
 - **Combined:** update ViaBedrock and prove it independently before integrating the new ViaFabricPlus baseline.
+- **Upstream Bedrock removal:** follow `viafabricplus-v5-migration.md`; take Java/Fabric changes from the post-removal target and Bedrock responsibilities from the pre-removal boundary plus maintained forks. Never merge the old subsystem wholesale over the new tree.
 
 Use `gh` read-only against upstream repositories to inspect releases, branches, commits, and merged PRs. Use primary protocol sources when wire behavior changed. Record exact SHAs; branch names alone are not reproducible.
 
@@ -49,6 +50,8 @@ Prefer the implementation order:
 2. narrowly retained fixes in `Peaks2000/ViaBedrock`;
 3. fork-only transport/routing integration in `Peaks2000/ViaFabricPlusPeaks`;
 4. a temporary ViaFabricPlus compatibility mixin only when the dependency cannot own the defect.
+
+If upstream has removed Bedrock, "native baseline" means the current Java/Fabric architecture only. It does not mean the removed Bedrock feature has a new native replacement. Maintain two explicit baselines as described in `viafabricplus-v5-migration.md` and rebuild the retained Bedrock integration against current APIs.
 
 Do not merge the previous `peaks/<version>-fixes` branch wholesale into a new native baseline. Start from the target baseline, then port justified deltas one at a time so obsolete serializers, generated enums, mappings, and packet layouts cannot survive silently.
 
@@ -90,7 +93,7 @@ Integrate the target upstream ViaFabricPlus/Minecraft/Fabric baseline without ch
 
 - preserve dedicated LAN/friends discovery and its durable `ServerData` route marker;
 - preserve authenticated RakNet/Xbox and self-signed client-hosted LAN identity separation;
-- preserve the isolated stock runtime for ordinary server-list joins;
+- preserve the isolated stock runtime for ordinary server-list joins on 4.x; on a post-removal baseline, either retire it explicitly or pin and rename it as a fork-owned compatibility runtime;
 - adapt mixins to verified target bytecode and delete mixins superseded by native ViaBedrock;
 - update Gradle properties, Loom/Fabric dependencies, access wideners, mappings, and Java source compatibility together;
 - point the VCS dependency at the maintained target ViaBedrock branch, never a permanent local path.
@@ -110,7 +113,9 @@ Test these routes separately; one success does not cover another:
 | Client-hosted NetherNet LAN/iOS | local identity, signaling, login, spawn, movement |
 | Xbox friend world | MPSD join, nonce/signaling, login, spawn |
 | Core translation | resource packs, terrain, entities/skins, movement, disconnect |
+| Mounts and block state | boat steering/dismount/re-entry; coloured bed sleep/wake and chunk reload |
 | Inventory | natural block and mob pickup, drop/re-pickup, hotbar and screen refresh |
+| Creative ownership | catalog selection, cursor moves, armor equip/remove, drop, and mode transition |
 | Crafting | input placement, held left/right drag, output preview, collect, shift-craft, remainders in 2x2 and 3x3 |
 | Regression | last supported Bedrock protocol still follows its intended route |
 

@@ -15,12 +15,17 @@ import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.model.container.player.HudContainer;
+import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
+import net.raphimc.viabedrock.api.model.BlockState;
+import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
 import net.raphimc.viabedrock.protocol.model.FullContainerName;
 import net.raphimc.viabedrock.protocol.model.GameRule;
 import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
+import net.raphimc.viabedrock.protocol.model.Position2f;
+import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
@@ -28,11 +33,32 @@ import net.raphimc.viabedrock.protocol.types.item.BedrockItemType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void boatRotationUsesBedrockQuarterTurnOffset() {
+        final Position2f rotation = ClientPlayerEntity.bedrockBoatRotation(100F, 12F);
+        assertEquals(12F, rotation.x());
+        assertEquals(-170F, rotation.y());
+    }
+
+    @Test
+    public void bedColourRewritePreservesStateProperties() {
+        final BlockState whiteBed = new BlockState("white_bed", Map.of(
+            "facing", "west",
+            "occupied", "true",
+            "part", "head"
+        ));
+
+        final BlockState blueBed = BedBlockEntityRewriter.coloredBedState(whiteBed, DyeColor.BLUE);
+        assertEquals("blue_bed", blueBed.identifier());
+        assertEquals(whiteBed.properties(), blueBed.properties());
+    }
 
     @Test
     public void craftingTableHudSlotsUseCraftingInputContainer() {

@@ -16,6 +16,7 @@ Read `references/repository-coordination.md` before cloning, branching, changing
 Read the references selectively:
 
 - Read `references/upstream-release-playbook.md` first when any Bedrock, ViaBedrock, ViaFabricPlus, Minecraft Java, Fabric, or ViaVersion release changes the baseline.
+- Read `references/viafabricplus-v5-migration.md` when the target branch has removed ViaBedrock/Bedrock support or when moving this fork to ViaFabricPlus 5.x. Treat that transition as a subsystem migration, not a normal merge.
 - Read `references/fork-architecture.md` before changing routing, discovery, authentication, transport, or stock-runtime isolation.
 - Read `references/nethernet-auth-and-natives.md` for iOS NetherNet, `PeerConnectionFactory`, JNI/native loading, SDP `a=identity`, `ServerIdConflict`, `NotAuthenticated`, or `NonceMissing` failures.
 - Read `references/version-update-workflow.md` before changing a protocol number, packet field, serializer, mapping resource, or ViaBedrock revision.
@@ -85,7 +86,7 @@ Inspect `git diff --check`, the resulting JAR contents, and its SHA-256. Confirm
 
 Never overwrite a mod JAR in place while Minecraft has it open. This can leave the running ZIP reader observing a mixture of old and new bytes, producing `invalid LOC header`, missing translations, broken buttons, or resource reload failures even when the built JAR is valid. Check whether the instance is running; if it is, move the installed JAR to a recoverable path and copy the replacement under the expected filename so it receives a new inode, then require a full Minecraft restart. After installation, require matching local/installed SHA-256 values, `unzip -t` success, exactly one ViaFabricPlus mod JAR, and the expected `assets/viafabricplus/lang/en_us.json` keys.
 
-This fork deliberately uses two ViaBedrock runtimes in one Fabric instance: ordinary server-list joins use the isolated embedded stock runtime, while the dedicated LAN/friends screen selects the maintained current runtime. Preserve this route boundary. A LAN codec fix must not alter the stock server route, and validation must cover one ordinary Bedrock server plus the affected LAN/friends transport.
+The current 4.x fork deliberately uses two ViaBedrock runtimes in one Fabric instance: ordinary server-list joins use the isolated embedded stock runtime, while the dedicated LAN/friends screen selects the maintained current runtime. Preserve this boundary on 4.x. When migrating to an upstream baseline that no longer contains ViaBedrock, follow `references/viafabricplus-v5-migration.md`: any retained ordinary-server runtime becomes a pinned, fork-owned compatibility runtime rather than "stock", and it must not be carried forward implicitly.
 
 If a real host remains available, have the user retry once with the new JAR and immediately re-run the log collector. Record the next first causal error; Bedrock version updates commonly reveal packet changes one at a time.
 
