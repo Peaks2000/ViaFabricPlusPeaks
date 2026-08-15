@@ -83,6 +83,8 @@ Run, in order:
 
 Inspect `git diff --check`, the resulting JAR contents, and its SHA-256. Confirm the main JAR nests the maintained ViaBedrock JAR and every native classifier required by the reported client platform. The distributable is the remapped main JAR under `build/libs/`; exclude `-sources`, `-dev`, and submodule JARs. If the user wants it installed, locate the exact launcher instance and replace only the matching prior mod JAR.
 
+Never overwrite a mod JAR in place while Minecraft has it open. This can leave the running ZIP reader observing a mixture of old and new bytes, producing `invalid LOC header`, missing translations, broken buttons, or resource reload failures even when the built JAR is valid. Check whether the instance is running; if it is, move the installed JAR to a recoverable path and copy the replacement under the expected filename so it receives a new inode, then require a full Minecraft restart. After installation, require matching local/installed SHA-256 values, `unzip -t` success, exactly one ViaFabricPlus mod JAR, and the expected `assets/viafabricplus/lang/en_us.json` keys.
+
 This fork deliberately uses two ViaBedrock runtimes in one Fabric instance: ordinary server-list joins use the isolated embedded stock runtime, while the dedicated LAN/friends screen selects the maintained current runtime. Preserve this route boundary. A LAN codec fix must not alter the stock server route, and validation must cover one ordinary Bedrock server plus the affected LAN/friends transport.
 
 If a real host remains available, have the user retry once with the new JAR and immediately re-run the log collector. Record the next first causal error; Bedrock version updates commonly reveal packet changes one at a time.
