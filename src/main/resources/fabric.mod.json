@@ -20,6 +20,12 @@
     }
   ],
   "contributors": [
+    {
+      "name": "Peaks2000",
+      "contact": {
+        "homepage": "https://github.com/Peaks2000"
+      }
+    },
     "allinkdev",
     "lowercasebtw",
     {
