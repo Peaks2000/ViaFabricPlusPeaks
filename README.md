@@ -1,3 +1,5 @@
+
+## ViaFabricPlusPeaks is ViaFabricPlus with the ability to join Xbox Friends and LAN worlds.
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
   <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlus logo">
