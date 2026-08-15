@@ -14,6 +14,7 @@ package com.viaversion.viafabricplus.util.bedrock;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import net.raphimc.viabedrock.api.model.container.player.HudContainer;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
@@ -32,6 +33,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void craftingTableHudSlotsUseCraftingInputContainer() {
+        final HudContainer hud = new HudContainer(null);
+        for (int slot = 28; slot <= 40; slot++) {
+            assertEquals(ContainerEnumName.CraftingInputContainer, hud.getFullContainerName(slot).name());
+        }
+        assertEquals(ContainerEnumName.CursorContainer, hud.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.CraftingOutputPreviewContainer, hud.getFullContainerName(50).name());
+    }
 
     @Test
     public void emptyItemInstanceConsumesCompleteProtocol2168Record() {
