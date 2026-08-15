@@ -5,6 +5,12 @@
     -fixed bedrock crafting
     -fixed creative menu
     -thanks to github.com/Exterminate5573/ViaBedrock/pull/3
+# How to Join a LAN world!
+install the mod from releases then launch Minecraft click on "ViaFabricPlus" then in the bottom left you should see "Server Lists" click it then Click "Bedrock friends & LAN" then the LAN worlds should show up
+
+# How to Join a Bedrock Friends' worlds!
+install the mod from releases then launch Minecraft click on "ViaFabricPlus" then in the top right you should see settings scroll down and click Add bedrock account sign in with your Mircrosoft account then back out into the main ViaFabricPlus menu  you should see "Server Lists" click it then Click "Bedrock friends & LAN" then the Bedrock Friends' worlds should show up
+
 
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
