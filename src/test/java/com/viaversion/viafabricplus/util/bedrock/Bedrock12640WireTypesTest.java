@@ -252,6 +252,36 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void pickupAllUsesSequentialCursorStackIds() {
+        final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
+            new InventoryStackRequest.Take(12,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.InventoryContainer, null), 10, 41),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, 7)
+            ),
+            new InventoryStackRequest.Take(20,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.HotbarContainer, null), 2, 42),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, -1)
+            )
+        ));
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            new InventoryStackRequestType(id -> null).write(buffer, request);
+
+            assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(2, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertTake(buffer, 12, ContainerEnumName.InventoryContainer, 10, 41,
+                ContainerEnumName.CursorContainer, 0, 7);
+            assertTake(buffer, 20, ContainerEnumName.HotbarContainer, 2, 42,
+                ContainerEnumName.CursorContainer, 0, -1);
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(-1, buffer.readIntLE());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
     public void creativeRequestsUseCraftCreativeAndDestroyCerealVariants() {
         final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
             new InventoryStackRequest.CraftCreative(321, 1),
@@ -289,6 +319,16 @@ public final class Bedrock12640WireTypesTest {
                                     final ContainerEnumName destinationContainer, final int destinationSlot, final int destinationStackNetworkId) {
         assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
         assertEquals(1, buffer.readUnsignedByte());
+        assertEquals(count, buffer.readUnsignedByte());
+        assertSlot(buffer, sourceContainer, sourceSlot, sourceStackNetworkId);
+        assertSlot(buffer, destinationContainer, destinationSlot, destinationStackNetworkId);
+    }
+
+    private static void assertTake(final ByteBuf buffer, final int count,
+                                   final ContainerEnumName sourceContainer, final int sourceSlot, final int sourceStackNetworkId,
+                                   final ContainerEnumName destinationContainer, final int destinationSlot, final int destinationStackNetworkId) {
+        assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+        assertEquals(0, buffer.readUnsignedByte());
         assertEquals(count, buffer.readUnsignedByte());
         assertSlot(buffer, sourceContainer, sourceSlot, sourceStackNetworkId);
         assertSlot(buffer, destinationContainer, destinationSlot, destinationStackNetworkId);
