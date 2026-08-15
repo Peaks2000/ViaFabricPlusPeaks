@@ -1,6 +1,6 @@
 ---
 name: maintain-viafabricplus-bedrock
-description: Diagnose, update, build, validate, package, and coordinate the three repositories in the ViaFabricPlus Bedrock-maintenance fork. Use for cross-repository work in Peaks2000/ViaFabricPlusPeaks, Peaks2000/ViaBedrock, and Peaks2000/maintain-viafabricplus-bedrock; Bedrock LAN discovery; iOS NetherNet/WebRTC and native-library failures; RakNet; Xbox friends/MPSD; self-signed or transport-bound authentication; ViaBedrock protocol bumps; packet decoder, crafting, inventory, terrain, or mapping regressions; Fabric JAR builds; and stock-versus-maintained route isolation.
+description: Diagnose, update, build, validate, package, and coordinate the three repositories in the ViaFabricPlus Bedrock-maintenance fork. Use for new Minecraft Bedrock, ViaBedrock, ViaFabricPlus, Minecraft Java, Fabric Loader, or Fabric API releases; upstream rebases and dependency refreshes; auditing or retiring fork overrides; cross-repository work in Peaks2000/ViaFabricPlusPeaks, Peaks2000/ViaBedrock, and Peaks2000/maintain-viafabricplus-bedrock; Bedrock LAN discovery; iOS NetherNet/WebRTC and native-library failures; RakNet; Xbox friends/MPSD; self-signed or transport-bound authentication; protocol bumps; packet decoder, crafting, inventory, terrain, or mapping regressions; Fabric JAR builds; and stock-versus-maintained route isolation.
 ---
 
 # Maintain ViaFabricPlus Bedrock
@@ -15,9 +15,21 @@ Read `references/repository-coordination.md` before cloning, branching, changing
 
 Read the references selectively:
 
+- Read `references/upstream-release-playbook.md` first when any Bedrock, ViaBedrock, ViaFabricPlus, Minecraft Java, Fabric, or ViaVersion release changes the baseline.
 - Read `references/fork-architecture.md` before changing routing, discovery, authentication, transport, or stock-runtime isolation.
 - Read `references/nethernet-auth-and-natives.md` for iOS NetherNet, `PeerConnectionFactory`, JNI/native loading, SDP `a=identity`, `ServerIdConflict`, `NotAuthenticated`, or `NonceMissing` failures.
 - Read `references/version-update-workflow.md` before changing a protocol number, packet field, serializer, mapping resource, or ViaBedrock revision.
+
+## Upgrade a new release
+
+Treat upstream native behavior as the new baseline and this fork as a reviewed delta. Follow `references/upstream-release-playbook.md` rather than merging the previous maintenance branch wholesale.
+
+1. Record the old and target versions and exact commits across ViaFabricPlus, ViaBedrock, Minecraft/Fabric, and the VCS dependency before editing.
+2. Build and test the target upstream/native baseline where practical. Inventory every existing fork delta as **keep**, **drop**, **adapt**, or **quarantine**.
+3. Drop a delta when upstream now implements the same behavior. Keep transport and integration features that remain fork-only. Adapt only the smallest code owned by the lowest correct repository.
+4. Reject raw overrides: do not replace whole handlers, codecs, classes, or routes when a narrow owned change works; do not swallow decoder errors, clear unread bytes, accept arbitrary protocols, or duplicate a wire fix in ViaBedrock and ViaFabricPlus.
+5. Give every retained compatibility override an exact scope, evidence from a real failure or schema change, a regression test, and a removal condition tied to an upstream commit or release.
+6. Validate the stock server route and maintained LAN/friends route independently, then deliver dependency-first using `references/repository-coordination.md`.
 
 ## Start with evidence
 
@@ -48,21 +60,11 @@ Treat these identifiers separately:
 - RakNet MOTD protocol number is a Bedrock game protocol and is usable evidence.
 - Xbox session custom game version is usable evidence after normalization.
 - NetherNet LAN advertisement revision is a transport/discovery format. It is not a Bedrock game protocol.
-
-NetherNet LAN advertisement revision 6 uses unsigned-varint UTF-8 lengths, signed zigzag varints, and includes `AcceptsOnlineAuth`, `AcceptsSelfSignedAuth`, a host-generated `Nonce`, transport layer, and connection type after the shared world fields. Parse the full revision-6 payload and carry its nonce only in memory into the signed client-data claim. A one-byte string-length parser silently corrupts names longer than 127 bytes and must not be used.
 - `BedrockProtocolVersion.bedrockLatest` is ViaVersion's route identity and can differ from the wire protocol placed in `HandshakeStorage`.
 
-When the server returns `LoginFailed_ClientOld` or `LoginFailed_ServerOld`, add only verified adjacent supported protocols to `BedrockProtocolCompatibility`. Never loop over arbitrary integers. A successful login version check does not prove subsequent packet layouts are compatible.
+When the server returns `LoginFailed_ClientOld` or `LoginFailed_ServerOld`, add only verified adjacent supported protocols to `BedrockProtocolCompatibility`. Never loop over arbitrary integers, infer a protocol from a filename, or treat successful version negotiation as proof that later packet layouts work.
 
-Do not infer a protocol from a changelog filename. Mojang's file named `changelog_2168_07_07_26.md` currently declares network protocol 2169 in its header. Its note that client-hosted self-signed authentication requires a LAN secret therefore does not establish the first affected wire version. Capture the host's advertised/login protocol and its runtime disconnect reason. A protocol-2168 client-hosted world can return `NonceMissing`; handle the observed capability rather than widening every 2168 route.
-
-For packet decoder errors, identify the packet and the first incorrect field from the stack trace. Compare the checked-out ViaBedrock handler with a protocol schema for both the last working and target versions. Patch the dedicated ViaBedrock fork whenever it owns the codec, serializer, packet handler, or inventory model. Use a focused ViaFabricPlus mixin only when the dependency cannot reasonably own a small temporary correction, and delete the mixin after moving the fix into ViaBedrock. Every mixin targeting a synthetic `lambda$...` method needs a development-client startup check because upstream recompilation can change the target.
-
-If Java reports that a translated packet was "larger than expected", inspect the ViaBedrock handler at the first `wrapper.send(...)`. Unread Bedrock input can leak into the Java packet. Do not merely clear the input buffer: verify whether Mojang changed an earlier field's encoding or converted the packet to Cereal. For 1.26.40, `AddItemActor` and `AddPlayer` must read their item with `ItemRewriter.newItemType()` (`NetworkItemStackDescriptor`), not the legacy `itemType()`.
-
-For a pickup animation with a stale Java inventory, trace authoritative inventory packets before changing refresh logic. Some 1.26.40 client-hosted worlds rely on Bedrock-side pickup prediction and send only `AddItemActor` plus local-player `TakeItemActor`; in that verified packet pattern, retain the item actor's decoded stack and predict the normal merge/empty-slot insertion locally. Never infer an item from `TakeItemActor` alone, and always let a later authoritative correction replace predicted state. Read the complete decision tree in `references/version-update-workflow.md`.
-
-For 1.26.40 crafting, distinguish input placement from result crafting. Map Java's player crafting inputs 1-4 to player-only UI/HUD slots 28-31 and crafting-table inputs 1-9 to slots 32-40. After an accepted input click, predict output slot 50 from retained `CraftingData` and refresh the complete Java container; some client-hosted worlds accept the input request without sending an output preview. Read the request layout, recipe-matching rules, and regression requirements in `references/version-update-workflow.md`.
+For a decoder error, identify the packet and first incorrect field, then compare the last working and target schemas. Patch ViaBedrock when it owns the codec, serializer, handler, mapping, or inventory model. Use a narrow ViaFabricPlus mixin only for an integration defect the dependency cannot own, and remove it once the fix moves down. Treat all version-specific notes in `references/version-update-workflow.md` as scoped historical knowledge, not permission to copy an old override into a new protocol.
 
 ## Xbox friends
 

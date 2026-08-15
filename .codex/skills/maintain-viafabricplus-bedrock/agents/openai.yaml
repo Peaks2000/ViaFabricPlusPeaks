@@ -1,4 +1,4 @@
 interface:
   display_name: "Maintain ViaFabricPlus Bedrock"
-  short_description: "Coordinate the Bedrock maintenance repositories"
-  default_prompt: "Use $maintain-viafabricplus-bedrock to coordinate, update, and validate the ViaFabricPlus Bedrock fork across its three repositories."
+  short_description: "Upgrade and maintain the three Bedrock fork repositories"
+  default_prompt: "Use $maintain-viafabricplus-bedrock to update the ViaFabricPlus Bedrock fork across its three repositories, preferring native upstream support and retaining only tested, scoped fork deltas."

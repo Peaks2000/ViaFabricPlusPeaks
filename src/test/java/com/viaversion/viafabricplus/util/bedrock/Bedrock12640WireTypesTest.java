@@ -11,6 +11,7 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
+import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
@@ -22,6 +23,7 @@ import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
+import net.raphimc.viabedrock.protocol.types.item.BedrockItemType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -30,6 +32,45 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void emptyItemInstanceConsumesCompleteProtocol2168Record() {
+        final BedrockItemType itemType = new BedrockItemType(0, new Int2ObjectOpenHashMap<>());
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            BedrockTypes.VAR_INT.write(buffer, 0); // runtime id (air)
+            buffer.writeShortLE(0); // count
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 0); // auxiliary value
+            BedrockTypes.VAR_INT.write(buffer, 0); // block runtime id
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 0); // user-data length
+            buffer.writeByte(0x5A); // next field
+
+            final BedrockItem item = itemType.read(buffer);
+            assertEquals(true, item.isEmpty());
+            assertEquals(0x5A, buffer.readUnsignedByte());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
+    public void emptyItemInstanceWritesCompleteProtocol2168Record() {
+        final BedrockItemType itemType = new BedrockItemType(0, new Int2ObjectOpenHashMap<>());
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            itemType.write(buffer, BedrockItem.empty());
+
+            assertEquals(0, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(0, buffer.readUnsignedShortLE());
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(0, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
 
     @Test
     public void startGameIntegerRulesUseFixedLittleEndianValues() {
@@ -167,6 +208,79 @@ public final class Bedrock12640WireTypesTest {
         } finally {
             buffer.release();
         }
+    }
+
+    @Test
+    public void rightDragUsesSequentialCursorStackIdsAcrossCraftingSlots() {
+        final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
+            new InventoryStackRequest.Place(1,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, 7),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CraftingInputContainer, null), 28, 0)
+            ),
+            new InventoryStackRequest.Place(1,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, -1),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CraftingInputContainer, null), 29, 0)
+            )
+        ));
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            new InventoryStackRequestType(id -> null).write(buffer, request);
+
+            assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(2, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertPlace(buffer, 1, ContainerEnumName.CursorContainer, 0, 7,
+                ContainerEnumName.CraftingInputContainer, 28, 0);
+            assertPlace(buffer, 1, ContainerEnumName.CursorContainer, 0, -1,
+                ContainerEnumName.CraftingInputContainer, 29, 0);
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(-1, buffer.readIntLE());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
+    public void creativeRequestsUseCraftCreativeAndDestroyCerealVariants() {
+        final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
+            new InventoryStackRequest.CraftCreative(321, 1),
+            new InventoryStackRequest.Destroy(64, new InventoryStackRequest.Slot(
+                new FullContainerName(ContainerEnumName.HotbarContainer, null), 0, 7
+            ))
+        ));
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            new InventoryStackRequestType(id -> null).write(buffer, request);
+
+            assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(2, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+
+            assertEquals(12, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(14, buffer.readUnsignedByte());
+            assertEquals(321, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, buffer.readUnsignedByte());
+
+            assertEquals(4, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(4, buffer.readUnsignedByte());
+            assertEquals(64, buffer.readUnsignedByte());
+            assertSlot(buffer, ContainerEnumName.HotbarContainer, 0, 7);
+
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(-1, buffer.readIntLE());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    private static void assertPlace(final ByteBuf buffer, final int count,
+                                    final ContainerEnumName sourceContainer, final int sourceSlot, final int sourceStackNetworkId,
+                                    final ContainerEnumName destinationContainer, final int destinationSlot, final int destinationStackNetworkId) {
+        assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+        assertEquals(1, buffer.readUnsignedByte());
+        assertEquals(count, buffer.readUnsignedByte());
+        assertSlot(buffer, sourceContainer, sourceSlot, sourceStackNetworkId);
+        assertSlot(buffer, destinationContainer, destinationSlot, destinationStackNetworkId);
     }
 
     private static void assertSlot(final ByteBuf buffer, final ContainerEnumName container, final int slot, final int stackNetworkId) {
