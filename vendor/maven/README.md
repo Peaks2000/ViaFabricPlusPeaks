@@ -16,6 +16,10 @@ platforms. Native classifiers included by this fork are:
 - macOS arm64: original CI artifact SHA-256
   `e28b2f2f2e5ecef60dcfe576f67240c1da6b0ab6b4a121894799c52ab41afc97`.
 
+The wrapper is Apache-2.0 and its native library bundles WebRTC under BSD-3-Clause. The exact
+upstream `LICENSE`, `NOTICE`, and JNI helper licence are preserved under
+[`licenses/webrtc-java-m152`](licenses/webrtc-java-m152/) and packaged into release JARs.
+
 When supporting another operating system or architecture, add the matching classifier from the
 same CI commit, include it in `configureBedrockDependencies`, and extend
 `WebRtcNativeLibraryTest`. Do not mix native libraries from M138 or a different JNI commit with

@@ -6,4 +6,18 @@
     <groupId>dev.kastle.webrtc</groupId>
     <artifactId>webrtc-java-m152test</artifactId>
     <version>1.0.4-m152</version>
+    <name>webrtc-java M152 test build</name>
+    <description>Reproducible build from Kas-tle/webrtc-java commit 04a3d55ca22254a3d508173ac7fa250f44ff2151</description>
+    <url>https://github.com/Kas-tle/webrtc-java</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <url>https://github.com/Kas-tle/webrtc-java/tree/04a3d55ca22254a3d508173ac7fa250f44ff2151</url>
+        <tag>04a3d55ca22254a3d508173ac7fa250f44ff2151</tag>
+    </scm>
 </project>

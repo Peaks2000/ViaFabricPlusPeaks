@@ -70,6 +70,18 @@ dependencies {
     compileOnly("com.terraformersmc:modmenu:20.0.0-beta.2")
 }
 
+tasks.named<Jar>("jar") {
+    from(rootProject.file("LICENSE")) {
+        into("META-INF/licenses/viafabricplus")
+    }
+    from(rootProject.file("THIRD_PARTY_NOTICES.md")) {
+        into("META-INF")
+    }
+    from(rootProject.file("vendor/maven/licenses")) {
+        into("META-INF/licenses")
+    }
+}
+
 includeTransitiveJijDependencies()
 
 fun configureBedrockDependencies() {

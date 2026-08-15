@@ -20,6 +20,7 @@ Read the references selectively:
 - Read `references/fork-architecture.md` before changing routing, discovery, authentication, transport, or stock-runtime isolation.
 - Read `references/nethernet-auth-and-natives.md` for iOS NetherNet, `PeerConnectionFactory`, JNI/native loading, SDP `a=identity`, `ServerIdConflict`, `NotAuthenticated`, or `NonceMissing` failures.
 - Read `references/version-update-workflow.md` before changing a protocol number, packet field, serializer, mapping resource, or ViaBedrock revision.
+- Read `references/license-compliance.md` before copying or adapting external code, vendoring binaries, committing a port, or publishing a JAR.
 
 ## Upgrade a new release
 
@@ -83,6 +84,8 @@ Run, in order:
 4. `./gradlew runClient`, wait for the main menu and ViaBedrock initialization, then stop it; treat missing optional narrator libraries as unrelated unless startup aborts.
 
 Inspect `git diff --check`, the resulting JAR contents, and its SHA-256. Confirm the main JAR nests the maintained ViaBedrock JAR and every native classifier required by the reported client platform. The distributable is the remapped main JAR under `build/libs/`; exclude `-sources`, `-dev`, and submodule JARs. If the user wants it installed, locate the exact launcher instance and replace only the matching prior mod JAR.
+
+Apply the licence and attribution gate in `references/license-compliance.md` before release. Require exact source commits for both code repositories and package required licence/NOTICE texts in the final JAR.
 
 Never overwrite a mod JAR in place while Minecraft has it open. This can leave the running ZIP reader observing a mixture of old and new bytes, producing `invalid LOC header`, missing translations, broken buttons, or resource reload failures even when the built JAR is valid. Check whether the instance is running; if it is, move the installed JAR to a recoverable path and copy the replacement under the expected filename so it receives a new inode, then require a full Minecraft restart. After installation, require matching local/installed SHA-256 values, `unzip -t` success, exactly one ViaFabricPlus mod JAR, and the expected `assets/viafabricplus/lang/en_us.json` keys.
 
