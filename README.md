@@ -1,5 +1,11 @@
 
 ## ViaFabricPlusPeaks is ViaFabricPlus with the ability to join Xbox Friends and LAN worlds.
+# What changed from ViaFabricPlus
+    -in server lists added a menu for LAN worlds and XBOX friends
+    -fixed bedrock crafting
+    -fixed creative menu
+    -thanks to github.com/Exterminate5573/ViaBedrock/pull/3
+
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
   <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlus logo">
