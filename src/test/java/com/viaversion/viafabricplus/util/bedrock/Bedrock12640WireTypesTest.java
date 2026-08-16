@@ -287,6 +287,44 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void wallCorrectionPreservesMovementAlongTheSurface() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(350, new Position3f(0.98F, 64F, 0F), true, true, 20);
+        tracker.record(351, new Position3f(0.98F, 64F, 0.2F), true, true, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            350, new Position3f(0.7F, 64F, 0F), true,
+            352, new Position3f(0.98F, 64F, 0.4F), true, true, false
+        );
+
+        assertEquals(new Position3f(0.7F, 64F, 0.4F), correction.position());
+        assertTrue(correction.replayed());
+
+        // A later zero-delta correction still remembers that X was the rejected
+        // axis, without freezing the continued Z movement along the wall.
+        final MovementPredictionTracker.Correction repeatedCorrection = tracker.replay(
+            351, new Position3f(0.7F, 64F, 0.2F), true,
+            353, new Position3f(0.98F, 64F, 0.6F), true, true, false
+        );
+        assertEquals(new Position3f(0.7F, 64F, 0.6F), repeatedCorrection.position());
+        assertTrue(repeatedCorrection.replayed());
+    }
+
+    @Test
+    public void cornerCorrectionCanSettleBothHorizontalAxes() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(360, new Position3f(0.98F, 64F, 0.98F), true, true, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            360, new Position3f(0.7F, 64F, 0.7F), true,
+            361, new Position3f(0.98F, 64F, 0.98F), true, true, false
+        );
+
+        assertEquals(new Position3f(0.7F, 64F, 0.7F), correction.position());
+        assertTrue(correction.replayed());
+    }
+
+    @Test
     public void historicalGroundedDescentDoesNotReplayAnOldVerticalOffset() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
         tracker.record(400, new Position3f(0F, 65F, 0F), true, false, 20);
