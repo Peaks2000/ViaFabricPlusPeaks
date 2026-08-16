@@ -4,9 +4,11 @@ on:
   pull_request:
     branches:
       - ver/26.2
+      - experiment/4.6.14
   push:
     branches:
       - ver/26.2
+      - experiment/4.6.14
   workflow_dispatch:
 
 permissions:
@@ -14,7 +16,7 @@ permissions:
 
 env:
   VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
-  VIABEDROCK_REF: 0998cd74edd40a2a4c2a2b816c740610f248203b
+  VIABEDROCK_REF: 765849e201f846ff1d8b8f9b80e425bc0d98ccfc
 
 jobs:
   preserve-fork:
