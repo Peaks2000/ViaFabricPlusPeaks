@@ -4,7 +4,12 @@
     -in server lists added a menu for LAN worlds and XBOX friends
     -fixed bedrock crafting
     -fixed creative menu
-    -inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
+    -fixed many many inventory bugs
+    -working offhand (soon) 
+
+credit 
+inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
+
 # How to Join a LAN world!
 install the mod from releases then launch Minecraft click on "ViaFabricPlus" then in the bottom left you should see "Server Lists" click it then Click "Bedrock friends & LAN" then the LAN worlds should show up
 
