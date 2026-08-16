@@ -11,6 +11,7 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
+import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.BlockPosition;
 import com.viaversion.viaversion.api.minecraft.VillagerData;
 import com.viaversion.viaversion.api.minecraft.item.StructuredItem;
@@ -21,6 +22,7 @@ import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.model.BlockState;
 import net.raphimc.viabedrock.api.model.container.ChestContainer;
 import net.raphimc.viabedrock.api.model.container.Container;
+import net.raphimc.viabedrock.api.model.container.CraftingTableContainer;
 import net.raphimc.viabedrock.api.model.container.FurnaceContainer;
 import net.raphimc.viabedrock.api.model.container.MerchantContainer;
 import net.raphimc.viabedrock.api.model.container.player.HudContainer;
@@ -59,6 +61,7 @@ import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType
 import net.raphimc.viabedrock.protocol.types.item.BedrockItemType;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -252,13 +255,13 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalMovementCorrectionPreservesLaterJumpDisplacement() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(100, new Position3f(0F, 64F, 0F), true, false, 20);
-        tracker.record(101, new Position3f(0F, 64.42F, 0F), false, false, 20);
-        tracker.record(102, new Position3f(0F, 65F, 0F), false, false, 20);
+        tracker.record(100, new Position3f(0F, 64F, 0F), true, false, false, 20);
+        tracker.record(101, new Position3f(0F, 64.42F, 0F), false, false, false, 20);
+        tracker.record(102, new Position3f(0F, 65F, 0F), false, false, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
             100, new Position3f(-0.1F, 64F, 0F), true,
-            102, new Position3f(0F, 65F, 0F), false, false, false
+            102, new Position3f(0F, 65F, 0F), false, false, false, false
         );
 
         assertTrue(correction.replayed());
@@ -269,11 +272,11 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void currentMovementCorrectionUsesAuthoritativeCollisionState() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(200, new Position3f(3F, 70F, 4F), false, false, 20);
+        tracker.record(200, new Position3f(3F, 70F, 4F), false, false, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
             200, new Position3f(3F, 69.9F, 4F), true,
-            200, new Position3f(3F, 70F, 4F), false, false, false
+            200, new Position3f(3F, 70F, 4F), false, false, false, false
         );
 
         assertEquals(new Position3f(3F, 69.9F, 4F), correction.position());
@@ -283,12 +286,12 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void repeatedWallCorrectionsDoNotPushTheCurrentPredictionBackAgain() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(300, new Position3f(0.98F, 64F, 0F), true, true, 20);
-        tracker.record(301, new Position3f(0.98F, 64F, 0F), true, true, 20);
+        tracker.record(300, new Position3f(0.98F, 64F, 0F), true, true, false, 20);
+        tracker.record(301, new Position3f(0.98F, 64F, 0F), true, true, false, 20);
 
         final MovementPredictionTracker.Correction firstCorrection = tracker.replay(
             300, new Position3f(0.7F, 64F, 0F), true,
-            302, new Position3f(0.98F, 64F, 0F), true, true, false
+            302, new Position3f(0.98F, 64F, 0F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0F), firstCorrection.position());
 
@@ -297,7 +300,7 @@ public final class Bedrock12640WireTypesTest {
         // offset to 0.98 and get shoved farther backwards.
         final MovementPredictionTracker.Correction secondCorrection = tracker.replay(
             301, new Position3f(0.7F, 64F, 0F), true,
-            303, new Position3f(0.98F, 64F, 0F), true, true, false
+            303, new Position3f(0.98F, 64F, 0F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0F), secondCorrection.position());
     }
@@ -305,12 +308,12 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void wallCorrectionPreservesMovementAlongTheSurface() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(350, new Position3f(0.98F, 64F, 0F), true, true, 20);
-        tracker.record(351, new Position3f(0.98F, 64F, 0.2F), true, true, 20);
+        tracker.record(350, new Position3f(0.98F, 64F, 0F), true, true, false, 20);
+        tracker.record(351, new Position3f(0.98F, 64F, 0.2F), true, true, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
             350, new Position3f(0.7F, 64F, 0F), true,
-            352, new Position3f(0.98F, 64F, 0.4F), true, true, false
+            352, new Position3f(0.98F, 64F, 0.4F), true, true, false, false
         );
 
         assertEquals(new Position3f(0.7F, 64F, 0.4F), correction.position());
@@ -320,7 +323,7 @@ public final class Bedrock12640WireTypesTest {
         // axis, without freezing the continued Z movement along the wall.
         final MovementPredictionTracker.Correction repeatedCorrection = tracker.replay(
             351, new Position3f(0.7F, 64F, 0.2F), true,
-            353, new Position3f(0.98F, 64F, 0.6F), true, true, false
+            353, new Position3f(0.98F, 64F, 0.6F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0.6F), repeatedCorrection.position());
         assertTrue(repeatedCorrection.replayed());
@@ -329,11 +332,11 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void cornerCorrectionCanSettleBothHorizontalAxes() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(360, new Position3f(0.98F, 64F, 0.98F), true, true, 20);
+        tracker.record(360, new Position3f(0.98F, 64F, 0.98F), true, true, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
             360, new Position3f(0.7F, 64F, 0.7F), true,
-            361, new Position3f(0.98F, 64F, 0.98F), true, true, false
+            361, new Position3f(0.98F, 64F, 0.98F), true, true, false, false
         );
 
         assertEquals(new Position3f(0.7F, 64F, 0.7F), correction.position());
@@ -343,12 +346,12 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalGroundedDescentDoesNotReplayAnOldVerticalOffset() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(400, new Position3f(0F, 65F, 0F), true, false, 20);
-        tracker.record(401, new Position3f(0.2F, 64.5F, 0F), true, false, 20);
+        tracker.record(400, new Position3f(0F, 65F, 0F), true, false, false, 20);
+        tracker.record(401, new Position3f(0.2F, 64.5F, 0F), true, false, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
             400, new Position3f(0.1F, 65.2F, 0F), true,
-            401, new Position3f(0.2F, 64.5F, 0F), true, false, false
+            401, new Position3f(0.2F, 64.5F, 0F), true, false, false, false
         );
 
         assertEquals(new Position3f(0.3F, 64.5F, 0F), correction.position());
@@ -358,12 +361,12 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalFlightDescentDoesNotReplayAnOldVerticalOffset() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(500, new Position3f(2F, 80F, 3F), false, false, 20);
-        tracker.record(501, new Position3f(2F, 79.5F, 3F), false, false, 20);
+        tracker.record(500, new Position3f(2F, 80F, 3F), false, false, true, 20);
+        tracker.record(501, new Position3f(2F, 79.5F, 3F), false, false, true, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
             500, new Position3f(2F, 80.25F, 3F), false,
-            501, new Position3f(2F, 79.5F, 3F), false, false, true
+            501, new Position3f(2F, 79.5F, 3F), false, false, true, true
         );
 
         assertEquals(new Position3f(2F, 79.5F, 3F), correction.position());
@@ -373,14 +376,14 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalCrouchedEdgeCorrectionKeepsAStableJavaHeight() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(600, new Position3f(4F, 64F, 7F), true, false, 20);
-        tracker.record(601, new Position3f(4.1F, 64F, 7F), false, false, 20);
+        tracker.record(600, new Position3f(4F, 64F, 7F), true, false, false, 20);
+        tracker.record(601, new Position3f(4.1F, 64F, 7F), false, false, false, 20);
 
         // Safe-walk at a block edge can transiently clear onGround without changing Y.
         // Continuous Shift must prevent the older positive Y delta from causing a snap.
         final MovementPredictionTracker.Correction correction = tracker.replay(
             600, new Position3f(4F, 64.2F, 7F), true,
-            601, new Position3f(4.1F, 64F, 7F), false, false, true
+            601, new Position3f(4.1F, 64F, 7F), false, false, true, false
         );
 
         assertEquals(new Position3f(4.1F, 64F, 7F), correction.position());
@@ -390,16 +393,63 @@ public final class Bedrock12640WireTypesTest {
 
     @Test
     public void flyingVerticalKeysCarryExplicitAscendAndDescendFlags() {
-        final var ascending = ClientPlayerPackets.verticalMovementInput(true, true, false);
+        final var ascending = ClientPlayerPackets.verticalMovementInput(true, true, false, false, 0F);
         assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.Ascend));
         assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.WantUp));
 
-        final var descending = ClientPlayerPackets.verticalMovementInput(true, false, true);
+        final var descending = ClientPlayerPackets.verticalMovementInput(true, false, true, false, 0F);
         assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.Descend));
         assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.WantDown));
 
-        assertFalse(ClientPlayerPackets.verticalMovementInput(false, false, true)
+        assertFalse(ClientPlayerPackets.verticalMovementInput(false, false, true, false, 0F)
             .contains(PlayerAuthInputPacketPayload_InputData.Descend));
+    }
+
+    @Test
+    public void historicalFlightAscentKeepsTheNewerJavaHeight() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(700, new Position3f(2F, 80F, 3F), false, false, true, 20);
+        tracker.record(701, new Position3f(2F, 80.5F, 3F), false, false, true, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            700, new Position3f(2F, 79.75F, 3F), false,
+            701, new Position3f(2F, 80.5F, 3F), false, false, false, true
+        );
+
+        assertEquals(new Position3f(2F, 80.5F, 3F), correction.position());
+        assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void sameTickFlightCorrectionRemainsAuthoritative() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(710, new Position3f(2F, 80F, 3F), false, false, true, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            710, new Position3f(2F, 79.75F, 3F), false,
+            710, new Position3f(2F, 80F, 3F), false, false, false, true
+        );
+
+        assertEquals(new Position3f(2F, 79.75F, 3F), correction.position());
+    }
+
+    @Test
+    public void ladderMotionCarriesDirectionWithoutSynthesizingRawKeyEdges() {
+        final var ascending = ClientPlayerPackets.verticalMovementInput(false, false, false, true, 0.2F);
+        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.Jumping));
+        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.WantUp));
+        assertFalse(ascending.contains(PlayerAuthInputPacketPayload_InputData.JumpCurrentRaw));
+
+        final var descending = ClientPlayerPackets.verticalMovementInput(false, false, false, true, -0.2F);
+        assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.WantDown));
+        assertFalse(descending.contains(PlayerAuthInputPacketPayload_InputData.Sneaking));
+    }
+
+    @Test
+    public void climbableIdentifierDetectionIsNarrow() {
+        assertTrue(ClientPlayerEntity.isClimbableBlockIdentifier("ladder"));
+        assertTrue(ClientPlayerEntity.isClimbableBlockIdentifier("twisting_vines_plant"));
+        assertFalse(ClientPlayerEntity.isClimbableBlockIdentifier("stone"));
     }
 
     @Test
@@ -532,6 +582,28 @@ public final class Bedrock12640WireTypesTest {
         }
         assertEquals(ContainerEnumName.CursorContainer, hud.getFullContainerName(0).name());
         assertEquals(ContainerEnumName.CraftingOutputPreviewContainer, hud.getFullContainerName(50).name());
+    }
+
+    @Test
+    public void craftingTablePredictionWritesThroughToItsHudBackingSlots() {
+        final InventoryTracker[] tracker = new InventoryTracker[1];
+        final UserConnection user = (UserConnection) Proxy.newProxyInstance(
+            UserConnection.class.getClassLoader(), new Class<?>[]{UserConnection.class},
+            (proxy, method, args) -> {
+                if (method.getName().equals("get") && args != null && args.length == 1
+                    && args[0] == InventoryTracker.class) {
+                    return tracker[0];
+                }
+                throw new UnsupportedOperationException(method.getName());
+            }
+        );
+        tracker[0] = new InventoryTracker(user);
+        final CraftingTableContainer craftingTable = new CraftingTableContainer(user, (byte) 1, null);
+        final BedrockItem ingredient = new BedrockItem(123, (short) 0, (byte) 4);
+
+        assertTrue(craftingTable.setPredictedItem(37, ingredient));
+        assertEquals(123, tracker[0].getHudContainer().getItem(37).identifier());
+        assertEquals(4, tracker[0].getHudContainer().getItem(37).amount());
     }
 
     private static final class SlotChangeCountingContainer extends Container {
