@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
+ * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
  * Copyright (C) 2021-2026 the original authors
  * Copyright (C) 2023-2026 ViaVersion and contributors
  *
