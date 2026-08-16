@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.screen.impl.classic4j;
 
+import com.viaversion.viafabricplus.injection.access.core.IEditBox;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
@@ -35,6 +36,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
@@ -47,6 +49,9 @@ public final class BetaCraftScreen extends VFPScreen {
 
     public static BCServerList SERVER_LIST;
     private static final String BETA_CRAFT_SERVER_LIST_URL = "https://betacraft.uk/serverlist/";
+
+    private EditBox searchField;
+    private SlotList slotList;
 
     private BetaCraftScreen() {
         super("BetaCraft", true);
@@ -70,9 +75,25 @@ public final class BetaCraftScreen extends VFPScreen {
         this.setupSubtitle(Component.nullToEmpty(BETA_CRAFT_SERVER_LIST_URL), ConfirmLinkScreen.confirmLink(this, BETA_CRAFT_SERVER_LIST_URL));
 
         final int entryHeight = (font.lineHeight + 2) * 3; // title is 2
-        this.addRenderableWidget(new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight, -5, entryHeight));
+        final int searchBarY = 2 * SLOT_MARGIN + entryHeight;
+
+        this.addRenderableWidget(searchField = new EditBox(font, 5, searchBarY, width - 10, 20, Component.empty()));
+        searchField.setHint(Component.translatable("base.viafabricplus.search"));
+        searchField.setResponder(query -> updateSearch());
+        ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
+
+        this.addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, searchBarY + 24, -5, entryHeight, BetaCraftServerListSupport.normalizeQuery(searchField.getValue())));
 
         this.addRefreshButton(() -> SERVER_LIST = null);
+    }
+
+    private void updateSearch() {
+        if (slotList == null) {
+            return;
+        }
+        removeWidget(slotList);
+        final int entryHeight = (font.lineHeight + 2) * 3;
+        addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight + 24, -5, entryHeight, BetaCraftServerListSupport.normalizeQuery(searchField.getValue())));
     }
 
     @Override
@@ -83,7 +104,7 @@ public final class BetaCraftScreen extends VFPScreen {
     public static class SlotList extends VFPList {
         private static double scrollAmount;
 
-        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight) {
+        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight, String query) {
             super(minecraftClient, width, height, top, bottom, entryHeight);
             if (SERVER_LIST == null) {
                 return;
@@ -94,13 +115,19 @@ public final class BetaCraftScreen extends VFPScreen {
                 if (servers.isEmpty()) {
                     continue;
                 }
+                final List<BCServerInfo> filtered = servers.stream().filter(server -> BetaCraftServerListSupport.matchesQuery(server, query)).toList();
+                if (filtered.isEmpty()) {
+                    continue;
+                }
                 addEntry(new TitleEntry(Component.nullToEmpty(value.name())));
-                for (BCServerInfo server : servers) {
+                for (BCServerInfo server : filtered) {
                     addEntry(new ServerSlot(server));
                 }
             }
 
-            initScrollY(scrollAmount);
+            if (query.isEmpty()) {
+                initScrollY(scrollAmount);
+            }
         }
 
         @Override
@@ -128,7 +155,7 @@ public final class BetaCraftScreen extends VFPScreen {
 
         @Override
         public void mappedMouseClicked(double mouseX, double mouseY, int button) {
-            ConnectionUtil.connect(server.name(), server.socket());
+            ConnectionUtil.connect(server.name(), server.socket(), BetaCraftServerListSupport.determineVersion(server));
             super.mappedMouseClicked(mouseX, mouseY, button);
         }
 

@@ -48,11 +48,11 @@ public final class ReportIssuesScreen extends VFPScreen {
             return;
         }
         actions.put("report.viafabricplus.bug_report", () -> {
-            Util.getPlatform().openUri(URI.create("https://github.com/ViaVersion/ViaFabricPlus/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml"));
+            Util.getPlatform().openUri(URI.create("https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml"));
             this.setupSubtitle(Component.translatable("report.viafabricplus.bug_report.response"));
         });
         actions.put("report.viafabricplus.feature_request", () -> {
-            Util.getPlatform().openUri(URI.create("https://github.com/ViaVersion/ViaFabricPlus/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml"));
+            Util.getPlatform().openUri(URI.create("https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml"));
             this.setupSubtitle(Component.translatable("report.viafabricplus.feature_request.response"));
         });
         actions.put("report.viafabricplus.create_via_dump", () -> DumpUtil.postDump(minecraft.getUser().getProfileId()).whenComplete((s, throwable) -> {

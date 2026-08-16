@@ -33,12 +33,18 @@
       "contact": {
         "homepage": "https://github.com/ViaVersion/ViaFabricPlus/graphs/contributors"
       }
+    },
+    {
+      "name": "ViaFabricPlusPeaks contributors",
+      "contact": {
+        "homepage": "https://github.com/Peaks2000/ViaFabricPlusPeaks/graphs/contributors"
+      }
     }
   ],
   "contact": {
     "homepage": "https://florianreuth.de/",
-    "sources": "https://github.com/ViaVersion/ViaFabricPlus",
-    "issues": "https://github.com/ViaVersion/ViaFabricPlus/issues",
+    "sources": "https://github.com/Peaks2000/ViaFabricPlusPeaks",
+    "issues": "https://github.com/Peaks2000/ViaFabricPlusPeaks/issues",
     "email": "florian@florianreuth.de"
   },
   "license": "GPL-v3",
