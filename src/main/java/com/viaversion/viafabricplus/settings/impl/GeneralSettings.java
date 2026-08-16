@@ -59,11 +59,13 @@ public final class GeneralSettings extends SettingGroup {
     public final BooleanSetting emulateInventoryActionsInAlphaVersions = new BooleanSetting(this, Component.translatable("general_settings.viafabricplus.emulate_inventory_actions_in_alpha_versions"), true);
     public final BooleanSetting saveScrollPositionInSlotScreens = new BooleanSetting(this, Component.translatable("general_settings.viafabricplus.save_scroll_position_in_slot_screens"), true);
     public final BooleanSetting experimentalBlockConnections = new BooleanSetting(this, Component.translatable("general_settings.viafabricplus.experimental_block_connections"), false);
+    public final BooleanSetting torchesStickToWallsClassicube = new BooleanSetting(this, Component.translatable("general_settings.viafabricplus.torches_stick_to_walls_classicube"), false);
 
     public GeneralSettings() {
         super(Component.translatable("setting_group_name.viafabricplus.general"));
         emulateInventoryActionsInAlphaVersions.lockValue();
         experimentalBlockConnections.lockValue();
+        torchesStickToWallsClassicube.lockValue();
     }
 
     public static void setOrientation(final Position position, final int orientationIndex, final int width, final int height) {
