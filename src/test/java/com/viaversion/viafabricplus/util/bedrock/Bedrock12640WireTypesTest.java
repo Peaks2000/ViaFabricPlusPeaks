@@ -35,6 +35,7 @@ import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthIn
 import net.raphimc.viabedrock.protocol.data.generated.bedrock.CustomBlockTags;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
 import net.raphimc.viabedrock.protocol.model.BedrockTradeOffer;
+import net.raphimc.viabedrock.protocol.model.CommandOriginData;
 import net.raphimc.viabedrock.protocol.model.FullContainerName;
 import net.raphimc.viabedrock.protocol.model.GameRule;
 import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
@@ -59,6 +60,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -347,6 +349,31 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void partialMoveActorDeltaPreservesCoordinatesThatWereNotSent() {
+        final Position3f current = new Position3f(12.5F, 71F, -8.25F);
+
+        assertEquals(new Position3f(12.5F, 70.25F, -8.25F),
+            current.withOptionalCoordinates(false, 0F, true, 70.25F, false, 0F));
+        assertEquals(new Position3f(13F, 71F, -9F),
+            current.withOptionalCoordinates(true, 13F, false, 0F, true, -9F));
+    }
+
+    @Test
+    public void playerCommandOriginCarriesTheSessionUniqueEntityId() {
+        final UUID uuid = UUID.fromString("2b141a3a-66d0-46df-bcf8-402ad6d3729e");
+        final CommandOriginData expected = CommandOriginData.player(uuid, 92837465L);
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            BedrockTypes.COMMAND_ORIGIN_DATA.write(buffer, expected);
+
+            assertEquals(expected, BedrockTypes.COMMAND_ORIGIN_DATA.read(buffer));
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
     public void villagerV2ProfessionRegionAndTierMapToJavaVillagerData() {
         assertEquals(new VillagerData(2, 9, 1), EntityMetadataRewriter.villagerData(5, 0, 0)); // plains librarian
         assertEquals(new VillagerData(0, 1, 5), EntityMetadataRewriter.villagerData(8, 1, 9)); // desert armorer, clamped
@@ -418,6 +445,19 @@ public final class Bedrock12640WireTypesTest {
         assertFalse(new BedrockTradeOffer(11, emerald, BedrockItem.empty(), bread, 2, 12, 1, 0F, 0).outOfStock());
         assertTrue(new BedrockTradeOffer(11, emerald, BedrockItem.empty(), bread, 12, 12, 1, 0F, 0).outOfStock());
         assertTrue(new BedrockTradeOffer(11, emerald, BedrockItem.empty(), bread, 0, 0, 1, 0F, 0).outOfStock());
+    }
+
+    @Test
+    public void merchantWildcardAuxAcceptsRealInventoryMetadata() {
+        final BedrockItem wildcardPaper = new BedrockItem(1, (short) BedrockItem.WILDCARD_AUX_VALUE, (byte) 24);
+        final BedrockItem inventoryPaper = new BedrockItem(1, (short) 0, (byte) 32);
+        final BedrockItem wrongItem = new BedrockItem(2, (short) 0, (byte) 32);
+        final BedrockItem exactVariant = new BedrockItem(1, (short) 4, (byte) 1);
+
+        assertTrue(wildcardPaper.hasWildcardData());
+        assertTrue(MerchantContainer.matchesCost(inventoryPaper, wildcardPaper));
+        assertFalse(MerchantContainer.matchesCost(wrongItem, wildcardPaper));
+        assertFalse(MerchantContainer.matchesCost(inventoryPaper, exactVariant));
     }
 
     @Test
