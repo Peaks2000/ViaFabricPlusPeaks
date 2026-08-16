@@ -1,5 +1,6 @@
 
-## ViaFabricPlusPeaks is ViaFabricPlus with the ability to join Xbox Friends and LAN worlds.
+## ViaFabricPlusPeaks is ViaFabricPlus with the ability to join Xbox Friends and LAN worlds. 
+and some classicube fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)!
 # What changed from ViaFabricPlus
     -in server lists added a menu for LAN worlds and XBOX friends
     -fixed bedrock crafting
