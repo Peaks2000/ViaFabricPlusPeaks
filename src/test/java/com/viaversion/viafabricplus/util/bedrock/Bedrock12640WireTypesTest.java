@@ -32,6 +32,7 @@ import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputPacketPayload_InputData;
+import net.raphimc.viabedrock.protocol.data.enums.java.generated.GameMode;
 import net.raphimc.viabedrock.protocol.data.generated.bedrock.CustomBlockTags;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
 import net.raphimc.viabedrock.protocol.model.BedrockTradeOffer;
@@ -231,6 +232,21 @@ public final class Bedrock12640WireTypesTest {
         assertFalse(tracker.isJavaInventoryRefreshPending());
         tracker.schedulePlayerInventoryResync(true);
         assertTrue(tracker.isJavaInventoryRefreshPending());
+    }
+
+    @Test
+    public void creativePlayerTransactionsPreserveTheJavaOwnedCursor() {
+        assertTrue(InventoryPackets.shouldPreserveCreativeCursor(GameMode.CREATIVE, true));
+        assertFalse(InventoryPackets.shouldPreserveCreativeCursor(GameMode.SURVIVAL, true));
+        assertFalse(InventoryPackets.shouldPreserveCreativeCursor(GameMode.CREATIVE, false));
+    }
+
+    @Test
+    public void localBlockPlacementSoundEchoIsSuppressedWithoutMutingOtherPlayers() {
+        assertTrue(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound("place", 42L, 42L));
+        assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound("place", 43L, 42L));
+        assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound("step", 42L, 42L));
+        assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound("place", 0L, 0L));
     }
 
     @Test
