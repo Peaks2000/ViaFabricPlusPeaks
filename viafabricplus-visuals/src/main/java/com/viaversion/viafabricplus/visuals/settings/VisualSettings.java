@@ -80,6 +80,7 @@ public final class VisualSettings extends SettingGroup {
     // a1.0.15 -> c0_28/c0_30
     public final VersionedBooleanSetting replaceCreativeInventory = new VersionedBooleanSetting(this, Component.translatable("visual_settings.viafabricplus.replace_creative_inventory_with_classic_inventory"), ProtocolVersionRange.andOlder(LegacyProtocolVersion.c0_28toc0_30));
     public final VersionedBooleanSetting oldWalkingAnimation = new VersionedBooleanSetting(this, Component.translatable("visual_settings.viafabricplus.old_walking_animation"), ProtocolVersionRange.andOlder(LegacyProtocolVersion.c0_28toc0_30));
+    public final BooleanSetting slowDownClassicAnimation = new BooleanSetting(this, Component.translatable("visual_settings.viafabricplus.slow_down_classic_animation"), true);
 
     public VisualSettings() {
         super(Component.translatable("setting_group_name.viafabricplus.visual"));

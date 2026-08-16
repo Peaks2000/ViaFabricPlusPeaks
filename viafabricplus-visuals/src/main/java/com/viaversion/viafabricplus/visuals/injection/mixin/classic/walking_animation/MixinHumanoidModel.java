@@ -50,12 +50,13 @@ public abstract class MixinHumanoidModel<T extends HumanoidRenderState> {
         if (VisualSettings.INSTANCE.oldWalkingAnimation.isEnabled()) {
             final float limbSwingAnimationProgress = state.walkAnimationPos;
             final float limbSwingAmplitude = state.walkAnimationSpeed;
+            final float speed = VisualSettings.INSTANCE.slowDownClassicAnimation.getValue() ? 0.7F : 1.0F;
 
-            this.rightArm.xRot = Mth.cos(limbSwingAnimationProgress * 0.6662F + 3.1415927F) * 2.0F * limbSwingAmplitude;
-            this.rightArm.zRot = (Mth.cos(limbSwingAnimationProgress * 0.2312F) + 1.0F) * 1.0F * limbSwingAmplitude;
+            this.rightArm.xRot = Mth.cos(limbSwingAnimationProgress * 0.6662F * speed + 3.1415927F) * 2.0F * limbSwingAmplitude;
+            this.rightArm.zRot = (Mth.cos(limbSwingAnimationProgress * 0.2312F * speed) + 1.0F) * 1.0F * limbSwingAmplitude;
 
-            this.leftArm.xRot = Mth.cos(limbSwingAnimationProgress * 0.6662F) * 2.0F * limbSwingAmplitude;
-            this.leftArm.zRot = (Mth.cos(limbSwingAnimationProgress * 0.2812F) - 1.0F) * 1.0F * limbSwingAmplitude;
+            this.leftArm.xRot = Mth.cos(limbSwingAnimationProgress * 0.6662F * speed) * 2.0F * limbSwingAmplitude;
+            this.leftArm.zRot = (Mth.cos(limbSwingAnimationProgress * 0.2812F * speed) - 1.0F) * 1.0F * limbSwingAmplitude;
         }
     }
 
