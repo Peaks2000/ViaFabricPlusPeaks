@@ -25,6 +25,9 @@ import com.google.gson.JsonObject;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.save.AbstractSave;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
+import de.florianreuth.classic4j.util.CookieStore;
+import java.util.HashMap;
+import java.util.Map;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.util.MinecraftAuth4To5Migrator;
@@ -46,6 +49,9 @@ public final class AccountsSave extends AbstractSave {
         }
         if (classicubeAccount != null) {
             object.add("classicube", classicubeAccount.asJson());
+            final JsonObject cookies = new JsonObject();
+            classicubeAccount.cookieStore.getMap().forEach(cookies::addProperty);
+            object.add("classicube_cookies", cookies);
         }
     }
 
@@ -58,6 +64,11 @@ public final class AccountsSave extends AbstractSave {
         });
         handleAccount("bedrockV3", object, account -> bedrockAccount = BedrockAuthManager.fromJson(MinecraftAuth.createHttpClient(), ProtocolConstants.BEDROCK_VERSION_NAME, account));
         handleAccount("classicube", object, account -> classicubeAccount = CCAccount.fromJson(account));
+        handleAccount("classicube_cookies", object, cookies -> {
+            final Map<String, String> cookieValues = new HashMap<>();
+            cookies.entrySet().forEach(entry -> cookieValues.put(entry.getKey(), entry.getValue().getAsString()));
+            classicubeAccount.cookieStore.merge(new CookieStore(cookieValues));
+        });
     }
 
     private void handleAccount(final String name, final JsonObject object, final AccountConsumer output) {

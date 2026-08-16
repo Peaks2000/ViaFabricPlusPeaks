@@ -30,6 +30,7 @@ import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.settings.impl.AuthenticationSettings;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import de.florianreuth.classic4j.ClassiCubeHandler;
+import de.florianreuth.classic4j.api.LoginProcessHandler;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
 import de.florianreuth.classic4j.model.classicube.server.CCServerInfo;
 import java.util.ArrayList;
@@ -51,9 +52,50 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
 
     private static List<CCServerInfo> SERVER_LIST;
     private static final String CLASSICUBE_SERVER_LIST_URL = "https://www.classicube.net/server/list/";
+    private boolean reauthenticating;
 
     public ClassiCubeServerListScreen() {
         super("ClassiCube", true);
+    }
+
+    /**
+     * The server list API only returns an mppass for each server when the account is logged in.
+     * If the session expired, the servers are returned without an mppass, which would result in the servers
+     * kicking the client with "Unknown host" when trying to join.
+     */
+    private boolean needsReauthentication() {
+        return !SERVER_LIST.isEmpty() && SERVER_LIST.stream().noneMatch(server -> server.mpPass() != null && !server.mpPass().isEmpty());
+    }
+
+    private void reauthenticate(final CCAccount account) {
+        if (reauthenticating) {
+            return;
+        }
+        reauthenticating = true;
+
+        ClassiCubeHandler.requestAuthentication(account, null, new LoginProcessHandler() {
+
+            @Override
+            public void handleMfa(CCAccount account) {
+                reauthenticating = false;
+                SERVER_LIST = null;
+                ClassiCubeMFAScreen.INSTANCE.open(prevScreen);
+            }
+
+            @Override
+            public void handleSuccessfulLogin(CCAccount account) {
+                reauthenticating = false;
+                SERVER_LIST = null;
+                open(prevScreen);
+            }
+
+            @Override
+            public void handleException(Throwable throwable) {
+                reauthenticating = false;
+                ViaFabricPlusImpl.INSTANCE.getLogger().error("Error while re-authenticating to ClassiCube!", throwable);
+                showErrorScreen(INSTANCE.getTitle(), throwable, prevScreen);
+            }
+        });
     }
 
     @Override
@@ -62,6 +104,10 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         if (SERVER_LIST == null) {
             ClassiCubeHandler.requestServerList(account, serverList -> {
                 SERVER_LIST = new ArrayList<>(serverList.servers());
+                if (needsReauthentication()) {
+                    reauthenticate(account);
+                    return;
+                }
                 open(prevScreen);
                 setupUrlSubtitle(CLASSICUBE_SERVER_LIST_URL);
             }, throwable -> {
