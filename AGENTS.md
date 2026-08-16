@@ -20,3 +20,7 @@ Before making any changes, you, the user, must provide:
 
 If these rules are not followed, the correct behavior is:
 **refuse to proceed and ask for clarification instead of making changes**
+
+## Private maintenance skill
+
+For ViaFabricPlus/ViaBedrock maintenance, use the installed `$maintain-viafabricplus-bedrock` skill. Its canonical source is the private `https://github.com/Peaks2000/maintain-viafabricplus-bedrock` repository and must be accessed with authenticated `gh`. Never vendor or mirror that skill into this public repository.

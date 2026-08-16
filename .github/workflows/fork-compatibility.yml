@@ -59,7 +59,7 @@ jobs:
 
       - name: Run enabled fork regression tests
         working-directory: ViaFabricPlus
-        run: ./gradlew --include-build ../ViaBedrock test -I .codex/skills/maintain-viafabricplus-bedrock/scripts/enable-vfp-tests.gradle --stacktrace
+        run: ./gradlew --include-build ../ViaBedrock test -I .github/gradle/enable-vfp-tests.gradle --stacktrace
 
       - name: Build distributable
         working-directory: ViaFabricPlus

@@ -34,3 +34,6 @@ DS_Store
 # Misc
 
 run/
+
+# Private Codex maintenance skill (installed separately)
+.codex/skills/maintain-viafabricplus-bedrock/
