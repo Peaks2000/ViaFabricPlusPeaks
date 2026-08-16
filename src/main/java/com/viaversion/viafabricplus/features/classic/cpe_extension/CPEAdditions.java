@@ -23,18 +23,18 @@ package com.viaversion.viafabricplus.features.classic.cpe_extension;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.connection.UserConnection;
-import com.viaversion.viaversion.util.IdAndData;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import net.lenni0451.reflect.Enums;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
-import net.raphimc.vialegacy.api.data.BlockList1_6;
 import net.raphimc.vialegacy.protocol.classic.c0_30cpetoc0_28_30.data.ClassicProtocolExtension;
 import net.raphimc.vialegacy.protocol.classic.c0_30cpetoc0_28_30.data.ExtendedClassicBlocks;
 import net.raphimc.vialegacy.protocol.classic.c0_30cpetoc0_28_30.packet.ClientboundPacketsc0_30cpe;
@@ -44,14 +44,21 @@ public final class CPEAdditions {
     public final static List<ClassicProtocolExtension> ALLOWED_EXTENSIONS = new ArrayList<>();
     public final static Map<Integer, ClientboundPacketsc0_30cpe> CUSTOM_PACKETS = new HashMap<>();
     public static final List<Item> EXTENDED_CLASSIC_ITEMS = new ArrayList<>();
+    public static final Set<Integer> CLIMBABLE_BLOCKS = ConcurrentHashMap.newKeySet();
+
+    public static final int COLLIDE_CLIMB = 5;
+    public static final int COLLIDE_DEVCLIMB = 7;
 
     public static ClientboundPacketsc0_30cpe EXT_WEATHER_TYPE;
+    public static ClientboundPacketsc0_30cpe EXT_BLOCK_DEFINITIONS;
+    public static ClientboundPacketsc0_30cpe EXT_BLOCK_DEFINITIONS_EXT;
+    public static ClientboundPacketsc0_30cpe EXT_UNDEFINE_BLOCK;
 
     private static boolean snowing = false;
 
     public static void init() {
         EXTENDED_CLASSIC_ITEMS.add(Items.COBBLESTONE_SLAB);
-        EXTENDED_CLASSIC_ITEMS.add(Items.LADDER);
+        EXTENDED_CLASSIC_ITEMS.add(Items.DEAD_BUSH);
         EXTENDED_CLASSIC_ITEMS.add(Items.SANDSTONE);
         EXTENDED_CLASSIC_ITEMS.add(Items.SNOW);
         EXTENDED_CLASSIC_ITEMS.add(Items.TORCH);
@@ -66,8 +73,34 @@ public final class CPEAdditions {
         allowExtension(ClassicProtocolExtension.ENV_WEATHER_TYPE);
         EXT_WEATHER_TYPE = createNewPacket(ClassicProtocolExtension.ENV_WEATHER_TYPE, 31, (user, buf) -> buf.readByte());
 
-        ExtendedClassicBlocks.MAPPING.put(ExtendedClassicBlocks.ROPE, new IdAndData(BlockList1_6.ladder.blockId(), 2));
-        ExtendedClassicBlocks.REVERSE_MAPPING.put(new IdAndData(BlockList1_6.ladder.blockId(), 0), ExtendedClassicBlocks.ROPE);
+        allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS);
+        allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT);
+        EXT_BLOCK_DEFINITIONS = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 33, (user, buf) -> buf.skipBytes(79));
+        EXT_UNDEFINE_BLOCK = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 34, (user, buf) -> buf.skipBytes(1));
+        EXT_BLOCK_DEFINITIONS_EXT = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT, 35, (user, buf) -> buf.skipBytes(84));
+
+        resetBlockDefinitions();
+    }
+
+    public static boolean isClimbableBlock(final int blockId) {
+        return CLIMBABLE_BLOCKS.contains(blockId);
+    }
+
+    public static void handleBlockDefinition(final int blockId, final byte collideType) {
+        if (collideType == COLLIDE_CLIMB || collideType == COLLIDE_DEVCLIMB) {
+            CLIMBABLE_BLOCKS.add(blockId);
+        } else {
+            CLIMBABLE_BLOCKS.remove(blockId);
+        }
+    }
+
+    public static void removeBlockDefinition(final int blockId) {
+        CLIMBABLE_BLOCKS.remove(blockId);
+    }
+
+    public static void resetBlockDefinitions() {
+        CLIMBABLE_BLOCKS.clear();
+        CLIMBABLE_BLOCKS.add(ExtendedClassicBlocks.ROPE);
     }
 
     public static boolean isSnowing() {

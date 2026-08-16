@@ -26,6 +26,7 @@ import com.viaversion.viaversion.api.protocol.AbstractProtocol;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
 import com.viaversion.viaversion.api.protocol.remapper.PacketHandlers;
 import com.viaversion.viaversion.api.type.Types;
+import com.viaversion.viaversion.api.type.types.FixedByteArrayType;
 import com.viaversion.viaversion.protocols.v1_19_3to1_19_4.Protocol1_19_3To1_19_4;
 import com.viaversion.viaversion.protocols.v1_19_3to1_19_4.packet.ClientboundPackets1_19_4;
 import net.raphimc.vialegacy.protocol.classic.c0_28_30toa1_0_15.packet.ClientboundPacketsc0_28;
@@ -65,11 +66,42 @@ public abstract class MixinProtocolc0_30cpeToc0_28_30 extends AbstractProtocol<C
                 });
             }
         });
+
+        this.registerClientbound(CPEAdditions.EXT_BLOCK_DEFINITIONS, null, new PacketHandlers() {
+            @Override
+            public void register() {
+                handler(wrapper -> handleBlockDefinition(wrapper));
+            }
+        });
+        this.registerClientbound(CPEAdditions.EXT_BLOCK_DEFINITIONS_EXT, null, new PacketHandlers() {
+            @Override
+            public void register() {
+                handler(wrapper -> handleBlockDefinition(wrapper));
+            }
+        });
+        this.registerClientbound(CPEAdditions.EXT_UNDEFINE_BLOCK, null, new PacketHandlers() {
+            @Override
+            public void register() {
+                handler(wrapper -> {
+                    wrapper.cancel();
+                    CPEAdditions.removeBlockDefinition(wrapper.read(Types.UNSIGNED_BYTE));
+                });
+            }
+        });
+    }
+
+    private static void handleBlockDefinition(final PacketWrapper wrapper) {
+        wrapper.cancel();
+        final short blockId = wrapper.read(Types.UNSIGNED_BYTE);
+        wrapper.read(new FixedByteArrayType(64)); // block name
+        final byte collideType = wrapper.read(Types.BYTE);
+        CPEAdditions.handleBlockDefinition(blockId, collideType);
     }
 
     @Inject(method = "init", at = @At("HEAD"))
     private void resetSnowing(CallbackInfo ci) {
         CPEAdditions.setSnowing(false);
+        CPEAdditions.resetBlockDefinitions();
     }
 
 }
