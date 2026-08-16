@@ -1,0 +1,83 @@
+name: Fork Compatibility
+
+on:
+  pull_request:
+    branches:
+      - ver/26.2
+  push:
+    branches:
+      - ver/26.2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
+  VIABEDROCK_REF: ddd1338e37a0e69f4d828b217f693ef9cb15a9ae
+
+jobs:
+  preserve-fork:
+    name: Preserve fork behavior
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout ViaFabricPlus fork
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ViaFabricPlus
+          persist-credentials: false
+
+      - name: Checkout pinned ViaBedrock fork
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.VIABEDROCK_REPOSITORY }}
+          ref: ${{ env.VIABEDROCK_REF }}
+          path: ViaBedrock
+          persist-credentials: false
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+        with:
+          cache-disabled: true
+          cache-provider: basic
+
+      - name: Set up Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: 25
+          check-latest: true
+
+      - name: Verify pinned dependency
+        working-directory: ViaBedrock
+        run: test "$(git rev-parse HEAD)" = "${VIABEDROCK_REF}"
+
+      - name: Compile against pinned ViaBedrock
+        working-directory: ViaFabricPlus
+        run: ./gradlew --include-build ../ViaBedrock compileJava --stacktrace
+
+      - name: Run enabled fork regression tests
+        working-directory: ViaFabricPlus
+        run: ./gradlew --include-build ../ViaBedrock test -I .codex/skills/maintain-viafabricplus-bedrock/scripts/enable-vfp-tests.gradle --stacktrace
+
+      - name: Build distributable
+        working-directory: ViaFabricPlus
+        run: ./gradlew --include-build ../ViaBedrock build --stacktrace
+
+      - name: Audit fork JAR invariants
+        working-directory: ViaFabricPlus
+        shell: bash
+        run: |
+          mapfile -t artifacts < <(find build/libs -maxdepth 1 -type f -name 'ViaFabricPlus-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print)
+          test "${#artifacts[@]}" -eq 1
+          jar_path="${artifacts[0]}"
+          unzip -t "$jar_path"
+          zipinfo -1 "$jar_path" | grep -Eq '^META-INF/jars/ViaBedrock-.*\.jar$'
+          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/stock/ViaBedrock-stock-1.26.30.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-linux-x86_64.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-macos-aarch64.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'META-INF/licenses/viafabricplus/LICENSE'
+          zipinfo -1 "$jar_path" | grep -qx 'META-INF/licenses/webrtc-java-m152/LICENSE'
+          unzip -p "$jar_path" assets/viafabricplus/lang/en_us.json | grep -q 'bedrock_worlds.viafabricplus'

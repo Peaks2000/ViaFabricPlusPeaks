@@ -52,6 +52,8 @@ After the ViaBedrock commit is pushed, rebuild ViaFabricPlus against the remote 
 
 Treat this remote-backed build as the release build. Gradle labels its source-control checkout `:ViaBedrock`, so that task name alone does not prove sibling substitution. Locate the newest `ViaFabricPlus/.gradle/vcs-1/*/ViaBedrock` checkout and run `git -C <checkout> rev-parse HEAD`; require the pushed ViaBedrock commit. Then run the remaining validation from the main skill, identify the remapped main JAR, and record its SHA-256.
 
+For upstream synchronization, keep the release branches unchanged while using dedicated staging branches and pull requests. ViaFabricPlus's `Fork Compatibility` workflow must test the staging result against the exact ViaBedrock commit pinned in that workflow. ViaBedrock's `ViaFabricPlus Consumer` workflow must test each maintained dependency change through the current ViaFabricPlus fork. Update a pin only in the same reviewed change that proves the new pair of commits together. Never treat Dependabot, a green upstream workflow, or compilation against a moving branch as sufficient compatibility evidence.
+
 ## Synchronize the skill
 
 Edit the standalone `maintain-viafabricplus-bedrock` checkout as the canonical source. Copy every changed skill file into the ViaFabricPlus mirror, including `SKILL.md`, `agents/`, `references/`, and `scripts/`. Before committing either repository, require an empty recursive diff apart from standalone Git metadata:

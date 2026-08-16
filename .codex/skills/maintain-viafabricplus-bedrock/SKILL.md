@@ -15,6 +15,8 @@ Read `references/repository-coordination.md` before cloning, branching, changing
 
 When integrating an external pull request, follow the contributor-attribution workflow in `references/repository-coordination.md`. Preserve the exact contributor-authored commits and GitHub PR relationship with a true merge while resolving the resulting tree against the maintained branch; do not squash, re-author, or overwrite newer fork behavior merely for convenience.
 
+Treat the released fork branch as a compatibility product, not as a disposable mirror of upstream. Integrate ViaFabricPlus or ViaBedrock upstream changes only on a staging branch and through a reviewed merge; keep the released branch unchanged until the pinned cross-repository build, fork-invariant tests, runtime smoke test, and JAR audit pass. Preserve every working fork-only route and user-facing feature by default, and require explicit evidence plus user approval before intentionally retiring one.
+
 Read the references selectively:
 
 - Read `references/upstream-release-playbook.md` first when any Bedrock, ViaBedrock, ViaFabricPlus, Minecraft Java, Fabric, or ViaVersion release changes the baseline.

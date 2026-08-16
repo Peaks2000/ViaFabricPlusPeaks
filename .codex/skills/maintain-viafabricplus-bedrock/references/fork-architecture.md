@@ -8,6 +8,7 @@
 - Vendored `webrtc-java-m152test` artifacts under `vendor/maven/` provide the NetherNet/WebRTC runtime and platform natives needed by iOS-hosted LAN worlds. The M152 Java and native classifiers must come from one JNI commit; see `nethernet-auth-and-natives.md`.
 - On the current 4.x line, `StockViaBedrockRuntime` loads the embedded stock 1.26.30 ViaBedrock JAR in a child-first class loader. Ordinary server-list connections use that runtime. Dedicated LAN/friends `ServerData` entries carry their maintained Bedrock wire protocol through `IServerData`; `MixinConnectScreen_1` uses that durable marker to select and prepare the maintained route on every attempt, including Peakeor/manual reconnects. Do not replace this with one-shot global route identity.
 - Upstream `next/v5` removed Bedrock instead of supplying a replacement translator. Before rebasing onto a post-removal baseline, read `viafabricplus-v5-migration.md`. Do not assume the 4.x embedded stock runtime still exists; if retained, rename and pin it as a fork-owned compatibility runtime with independent route tests.
+- `.github/workflows/fork-compatibility.yml` pins the maintained ViaBedrock commit and runs ViaFabricPlus's enabled regression suite plus JAR invariants. ViaBedrock's `.github/workflows/viafabricplus-consumer.yml` performs the reverse consumer build. These checks are merge gates for upstream synchronization; update their refs deliberately when advancing either side, never as an unreviewed moving dependency.
 
 ## User-facing flow
 

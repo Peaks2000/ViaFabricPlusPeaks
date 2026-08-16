@@ -4,6 +4,7 @@ Use this playbook whenever Minecraft Bedrock, ViaBedrock, ViaFabricPlus, Minecra
 
 ## Contents
 
+0. Enforce the fork preservation gate
 1. Define the upgrade
 2. Establish the native baseline
 3. Audit the fork delta
@@ -11,6 +12,14 @@ Use this playbook whenever Minecraft Bedrock, ViaBedrock, ViaFabricPlus, Minecra
 5. Update ViaFabricPlus
 6. Validate the compatibility matrix
 7. Deliver and record evidence
+
+## 0. Enforce the fork preservation gate
+
+Treat the latest released fork branch and JAR as the rollback baseline. Never reset, rebase, force-push, or directly merge an upstream ViaFabricPlus or ViaBedrock branch into that released branch. Create a dedicated staging branch from the released fork, merge the exact upstream commit there with a true merge commit, and deliver it through a reviewed pull request only after every gate below passes.
+
+Before resolving conflicts, record the released ViaFabricPlus commit, maintained ViaBedrock commit, skill commit, upstream commit, and distributable JAR SHA-256. Treat all working fork-only behavior as an acceptance contract, including LAN/friends discovery, Xbox/MPSD, NetherNet identities and natives, RakNet, bounded protocol selection, mapping repairs, inventory/crafting fixes, and stock-versus-maintained route isolation. Default each delta to **keep**. Drop it only when a verified upstream implementation passes the same tests and the user approves the intentional retirement; upstream deletion or refactoring alone is not evidence that the fork no longer needs it.
+
+Resolve conflicts by responsibility and behavior, never with repository-wide or whole-file `ours`/`theirs` choices. Freeze the exact ViaBedrock revision used by the consumer validation; a successful build against a moving branch is not reproducible evidence. Require the pinned ViaFabricPlus fork-compatibility workflow and the ViaBedrock consumer workflow to pass, then run the local compatibility matrix and runtime/JAR checks. If any fork invariant regresses, stop on the staging branch and keep the released branch deployable. Do not make CI green by skipping tests, loosening protocol validation, removing routes, or accepting an unverified dependency head.
 
 ## 1. Define the upgrade
 
