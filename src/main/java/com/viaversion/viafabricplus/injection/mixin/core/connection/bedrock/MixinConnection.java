@@ -36,6 +36,7 @@ import com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentity;
 import com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentitySignaling;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
+import com.viaversion.viafabricplus.util.bedrock.NetherNetPortAllocator;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetDiscoverySignaling;
 import com.viaversion.viafabricplus.util.bedrock.ViaFabricPlusNetherNetXboxRpcSignaling;
 import com.viaversion.viafabricplus.util.bedrock.WebRtcNativeLibrary;
@@ -193,6 +194,10 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
         return () -> {
             final NetherNetClientChannel channel = factory.newChannel();
             channel.attr(BedrockNetherNetIdentity.CHANNEL_ATTRIBUTE).set(identity);
+            channel.config().setOption(
+                NetherChannelOption.NETHER_PORT_ALLOCATOR_CONFIG,
+                NetherNetPortAllocator.includeAllLocalAdapters(channel.config().getOption(NetherChannelOption.NETHER_PORT_ALLOCATOR_CONFIG))
+            );
             channel.config().setOption(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
             channel.config().setOption(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 0);
             return channel;

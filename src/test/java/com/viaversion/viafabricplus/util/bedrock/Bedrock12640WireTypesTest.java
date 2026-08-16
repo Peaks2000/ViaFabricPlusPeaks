@@ -14,12 +14,18 @@ package com.viaversion.viafabricplus.util.bedrock;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.raphimc.viabedrock.api.model.container.player.HudContainer;
-import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
 import net.raphimc.viabedrock.api.model.BlockState;
+import net.raphimc.viabedrock.api.model.container.ChestContainer;
+import net.raphimc.viabedrock.api.model.container.Container;
+import net.raphimc.viabedrock.api.model.container.FurnaceContainer;
+import net.raphimc.viabedrock.api.model.container.player.HudContainer;
+import net.raphimc.viabedrock.api.model.container.player.OffhandContainer;
+import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
+import net.raphimc.viabedrock.protocol.data.generated.bedrock.CustomBlockTags;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
 import net.raphimc.viabedrock.protocol.model.FullContainerName;
 import net.raphimc.viabedrock.protocol.model.GameRule;
@@ -61,6 +67,52 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void offhandUsesDistinctStackRequestSlot() {
+        final OffhandContainer offhand = new OffhandContainer(null);
+        assertEquals(45, offhand.javaSlot(0));
+        assertEquals(1, offhand.stackRequestSlot(0));
+        assertEquals(0, offhand.stackResponseSlot(1));
+    }
+
+    @Test
+    public void genericBlockContainersUseTheirStackRequestNames() {
+        final ChestContainer barrel = new ChestContainer(null, (byte) 1, null, null, 27, CustomBlockTags.BARREL);
+        final ChestContainer shulker = new ChestContainer(null, (byte) 2, null, null, 27, CustomBlockTags.SHULKER_BOX);
+        final ChestContainer enderChest = new ChestContainer(null, (byte) 3, null, null, 27, CustomBlockTags.ENDER_CHEST);
+
+        assertEquals(ContainerEnumName.BarrelContainer, barrel.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.ShulkerBoxContainer, shulker.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.LevelEntityContainer, enderChest.getFullContainerName(0).name());
+        assertEquals(true, barrel.isValidBlockTag(CustomBlockTags.BARREL));
+        assertEquals(true, shulker.isValidBlockTag(CustomBlockTags.SHULKER_BOX));
+        assertEquals(true, enderChest.isValidBlockTag(CustomBlockTags.ENDER_CHEST));
+    }
+
+    @Test
+    public void furnaceSlotsUseSpecializedStackRequestNames() {
+        final FurnaceContainer furnace = new FurnaceContainer(null, (byte) 1, ContainerType.FURNACE, null, null);
+        final FurnaceContainer blastFurnace = new FurnaceContainer(null, (byte) 2, ContainerType.BLAST_FURNACE, null, null);
+        final FurnaceContainer smoker = new FurnaceContainer(null, (byte) 3, ContainerType.SMOKER, null, null);
+
+        assertEquals(ContainerEnumName.FurnaceIngredientContainer, furnace.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.BlastFurnaceIngredientContainer, blastFurnace.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.SmokerIngredientContainer, smoker.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.FurnaceFuelContainer, furnace.getFullContainerName(1).name());
+        assertEquals(ContainerEnumName.FurnaceResultContainer, furnace.getFullContainerName(2).name());
+        assertEquals(true, furnace.isValidBlockTag(CustomBlockTags.FURNACE));
+    }
+
+    @Test
+    public void requestPredictionDoesNotPublishEquipmentBeforeHostResponse() {
+        final SlotChangeCountingContainer container = new SlotChangeCountingContainer();
+        container.setPredictedItem(0, new BedrockItem(1));
+        assertEquals(0, container.slotChanges);
+
+        container.setItem(0, BedrockItem.empty());
+        assertEquals(1, container.slotChanges);
+    }
+
+    @Test
     public void craftingTableHudSlotsUseCraftingInputContainer() {
         final HudContainer hud = new HudContainer(null);
         for (int slot = 28; slot <= 40; slot++) {
@@ -68,6 +120,20 @@ public final class Bedrock12640WireTypesTest {
         }
         assertEquals(ContainerEnumName.CursorContainer, hud.getFullContainerName(0).name());
         assertEquals(ContainerEnumName.CraftingOutputPreviewContainer, hud.getFullContainerName(50).name());
+    }
+
+    private static final class SlotChangeCountingContainer extends Container {
+
+        private int slotChanges;
+
+        private SlotChangeCountingContainer() {
+            super(null, (byte) 0, ContainerType.INVENTORY, null, null, 1);
+        }
+
+        @Override
+        protected void onSlotChanged(final int slot, final BedrockItem oldItem, final BedrockItem newItem) {
+            this.slotChanges++;
+        }
     }
 
     @Test
@@ -332,6 +398,36 @@ public final class Bedrock12640WireTypesTest {
             assertEquals(64, buffer.readUnsignedByte());
             assertSlot(buffer, ContainerEnumName.HotbarContainer, 0, 7);
 
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(-1, buffer.readIntLE());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
+    public void creativeOffhandTransferStagesThroughCursor() {
+        final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
+            new InventoryStackRequest.Take(1,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CreatedOutputContainer, null), 50, -1),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, 0)
+            ),
+            new InventoryStackRequest.Place(1,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CursorContainer, null), 0, -1),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.OffhandContainer, null), 1, 0)
+            )
+        ));
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            new InventoryStackRequestType(id -> null).write(buffer, request);
+
+            assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(2, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertTake(buffer, 1, ContainerEnumName.CreatedOutputContainer, 50, -1,
+                ContainerEnumName.CursorContainer, 0, 0);
+            assertPlace(buffer, 1, ContainerEnumName.CursorContainer, 0, -1,
+                ContainerEnumName.OffhandContainer, 1, 0);
             assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(-1, buffer.readIntLE());
             assertEquals(0, buffer.readableBytes());

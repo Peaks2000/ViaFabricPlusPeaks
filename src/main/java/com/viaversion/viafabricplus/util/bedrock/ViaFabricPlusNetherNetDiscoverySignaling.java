@@ -75,6 +75,9 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
         if (removedCandidates > 0) {
             ViaFabricPlusImpl.INSTANCE.getLogger().warn("Removed {} unsupported ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
         }
+        if (retainedCandidates > 0) {
+            ViaFabricPlusImpl.INSTANCE.getLogger().info("Accepted {} private IPv4 ICE candidate(s) from the NetherNet LAN SDP answer", retainedCandidates);
+        }
         if (retainedCandidates == 0) {
             ViaFabricPlusImpl.INSTANCE.getLogger().warn("The NetherNet LAN SDP answer contained no usable private IPv4 ICE candidate");
         }
