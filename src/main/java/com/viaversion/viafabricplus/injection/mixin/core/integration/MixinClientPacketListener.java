@@ -30,14 +30,19 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
 public abstract class MixinClientPacketListener {
+
+    @Unique
+    private ItemStack viaFabricPlus$pendingRejectedCreativeCursor = ItemStack.EMPTY;
 
     @Shadow
     public abstract Connection getConnection();
@@ -58,9 +63,24 @@ public abstract class MixinClientPacketListener {
                 packet.containerId(),
                 packet.carriedItem().isEmpty(),
                 screen instanceof CreativeModeInventoryScreen)) {
-            // Minecraft 26.2 applies container 0 updates to InventoryMenu, while the open
-            // creative screen keeps its cursor in a separate ItemPickerMenu.
-            ((CreativeModeInventoryScreen) screen).getMenu().setCarried(packet.carriedItem().copy());
+            // Apply immediately, then once more after this connection's packet batch. A
+            // trailing creative inventory update can otherwise erase Bedrock's rejected item.
+            viaFabricPlus$pendingRejectedCreativeCursor = packet.carriedItem().copy();
+            ((CreativeModeInventoryScreen) screen).getMenu().setCarried(viaFabricPlus$pendingRejectedCreativeCursor.copy());
+        }
+    }
+
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void applyDeferredMaintainedBedrockCreativeCursor(CallbackInfo ci) {
+        final ItemStack pendingCursor = viaFabricPlus$pendingRejectedCreativeCursor;
+        viaFabricPlus$pendingRejectedCreativeCursor = ItemStack.EMPTY;
+
+        final var screen = Minecraft.getInstance().gui.screen();
+        if (BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
+                ((IConnection) getConnection()).viaFabricPlus$getTargetVersion(),
+                pendingCursor.isEmpty(),
+                screen instanceof CreativeModeInventoryScreen)) {
+            ((CreativeModeInventoryScreen) screen).getMenu().setCarried(pendingCursor);
         }
     }
 

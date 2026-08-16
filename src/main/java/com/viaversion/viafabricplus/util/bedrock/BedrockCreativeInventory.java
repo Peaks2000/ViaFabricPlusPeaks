@@ -27,4 +27,12 @@ public final class BedrockCreativeInventory {
                 && creativeScreenOpen;
     }
 
+    public static boolean shouldApplyDeferredCursorRestore(final ProtocolVersion targetVersion,
+                                                           final boolean pendingItemEmpty,
+                                                           final boolean creativeScreenOpen) {
+        return BedrockProtocolVersion.bedrockLatest.equals(targetVersion)
+                && !pendingItemEmpty
+                && creativeScreenOpen;
+    }
+
 }

@@ -35,4 +35,17 @@ public final class BedrockCreativeInventoryTest {
                 BedrockProtocolVersion.bedrockLatest, 0, false, false));
     }
 
+    @Test
+    public void deferredRestoreRemainsMaintainedBedrockCreativeOnly() {
+        assertTrue(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
+                BedrockProtocolVersion.bedrockLatest, false, true));
+
+        assertFalse(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
+                ProtocolVersion.v1_21_11, false, true));
+        assertFalse(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
+                BedrockProtocolVersion.bedrockLatest, true, true));
+        assertFalse(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
+                BedrockProtocolVersion.bedrockLatest, false, false));
+    }
+
 }
