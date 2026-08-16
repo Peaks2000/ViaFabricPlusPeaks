@@ -245,6 +245,14 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void creativeHudRefreshCannotEraseARejectedOffhandCursor() {
+        assertTrue(InventoryPackets.shouldSuppressCreativeHudFullRefresh(GameMode.CREATIVE, true, false));
+        assertFalse(InventoryPackets.shouldSuppressCreativeHudFullRefresh(GameMode.SURVIVAL, true, false));
+        assertFalse(InventoryPackets.shouldSuppressCreativeHudFullRefresh(GameMode.CREATIVE, false, false));
+        assertFalse(InventoryPackets.shouldSuppressCreativeHudFullRefresh(GameMode.CREATIVE, true, true));
+    }
+
+    @Test
     public void localBlockPlacementSoundEchoIsSuppressedWithoutMutingOtherPlayers() {
         assertTrue(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound("place", 42L, 42L));
         assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound("place", 43L, 42L));
