@@ -36,6 +36,7 @@ import net.raphimc.viabedrock.protocol.model.Position3f;
 import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
+import net.raphimc.viabedrock.protocol.storage.BlockPlacementPredictionTracker;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
@@ -46,9 +47,47 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void placementAcknowledgementsWaitForAuthoritativeUpdatesInSequenceOrder() {
+        final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(100L);
+        final BlockPosition firstClicked = new BlockPosition(1, 64, 1);
+        final BlockPosition firstPlaced = new BlockPosition(1, 65, 1);
+        final BlockPosition secondClicked = new BlockPosition(2, 64, 1);
+        final BlockPosition secondPlaced = new BlockPosition(2, 65, 1);
+
+        tracker.track(1, firstClicked, firstPlaced, 0L);
+        assertEquals(-1, tracker.requestAcknowledgement(1));
+        tracker.track(2, secondClicked, secondPlaced, 1L);
+        assertEquals(-1, tracker.requestAcknowledgement(2));
+        assertEquals(-1, tracker.requestAcknowledgement(3));
+
+        assertFalse(tracker.confirm(firstClicked));
+        assertTrue(tracker.confirm(secondPlaced));
+        assertEquals(-1, tracker.pollAcknowledgement());
+        assertTrue(tracker.confirm(firstPlaced));
+        assertEquals(3, tracker.pollAcknowledgement());
+    }
+
+    @Test
+    public void placementTimeoutResyncsBothCandidatePositionsBeforeAcknowledging() {
+        final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(100L);
+        final BlockPosition clicked = new BlockPosition(4, 70, 4);
+        final BlockPosition adjacent = new BlockPosition(4, 71, 4);
+
+        tracker.track(7, clicked, adjacent, 10L);
+        assertEquals(6, tracker.requestAcknowledgement(7));
+        assertEquals(List.of(), tracker.expire(109L).resyncPositions());
+        assertEquals(-1, tracker.pollAcknowledgement());
+
+        assertEquals(List.of(clicked, adjacent), tracker.expire(110L).resyncPositions());
+        assertEquals(7, tracker.pollAcknowledgement());
+    }
 
     @Test
     public void boatRotationUsesBedrockQuarterTurnOffset() {
