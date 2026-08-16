@@ -6,7 +6,7 @@
     -fixed creative menu
     -fixed many many inventory bugs
     -working offhand 
-    
+    -fixed a bug in ViaFabricPlus forcing a relogin for classicube every time you restart your game thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)
 
 credit 
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
