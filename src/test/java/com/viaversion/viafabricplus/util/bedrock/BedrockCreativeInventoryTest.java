@@ -36,16 +36,22 @@ public final class BedrockCreativeInventoryTest {
     }
 
     @Test
-    public void deferredRestoreRemainsMaintainedBedrockCreativeOnly() {
-        assertTrue(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
-                BedrockProtocolVersion.bedrockLatest, false, true));
+    public void emptyContentGuardRemainsMaintainedBedrockCreativeOnly() {
+        assertTrue(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                BedrockProtocolVersion.bedrockLatest, 0, true, false, true, true));
 
-        assertFalse(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
-                ProtocolVersion.v1_21_11, false, true));
-        assertFalse(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
-                BedrockProtocolVersion.bedrockLatest, true, true));
-        assertFalse(BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
-                BedrockProtocolVersion.bedrockLatest, false, false));
+        assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                ProtocolVersion.v1_21_11, 0, true, false, true, true));
+        assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                BedrockProtocolVersion.bedrockLatest, 1, true, false, true, true));
+        assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                BedrockProtocolVersion.bedrockLatest, 0, false, false, true, true));
+        assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                BedrockProtocolVersion.bedrockLatest, 0, true, true, true, true));
+        assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                BedrockProtocolVersion.bedrockLatest, 0, true, false, false, true));
+        assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                BedrockProtocolVersion.bedrockLatest, 0, true, false, true, false));
     }
 
 }

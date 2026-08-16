@@ -274,7 +274,7 @@ public final class Bedrock12640WireTypesTest {
         final BlockPosition placed = new BlockPosition(4, 64, 7);
         tracker.track(1, clicked, placed, 0L);
         assertTrue(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound(
-            "place", 0L, 42L, placed, tracker, 1L
+            "place", 0L, 42L, clicked, tracker, 1L
         ));
         assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound(
             "place", 0L, 42L, placed, tracker, 2L
@@ -282,15 +282,18 @@ public final class Bedrock12640WireTypesTest {
 
         tracker.track(2, clicked, placed, 3L);
         assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound(
-            "place", 43L, 42L, placed, tracker, 4L
+            "place", 0L, 42L, new BlockPosition(5, 63, 7), tracker, 4L
+        ));
+        assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound(
+            "place", 43L, 42L, placed, tracker, 5L
         ));
         assertTrue(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound(
-            "place", 0L, 42L, placed, tracker, 5L
+            "place", 0L, 42L, placed, tracker, 6L
         ));
 
-        tracker.track(3, clicked, placed, 6L);
+        tracker.track(3, clicked, placed, 7L);
         assertFalse(WorldEffectPackets.shouldSuppressLocalBlockPlaceSound(
-            "place", 0L, 42L, placed, tracker, 106L
+            "place", 0L, 42L, placed, tracker, 107L
         ));
     }
 
