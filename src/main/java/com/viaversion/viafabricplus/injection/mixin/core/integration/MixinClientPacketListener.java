@@ -21,10 +21,14 @@
 package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
+import com.viaversion.viafabricplus.util.bedrock.BedrockCreativeInventory;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.connection.ConnectionDetails;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -43,6 +47,20 @@ public abstract class MixinClientPacketListener {
         final UserConnection user = ((IConnection) getConnection()).viaFabricPlus$getUserConnection();
         if (user != null) {
             ConnectionDetails.sendConnectionDetails(user, ConnectionDetails.MOD_CHANNEL);
+        }
+    }
+
+    @Inject(method = "handleContainerContent", at = @At("RETURN"))
+    private void restoreMaintainedBedrockCreativeCursor(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+        final var screen = Minecraft.getInstance().gui.screen();
+        if (BedrockCreativeInventory.shouldRestoreRejectedCursor(
+                ((IConnection) getConnection()).viaFabricPlus$getTargetVersion(),
+                packet.containerId(),
+                packet.carriedItem().isEmpty(),
+                screen instanceof CreativeModeInventoryScreen)) {
+            // Minecraft 26.2 applies container 0 updates to InventoryMenu, while the open
+            // creative screen keeps its cursor in a separate ItemPickerMenu.
+            ((CreativeModeInventoryScreen) screen).getMenu().setCarried(packet.carriedItem().copy());
         }
     }
 
