@@ -1,7 +1,11 @@
 gradle.projectsEvaluated {
+    def testRunDirectory = gradle.rootProject.file("run")
+    testRunDirectory.mkdirs()
+
     allprojects {
         tasks.withType(Test).configureEach {
             enabled = true
+            workingDir(testRunDirectory)
         }
     }
 }
