@@ -81,7 +81,6 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 
 - [Contribution guide & dev setup](CONTRIBUTING.md)
 - [API docs & integration examples](docs/DEVELOPER_API.md)
-- Codex can use the repository-maintained `$maintain-viafabricplus-bedrock` skill in `.codex/skills/` for log diagnosis and future Bedrock protocol updates.
 
 ## Credits
 
