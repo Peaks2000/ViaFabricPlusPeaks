@@ -12,31 +12,45 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import com.viaversion.viaversion.api.minecraft.BlockPosition;
+import com.viaversion.viaversion.api.minecraft.VillagerData;
+import com.viaversion.viaversion.api.minecraft.item.StructuredItem;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
+import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPackets26_1;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.model.BlockState;
 import net.raphimc.viabedrock.api.model.container.ChestContainer;
 import net.raphimc.viabedrock.api.model.container.Container;
 import net.raphimc.viabedrock.api.model.container.FurnaceContainer;
+import net.raphimc.viabedrock.api.model.container.MerchantContainer;
 import net.raphimc.viabedrock.api.model.container.player.HudContainer;
 import net.raphimc.viabedrock.api.model.container.player.OffhandContainer;
 import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
+import net.raphimc.viabedrock.api.util.PacketFactory;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputPacketPayload_InputData;
 import net.raphimc.viabedrock.protocol.data.generated.bedrock.CustomBlockTags;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
+import net.raphimc.viabedrock.protocol.model.BedrockTradeOffer;
 import net.raphimc.viabedrock.protocol.model.FullContainerName;
 import net.raphimc.viabedrock.protocol.model.GameRule;
 import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
 import net.raphimc.viabedrock.protocol.model.Position2f;
 import net.raphimc.viabedrock.protocol.model.Position3f;
 import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
+import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
+import net.raphimc.viabedrock.protocol.packet.InventoryPackets;
+import net.raphimc.viabedrock.experimental.rewriter.EntityMetadataRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.storage.BlockPlacementPredictionTracker;
+import net.raphimc.viabedrock.protocol.storage.BreakingTracker;
+import net.raphimc.viabedrock.protocol.storage.InventoryRequestTracker;
+import net.raphimc.viabedrock.protocol.storage.InventoryTracker;
+import net.raphimc.viabedrock.protocol.storage.MovementPredictionTracker;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
@@ -67,10 +81,10 @@ public final class Bedrock12640WireTypesTest {
         assertEquals(-1, tracker.requestAcknowledgement(2));
         assertEquals(-1, tracker.requestAcknowledgement(3));
 
-        assertFalse(tracker.confirm(firstClicked));
-        assertTrue(tracker.confirm(secondPlaced));
+        assertFalse(tracker.confirm(firstClicked, false));
+        assertTrue(tracker.confirm(secondPlaced, false));
         assertEquals(-1, tracker.pollAcknowledgement());
-        assertTrue(tracker.confirm(firstPlaced));
+        assertTrue(tracker.confirm(firstPlaced, false));
         assertEquals(3, tracker.pollAcknowledgement());
     }
 
@@ -87,6 +101,50 @@ public final class Bedrock12640WireTypesTest {
 
         assertEquals(List.of(clicked, adjacent), tracker.expire(110L).resyncPositions());
         assertEquals(7, tracker.pollAcknowledgement());
+    }
+
+    @Test
+    public void breakingAcknowledgementWaitsForItsAuthoritativeBlockUpdate() {
+        final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(100L);
+        final BlockPosition broken = new BlockPosition(4, 70, 4);
+
+        tracker.trackBreaking(12, broken, 0L);
+        assertEquals(11, tracker.requestAcknowledgement(12));
+        assertTrue(tracker.isPendingBreaking(broken));
+        assertTrue(tracker.shouldSuppressBreakingReassertion(broken, false));
+        assertFalse(tracker.shouldSuppressBreakingReassertion(broken, true));
+        assertFalse(tracker.confirm(broken, false));
+        assertEquals(-1, tracker.pollAcknowledgement());
+        assertTrue(tracker.isPendingBreaking(broken));
+        assertTrue(tracker.confirm(broken, true));
+        assertFalse(tracker.isPendingBreaking(broken));
+        assertFalse(tracker.shouldSuppressBreakingReassertion(broken, false));
+        assertEquals(12, tracker.pollAcknowledgement());
+    }
+
+    @Test
+    public void placementAndBreakingConfirmOnlyTheirPredictedBlockState() {
+        final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(100L);
+        final BlockPosition placed = new BlockPosition(8, 70, 8);
+        final BlockPosition broken = new BlockPosition(9, 70, 8);
+
+        tracker.track(20, new BlockPosition(8, 69, 8), placed, 0L);
+        tracker.trackBreaking(21, broken, 1L);
+
+        assertFalse(tracker.confirm(placed, true));
+        assertFalse(tracker.confirm(broken, false));
+        assertTrue(tracker.confirm(placed, false));
+        assertEquals(20, tracker.requestAcknowledgement(21));
+        assertTrue(tracker.confirm(broken, true));
+        assertEquals(21, tracker.pollAcknowledgement());
+    }
+
+    @Test
+    public void localCrackingSuppressionUsesFlooredBedrockPosition() {
+        final BlockPosition localTarget = new BlockPosition(-5, 72, -10);
+
+        assertTrue(BreakingTracker.isSameBlock(localTarget, new Position3f(-4.5F, 72.9F, -9.5F)));
+        assertFalse(BreakingTracker.isSameBlock(localTarget, new Position3f(-3.9F, 72.9F, -9.5F)));
     }
 
     @Test
@@ -147,6 +205,166 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void creativeFailureKeepsAnIndependentCursorRollbackItem() {
+        final StructuredItem cursor = new StructuredItem(123, 4);
+        final InventoryRequestTracker.PendingRequest pending = new InventoryRequestTracker.PendingRequest(
+            Map.of(), List.of(), true, cursor
+        );
+
+        cursor.setAmount(1);
+        assertEquals(4, pending.javaCursorOnFailure().amount());
+    }
+
+    @Test
+    public void creativeFailureUsesAnAtomicFullContentCursorRollback() {
+        assertEquals(ClientboundPackets26_1.CONTAINER_SET_CONTENT, PacketFactory.javaCreativeCursorRollbackPacketType());
+    }
+
+    @Test
+    public void creativeFailureResyncDoesNotQueueAFullCursorErasingRefresh() {
+        final InventoryTracker tracker = new InventoryTracker(null);
+
+        tracker.schedulePlayerInventoryResync(false);
+
+        assertFalse(tracker.isJavaInventoryRefreshPending());
+        tracker.schedulePlayerInventoryResync(true);
+        assertTrue(tracker.isJavaInventoryRefreshPending());
+    }
+
+    @Test
+    public void historicalMovementCorrectionPreservesLaterJumpDisplacement() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(100, new Position3f(0F, 64F, 0F), true, false, 20);
+        tracker.record(101, new Position3f(0F, 64.42F, 0F), false, false, 20);
+        tracker.record(102, new Position3f(0F, 65F, 0F), false, false, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            100, new Position3f(-0.1F, 64F, 0F), true,
+            102, new Position3f(0F, 65F, 0F), false, false, false
+        );
+
+        assertTrue(correction.replayed());
+        assertEquals(new Position3f(-0.1F, 65F, 0F), correction.position());
+        assertFalse(correction.onGround());
+    }
+
+    @Test
+    public void currentMovementCorrectionUsesAuthoritativeCollisionState() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(200, new Position3f(3F, 70F, 4F), false, false, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            200, new Position3f(3F, 69.9F, 4F), true,
+            200, new Position3f(3F, 70F, 4F), false, false, false
+        );
+
+        assertEquals(new Position3f(3F, 69.9F, 4F), correction.position());
+        assertTrue(correction.onGround());
+    }
+
+    @Test
+    public void repeatedWallCorrectionsDoNotPushTheCurrentPredictionBackAgain() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(300, new Position3f(0.98F, 64F, 0F), true, true, 20);
+        tracker.record(301, new Position3f(0.98F, 64F, 0F), true, true, 20);
+
+        final MovementPredictionTracker.Correction firstCorrection = tracker.replay(
+            300, new Position3f(0.7F, 64F, 0F), true,
+            302, new Position3f(0.98F, 64F, 0F), true, true, false
+        );
+        assertEquals(new Position3f(0.7F, 64F, 0F), firstCorrection.position());
+
+        // Java has already walked back up to the wall before the next historical
+        // correction arrives. It must settle to the server point, not apply the old
+        // offset to 0.98 and get shoved farther backwards.
+        final MovementPredictionTracker.Correction secondCorrection = tracker.replay(
+            301, new Position3f(0.7F, 64F, 0F), true,
+            303, new Position3f(0.98F, 64F, 0F), true, true, false
+        );
+        assertEquals(new Position3f(0.7F, 64F, 0F), secondCorrection.position());
+    }
+
+    @Test
+    public void historicalGroundedDescentDoesNotReplayAnOldVerticalOffset() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(400, new Position3f(0F, 65F, 0F), true, false, 20);
+        tracker.record(401, new Position3f(0.2F, 64.5F, 0F), true, false, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            400, new Position3f(0.1F, 65.2F, 0F), true,
+            401, new Position3f(0.2F, 64.5F, 0F), true, false, false
+        );
+
+        assertEquals(new Position3f(0.3F, 64.5F, 0F), correction.position());
+        assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void historicalFlightDescentDoesNotReplayAnOldVerticalOffset() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(500, new Position3f(2F, 80F, 3F), false, false, 20);
+        tracker.record(501, new Position3f(2F, 79.5F, 3F), false, false, 20);
+
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            500, new Position3f(2F, 80.25F, 3F), false,
+            501, new Position3f(2F, 79.5F, 3F), false, false, true
+        );
+
+        assertEquals(new Position3f(2F, 79.5F, 3F), correction.position());
+        assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void historicalCrouchedEdgeCorrectionKeepsAStableJavaHeight() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(600, new Position3f(4F, 64F, 7F), true, false, 20);
+        tracker.record(601, new Position3f(4.1F, 64F, 7F), false, false, 20);
+
+        // Safe-walk at a block edge can transiently clear onGround without changing Y.
+        // Continuous Shift must prevent the older positive Y delta from causing a snap.
+        final MovementPredictionTracker.Correction correction = tracker.replay(
+            600, new Position3f(4F, 64.2F, 7F), true,
+            601, new Position3f(4.1F, 64F, 7F), false, false, true
+        );
+
+        assertEquals(new Position3f(4.1F, 64F, 7F), correction.position());
+        assertFalse(correction.onGround());
+        assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void flyingVerticalKeysCarryExplicitAscendAndDescendFlags() {
+        final var ascending = ClientPlayerPackets.verticalMovementInput(true, true, false);
+        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.Ascend));
+        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.WantUp));
+
+        final var descending = ClientPlayerPackets.verticalMovementInput(true, false, true);
+        assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.Descend));
+        assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.WantDown));
+
+        assertFalse(ClientPlayerPackets.verticalMovementInput(false, false, true)
+            .contains(PlayerAuthInputPacketPayload_InputData.Descend));
+    }
+
+    @Test
+    public void villagerV2ProfessionRegionAndTierMapToJavaVillagerData() {
+        assertEquals(new VillagerData(2, 9, 1), EntityMetadataRewriter.villagerData(5, 0, 0)); // plains librarian
+        assertEquals(new VillagerData(0, 1, 5), EntityMetadataRewriter.villagerData(8, 1, 9)); // desert armorer, clamped
+        assertEquals(new VillagerData(2, 0, 1), EntityMetadataRewriter.villagerData(99, 99, -3));
+    }
+
+    @Test
+    public void creativeScreenEchoUsesTheTrackedBedrockItemInsteadOfRecraftingIt() {
+        final BedrockItem tracked = new BedrockItem(453, (short) 0, (byte) 1);
+        tracked.setNetId(252);
+        final BedrockItem catalog = new BedrockItem(453, (short) 0, (byte) 1);
+
+        assertTrue(InventoryPackets.isCreativeInventoryEcho(tracked, catalog));
+        catalog.setAmount(64);
+        assertFalse(InventoryPackets.isCreativeInventoryEcho(tracked, catalog));
+    }
+
+    @Test
     public void genericBlockContainersUseTheirStackRequestNames() {
         final ChestContainer barrel = new ChestContainer(null, (byte) 1, null, null, 27, CustomBlockTags.BARREL);
         final ChestContainer shulker = new ChestContainer(null, (byte) 2, null, null, 27, CustomBlockTags.SHULKER_BOX);
@@ -172,6 +390,34 @@ public final class Bedrock12640WireTypesTest {
         assertEquals(ContainerEnumName.FurnaceFuelContainer, furnace.getFullContainerName(1).name());
         assertEquals(ContainerEnumName.FurnaceResultContainer, furnace.getFullContainerName(2).name());
         assertEquals(true, furnace.isValidBlockTag(CustomBlockTags.FURNACE));
+    }
+
+    @Test
+    public void merchantSlotsUseTrade2RequestAndResponseIdentities() {
+        final MerchantContainer merchant = new MerchantContainer(null, (byte) 7, null);
+
+        assertEquals(ContainerEnumName.Trade2Ingredient1Container, merchant.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.Trade2Ingredient2Container, merchant.getFullContainerName(1).name());
+        assertEquals(ContainerEnumName.Trade2ResultPreviewContainer, merchant.getFullContainerName(2).name());
+        assertEquals(ContainerEnumName.Trade2Ingredient1Container, merchant.getFullContainerName(4).name());
+        assertEquals(ContainerEnumName.Trade2Ingredient2Container, merchant.getFullContainerName(5).name());
+        assertEquals(ContainerEnumName.Trade2ResultPreviewContainer, merchant.getFullContainerName(50).name());
+        assertEquals(4, merchant.stackRequestSlot(0));
+        assertEquals(5, merchant.stackRequestSlot(1));
+        assertEquals(50, merchant.stackRequestSlot(2));
+        assertEquals(0, merchant.stackResponseSlot(4));
+        assertEquals(1, merchant.stackResponseSlot(5));
+        assertEquals(2, merchant.stackResponseSlot(50));
+    }
+
+    @Test
+    public void merchantOfferStockStateUsesBedrockUsesAndMaxUses() {
+        final BedrockItem emerald = new BedrockItem(1, (short) 0, (byte) 2);
+        final BedrockItem bread = new BedrockItem(2, (short) 0, (byte) 6);
+
+        assertFalse(new BedrockTradeOffer(11, emerald, BedrockItem.empty(), bread, 2, 12, 1, 0F, 0).outOfStock());
+        assertTrue(new BedrockTradeOffer(11, emerald, BedrockItem.empty(), bread, 12, 12, 1, 0F, 0).outOfStock());
+        assertTrue(new BedrockTradeOffer(11, emerald, BedrockItem.empty(), bread, 0, 0, 1, 0F, 0).outOfStock());
     }
 
     @Test
@@ -341,6 +587,61 @@ public final class Bedrock12640WireTypesTest {
             assertSlot(buffer, ContainerEnumName.CreatedOutputContainer, 50, -1);
             assertSlot(buffer, ContainerEnumName.InventoryContainer, 9, 0);
 
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(-1, buffer.readIntLE());
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
+
+    @Test
+    public void merchantRequestUsesRecipeConsumeAndCreatedOutputActions() {
+        final BedrockItem bread = new BedrockItem(2, (short) 0, (byte) 6);
+        final InventoryStackRequest request = new InventoryStackRequest(-1, List.of(
+            new InventoryStackRequest.CraftRecipe(11, 1),
+            new InventoryStackRequest.CraftResultsDeprecated(List.of(bread), 1),
+            new InventoryStackRequest.Consume(2, new InventoryStackRequest.Slot(
+                new FullContainerName(ContainerEnumName.Trade2Ingredient1Container, null), 4, 71
+            )),
+            new InventoryStackRequest.Take(6,
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.CreatedOutputContainer, null), 50, -1),
+                new InventoryStackRequest.Slot(new FullContainerName(ContainerEnumName.InventoryContainer, null), 9, 0)
+            )
+        ));
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            new InventoryStackRequestType(id -> id == 2 ? "minecraft:bread" : null).write(buffer, request);
+
+            assertEquals(-1, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(4, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(10, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(12, buffer.readUnsignedByte());
+            assertEquals(11, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, buffer.readUnsignedByte());
+
+            assertEquals(17, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(19, buffer.readUnsignedByte());
+            assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, buffer.readUnsignedByte());
+            assertEquals("minecraft:bread", BedrockTypes.STRING.read(buffer));
+            assertEquals(0, BedrockTypes.VAR_INT.read(buffer));
+            assertEquals(6, buffer.readUnsignedShortLE());
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            buffer.skipBytes(BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(1, buffer.readUnsignedByte());
+
+            assertEquals(5, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(5, buffer.readUnsignedByte());
+            assertEquals(2, buffer.readUnsignedByte());
+            assertSlot(buffer, ContainerEnumName.Trade2Ingredient1Container, 4, 71);
+
+            assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(0, buffer.readUnsignedByte());
+            assertEquals(6, buffer.readUnsignedByte());
+            assertSlot(buffer, ContainerEnumName.CreatedOutputContainer, 50, -1);
+            assertSlot(buffer, ContainerEnumName.InventoryContainer, 9, 0);
             assertEquals(0, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(-1, buffer.readIntLE());
             assertEquals(0, buffer.readableBytes());

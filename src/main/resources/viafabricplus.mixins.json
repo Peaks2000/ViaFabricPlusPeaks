@@ -9,6 +9,7 @@
     "compat.classic4j.MixinEditBox",
     "compat.fabricapi.MixinClientRegistrySyncHandler",
     "compat.ipnext.MixinAutoRefillHandler_ItemSlotMonitor",
+    "compat.iris.MixinMinecraft",
     "compat.lithium.MixinEntity",
     "compat.mcstructs.MixinTextComponentSerializer",
     "compat.minecraftauth.MixinClasses",
