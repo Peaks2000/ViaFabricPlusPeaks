@@ -33,9 +33,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.raphimc.vialegacy.protocol.classic.c0_28_30toa1_0_15.model.ClassicLevel;
 import net.raphimc.vialegacy.protocol.classic.c0_28_30toa1_0_15.storage.ClassicLevelStorage;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -45,19 +47,38 @@ import static net.raphimc.vialegacy.api.LegacyProtocolVersion.c0_30cpe;
 @Mixin(LivingEntity.class)
 public abstract class MixinLivingEntity {
 
+    @Shadow
+    protected boolean jumping;
+
     @Inject(method = "onClimbable", at = @At("HEAD"), cancellable = true)
     private void classicClimbing(CallbackInfoReturnable<Boolean> cir) {
+        if (this.isTouchingClassicClimbable()) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "handleRelativeFrictionAndCalculateMovement", at = @At("HEAD"))
+    private void classicClimbUp(CallbackInfoReturnable<Vec3> cir) {
         if (!((Object) this instanceof LocalPlayer player)) return;
-        if (!ProtocolTranslator.getTargetVersion().equals(c0_30cpe)) return;
-        if (player.isSpectator()) return;
+        if (player.xxa == 0.0F && player.zza == 0.0F && !this.jumping) return;
+        if (this.isTouchingClassicClimbable()) {
+            final Vec3 delta = player.getDeltaMovement();
+            player.setDeltaMovement(delta.x, 0.2, delta.z);
+        }
+    }
+
+    private boolean isTouchingClassicClimbable() {
+        if (!((Object) this instanceof LocalPlayer player)) return false;
+        if (!ProtocolTranslator.getTargetVersion().equals(c0_30cpe)) return false;
+        if (player.isSpectator()) return false;
 
         final ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection == null) return;
+        if (connection == null) return false;
         final UserConnection user = ((IConnection) connection.getConnection()).viaFabricPlus$getUserConnection();
         final ClassicLevelStorage levelStorage = user.get(ClassicLevelStorage.class);
-        if (levelStorage == null || !levelStorage.hasReceivedLevel()) return;
+        if (levelStorage == null || !levelStorage.hasReceivedLevel()) return false;
         final ClassicLevel classicLevel = levelStorage.getClassicLevel();
-        if (classicLevel == null) return;
+        if (classicLevel == null) return false;
 
         final AABB bounds = player.getBoundingBox().expandTowards(0.0, 0.5 / 16.0, 0.0);
         final int minX = Mth.floor(bounds.minX);
@@ -79,10 +100,10 @@ public abstract class MixinLivingEntity {
                 }
             }
             if (!blocked) {
-                cir.setReturnValue(true);
-                return;
+                return true;
             }
         }
+        return false;
     }
 
 }
