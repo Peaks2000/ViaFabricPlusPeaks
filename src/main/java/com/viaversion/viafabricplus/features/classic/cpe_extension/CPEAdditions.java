@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.features.classic.cpe_extension;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.connection.UserConnection;
+import com.viaversion.viaversion.util.IdAndData;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +34,9 @@ import net.lenni0451.reflect.Enums;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
+import net.raphimc.vialegacy.api.data.BlockList1_6;
 import net.raphimc.vialegacy.protocol.classic.c0_30cpetoc0_28_30.data.ClassicProtocolExtension;
+import net.raphimc.vialegacy.protocol.classic.c0_30cpetoc0_28_30.data.ExtendedClassicBlocks;
 import net.raphimc.vialegacy.protocol.classic.c0_30cpetoc0_28_30.packet.ClientboundPacketsc0_30cpe;
 
 public final class CPEAdditions {
@@ -48,7 +51,7 @@ public final class CPEAdditions {
 
     public static void init() {
         EXTENDED_CLASSIC_ITEMS.add(Items.COBBLESTONE_SLAB);
-        EXTENDED_CLASSIC_ITEMS.add(Items.DEAD_BUSH);
+        EXTENDED_CLASSIC_ITEMS.add(Items.LADDER);
         EXTENDED_CLASSIC_ITEMS.add(Items.SANDSTONE);
         EXTENDED_CLASSIC_ITEMS.add(Items.SNOW);
         EXTENDED_CLASSIC_ITEMS.add(Items.TORCH);
@@ -62,6 +65,9 @@ public final class CPEAdditions {
 
         allowExtension(ClassicProtocolExtension.ENV_WEATHER_TYPE);
         EXT_WEATHER_TYPE = createNewPacket(ClassicProtocolExtension.ENV_WEATHER_TYPE, 31, (user, buf) -> buf.readByte());
+
+        ExtendedClassicBlocks.MAPPING.put(ExtendedClassicBlocks.ROPE, new IdAndData(BlockList1_6.ladder.blockId(), 2));
+        ExtendedClassicBlocks.REVERSE_MAPPING.put(new IdAndData(BlockList1_6.ladder.blockId(), 0), ExtendedClassicBlocks.ROPE);
     }
 
     public static boolean isSnowing() {
