@@ -94,7 +94,8 @@ public abstract class MixinProtocolc0_30cpeToc0_28_30 extends AbstractProtocol<C
         wrapper.cancel();
         final short blockId = wrapper.read(Types.UNSIGNED_BYTE);
         wrapper.read(new FixedByteArrayType(64)); // block name
-        final byte collideType = wrapper.read(Types.BYTE);
+        final byte collideType = wrapper.read(Types.BYTE); // solidity
+        wrapper.read(Types.REMAINING_BYTES); // consume the rest of the packet
         CPEAdditions.handleBlockDefinition(blockId, collideType);
     }
 

@@ -45,12 +45,14 @@ public abstract class MixinHumanoidModel<T extends HumanoidRenderState> {
     @Final
     public ModelPart leftArm;
 
+    private static final float NORMAL_WALK_ANIMATION_SPEED = 0.864F;
+
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/geom/ModelPart;zRot:F", ordinal = 1, shift = At.Shift.AFTER, opcode = Opcodes.PUTFIELD))
     private void addOldWalkAnimation(T state, CallbackInfo ci) {
         if (VisualSettings.INSTANCE.oldWalkingAnimation.isEnabled()) {
             final float limbSwingAnimationProgress = state.walkAnimationPos;
             final float limbSwingAmplitude = state.walkAnimationSpeed;
-            final float speed = VisualSettings.INSTANCE.slowDownClassicAnimation.getValue() ? 0.7F : 1.0F;
+            final float speed = VisualSettings.INSTANCE.slowDownClassicAnimation.getValue() ? 0.7F * Mth.clamp(limbSwingAmplitude / NORMAL_WALK_ANIMATION_SPEED, 0.25F, 1.0F) : 1.0F;
 
             this.rightArm.xRot = Mth.cos(limbSwingAnimationProgress * 0.6662F * speed + 3.1415927F) * 2.0F * limbSwingAmplitude;
             this.rightArm.zRot = (Mth.cos(limbSwingAnimationProgress * 0.2312F * speed) + 1.0F) * 1.0F * limbSwingAmplitude;

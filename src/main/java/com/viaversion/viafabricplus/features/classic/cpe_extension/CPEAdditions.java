@@ -75,9 +75,9 @@ public final class CPEAdditions {
 
         allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS);
         allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT);
-        EXT_BLOCK_DEFINITIONS = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 33, (user, buf) -> buf.skipBytes(79));
-        EXT_UNDEFINE_BLOCK = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 34, (user, buf) -> buf.skipBytes(1));
-        EXT_BLOCK_DEFINITIONS_EXT = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT, 35, (user, buf) -> buf.skipBytes(84));
+        EXT_BLOCK_DEFINITIONS = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 35, (user, buf) -> buf.skipBytes(79));
+        EXT_UNDEFINE_BLOCK = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 36, (user, buf) -> buf.skipBytes(1));
+        EXT_BLOCK_DEFINITIONS_EXT = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT, 37, (user, buf) -> buf.skipBytes(84));
 
         resetBlockDefinitions();
     }
