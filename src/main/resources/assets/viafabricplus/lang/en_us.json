@@ -103,6 +103,7 @@
   "visual_settings.viafabricplus.hide_modern_hud_elements": "Hide modern HUD elements",
   "visual_settings.viafabricplus.replace_creative_inventory_with_classic_inventory": "Replace creative inventory",
   "visual_settings.viafabricplus.old_walking_animation": "Old walking animation",
+  "visual_settings.viafabricplus.slow_down_classic_animation": "Slow down classic animation (0.7x speed)",
   "visual_settings.viafabricplus.swing_hand_on_item_use": "Swing hand on item use",
   "visual_settings.viafabricplus.sideways_backwards_walking": "Sideways backwards walking",
   "visual_settings.viafabricplus.enable_legacy_tablist": "Enable legacy tablist",
