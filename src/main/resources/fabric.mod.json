@@ -31,14 +31,14 @@
     {
       "name": "GitHub contributors",
       "contact": {
-        "homepage": "https://github.com/ViaVersion/ViaFabricPlus/graphs/contributors"
+        "homepage": "https://github.com/Peaks2000/ViaFabricPlusPeaks/graphs/contributors"
       }
     }
   ],
   "contact": {
     "homepage": "https://florianreuth.de/",
-    "sources": "https://github.com/ViaVersion/ViaFabricPlus",
-    "issues": "https://github.com/ViaVersion/ViaFabricPlus/issues",
+    "sources": "https://github.com/Peaks2000/ViaFabricPlusPeaks",
+    "issues": "https://github.com/Peaks2000/ViaFabricPlusPeaks",
     "email": "florian@florianreuth.de"
   },
   "license": "GPL-v3",

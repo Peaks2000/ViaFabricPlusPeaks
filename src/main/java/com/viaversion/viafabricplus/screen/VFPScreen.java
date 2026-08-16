@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -65,7 +65,7 @@ import org.jspecify.annotations.NonNull;
  */
 public class VFPScreen extends Screen {
 
-    private static final String MOD_URL = "https://github.com/ViaVersion/ViaFabricPlus";
+    private static final String MOD_URL = "https://github.com/Peaks2000/ViaFabricPlusPeaks";
 
     private final boolean backButton;
     public Screen prevScreen;

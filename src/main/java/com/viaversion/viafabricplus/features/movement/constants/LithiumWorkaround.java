@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -27,7 +27,7 @@ import net.lenni0451.reflect.stream.RStream;
 public final class LithiumWorkaround {
 
     public static void init() {
-        // Workaround for https://github.com/ViaVersion/ViaFabricPlus/issues/1206 where lithium replaces sin/cos lookups using an optimized version
+        // Workaround for https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/1206 where lithium replaces sin/cos lookups using an optimized version
         final Set<String> loadedMixins = RStream.of("org.spongepowered.asm.mixin.transformer.MixinConfig").fields().by("globalMixinList").get();
         loadedMixins.add("net.caffeinemc.mods.lithium.mixin.math.sine_lut.MthMixin");
     }

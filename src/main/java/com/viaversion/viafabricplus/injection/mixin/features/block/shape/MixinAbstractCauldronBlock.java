@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -81,7 +81,7 @@ public abstract class MixinAbstractCauldronBlock extends Block {
 
     @Override
     public @NonNull VoxelShape getOcclusionShape(BlockState state) {
-        // Workaround for https://github.com/ViaVersion/ViaFabricPlus/issues/246
+        // Workaround for https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/246
         // MoreCulling is caching the culling shape and doesn't reload it, so we have to force vanilla's shape here.
         viaFabricPlus$requireOriginalShape = true;
         return super.getOcclusionShape(state);

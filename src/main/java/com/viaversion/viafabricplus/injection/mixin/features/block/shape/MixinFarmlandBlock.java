@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -56,7 +56,7 @@ public abstract class MixinFarmlandBlock extends Block {
         if (Minecraft.getInstance() != null && Minecraft.getInstance().isLocalServer()) {
             // When joining the singleplayer, we set the target version to the native version when the integrated server is started
             // However this is already to late for blocks since the world and entities have already been loaded, causing block collisions
-            // to make issues as described via https://github.com/ViaVersion/ViaFabricPlus/issues/436. A proper fix would be to
+            // to make issues as described via https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/436. A proper fix would be to
             // move version setting to earlier stage but /shrug
             return;
         }

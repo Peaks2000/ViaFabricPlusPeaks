@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC

@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -75,7 +75,7 @@ public abstract class MixinHopperBlock extends BaseEntityBlock {
 
     @Override
     public @NonNull VoxelShape getOcclusionShape(@NonNull BlockState state) {
-        // Workaround for https://github.com/ViaVersion/ViaFabricPlus/issues/45
+        // Workaround for https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/45
         viaFabricPlus$requireOriginalShape = true;
         return super.getOcclusionShape(state);
     }

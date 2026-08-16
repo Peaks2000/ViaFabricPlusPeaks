@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(value = LivingEntity.class, priority = 999 /* Workaround for https://github.com/ViaVersion/ViaFabricPlus/issues/684 */)
+@Mixin(value = LivingEntity.class, priority = 999 /* Workaround for https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/684 */)
 public abstract class MixinLivingEntity {
 
     @ModifyExpressionValue(method = "tickEffects", at = @At(value = "CONSTANT", args = "intValue=4"))

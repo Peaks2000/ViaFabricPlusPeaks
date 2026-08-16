@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -21,22 +21,29 @@
 
 package com.viaversion.viafabricplus.screen.impl.classic4j;
 
+import com.viaversion.viafabricplus.injection.access.core.IEditBox;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.screen.impl.settings.TitleEntry;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import de.florianreuth.classic4j.BetaCraftHandler;
 import de.florianreuth.classic4j.model.betacraft.BCServerInfo;
 import de.florianreuth.classic4j.model.betacraft.BCServerList;
 import de.florianreuth.classic4j.model.betacraft.BCVersionCategory;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.network.chat.Component;
+import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 import org.jspecify.annotations.NonNull;
 
 import static com.viaversion.viafabricplus.screen.VFPListEntry.SLOT_MARGIN;
@@ -47,6 +54,31 @@ public final class BetaCraftScreen extends VFPScreen {
 
     public static BCServerList SERVER_LIST;
     private static final String BETA_CRAFT_SERVER_LIST_URL = "https://betacraft.uk/serverlist/";
+
+    /**
+     * The server list API provides the game version of each server as a string, which can't be resolved by the
+     * protocol auto-detection (it only supports the modern status ping). This map resolves the known versions.
+     */
+    private static final Map<String, ProtocolVersion> GAME_VERSION_MAP = new HashMap<>();
+
+    static {
+        GAME_VERSION_MAP.put("c0.30-c-1900", LegacyProtocolVersion.c0_28toc0_30);
+        GAME_VERSION_MAP.put("a1.1.2_01", LegacyProtocolVersion.a1_1_0toa1_1_2_1);
+        GAME_VERSION_MAP.put("a1.2.6", LegacyProtocolVersion.a1_2_3_5toa1_2_6);
+        GAME_VERSION_MAP.put("b1.1_02", LegacyProtocolVersion.b1_1_2);
+        GAME_VERSION_MAP.put("b1.2_01", LegacyProtocolVersion.b1_2_0tob1_2_2);
+        GAME_VERSION_MAP.put("b1.5_01", LegacyProtocolVersion.b1_5tob1_5_2);
+        GAME_VERSION_MAP.put("b1.6.6", LegacyProtocolVersion.b1_6tob1_6_6);
+        GAME_VERSION_MAP.put("b1.7.3", LegacyProtocolVersion.b1_7tob1_7_3);
+        GAME_VERSION_MAP.put("1.2.5", LegacyProtocolVersion.r1_2_4tor1_2_5);
+        GAME_VERSION_MAP.put("1.4", LegacyProtocolVersion.r1_4_2);
+        GAME_VERSION_MAP.put("1.4.7", LegacyProtocolVersion.r1_4_6tor1_4_7);
+        GAME_VERSION_MAP.put("1.5.2", LegacyProtocolVersion.r1_5_2);
+        GAME_VERSION_MAP.put("1.6.4", LegacyProtocolVersion.r1_6_4);
+    }
+
+    private EditBox searchField;
+    private SlotList slotList;
 
     private BetaCraftScreen() {
         super("BetaCraft", true);
@@ -70,9 +102,60 @@ public final class BetaCraftScreen extends VFPScreen {
         this.setupSubtitle(Component.nullToEmpty(BETA_CRAFT_SERVER_LIST_URL), ConfirmLinkScreen.confirmLink(this, BETA_CRAFT_SERVER_LIST_URL));
 
         final int entryHeight = (font.lineHeight + 2) * 3; // title is 2
-        this.addRenderableWidget(new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight, -5, entryHeight));
+        final int searchBarY = 2 * SLOT_MARGIN + entryHeight;
+
+        this.addRenderableWidget(searchField = new EditBox(font, 5, searchBarY, width - 10, 20, Component.empty()));
+        searchField.setHint(Component.translatable("base.viafabricplus.search"));
+        searchField.setResponder(query -> updateSearch());
+        ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
+
+        this.addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, searchBarY + 24, -5, entryHeight, normalizeQuery(searchField.getValue())));
 
         this.addRefreshButton(() -> SERVER_LIST = null);
+    }
+
+    private void updateSearch() {
+        if (slotList == null) {
+            return;
+        }
+        removeWidget(slotList);
+        final int entryHeight = (font.lineHeight + 2) * 3;
+        addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight + 24, -5, entryHeight, normalizeQuery(searchField.getValue())));
+    }
+
+    private static String normalizeQuery(final String query) {
+        return query.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean matchesQuery(final BCServerInfo server, final String query) {
+        if (query.isEmpty()) {
+            return true;
+        }
+        return server.name().toLowerCase(Locale.ROOT).contains(query)
+            || server.socket().toLowerCase(Locale.ROOT).contains(query)
+            || server.gameVersion().toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private static ProtocolVersion determineVersion(final BCServerInfo server) {
+        final String gameVersion = server.gameVersion() == null ? "" : server.gameVersion().trim().toLowerCase(Locale.ROOT);
+        final ProtocolVersion version = GAME_VERSION_MAP.get(gameVersion);
+        if (version != null) {
+            return version;
+        }
+        if (gameVersion.startsWith("c0.30")) {
+            return LegacyProtocolVersion.c0_28toc0_30;
+        }
+        final String protocol = server.protocol();
+        if (protocol != null) {
+            try {
+                final int protocolId = Integer.parseInt(protocol);
+                if (ProtocolVersion.isRegistered(protocolId)) {
+                    return ProtocolVersion.getProtocol(protocolId);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return null;
     }
 
     @Override
@@ -83,7 +166,7 @@ public final class BetaCraftScreen extends VFPScreen {
     public static class SlotList extends VFPList {
         private static double scrollAmount;
 
-        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight) {
+        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight, String query) {
             super(minecraftClient, width, height, top, bottom, entryHeight);
             if (SERVER_LIST == null) {
                 return;
@@ -94,13 +177,19 @@ public final class BetaCraftScreen extends VFPScreen {
                 if (servers.isEmpty()) {
                     continue;
                 }
+                final List<BCServerInfo> filtered = servers.stream().filter(server -> matchesQuery(server, query)).toList();
+                if (filtered.isEmpty()) {
+                    continue;
+                }
                 addEntry(new TitleEntry(Component.nullToEmpty(value.name())));
-                for (BCServerInfo server : servers) {
+                for (BCServerInfo server : filtered) {
                     addEntry(new ServerSlot(server));
                 }
             }
 
-            initScrollY(scrollAmount);
+            if (query.isEmpty()) {
+                initScrollY(scrollAmount);
+            }
         }
 
         @Override
@@ -128,7 +217,7 @@ public final class BetaCraftScreen extends VFPScreen {
 
         @Override
         public void mappedMouseClicked(double mouseX, double mouseY, int button) {
-            ConnectionUtil.connect(server.name(), server.socket());
+            ConnectionUtil.connect(server.name(), server.socket(), determineVersion(server));
             super.mappedMouseClicked(mouseX, mouseY, button);
         }
 

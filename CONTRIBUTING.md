@@ -13,7 +13,7 @@ installed: [Gradle Installation Guide](https://gradle.org/install/).
 1. Clone the repo:
 
    ```bash
-   git clone https://github.com/ViaVersion/ViaFabricPlus
+   git clone https://github.com/Peaks2000/ViaFabricPlusPeaks
    ```
 2. Enter the project folder:
 

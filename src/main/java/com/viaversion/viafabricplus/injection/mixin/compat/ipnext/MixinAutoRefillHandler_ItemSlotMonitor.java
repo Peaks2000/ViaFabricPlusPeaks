@@ -1,5 +1,5 @@
 /*
- * This file is part of ViaFabricPlus - https://github.com/ViaVersion/ViaFabricPlus
+ * This file is part of ViaFabricPlus - https://github.com/Peaks2000/ViaFabricPlusPeaks
  * Copyright (C) 2021-2026 the original authors
  *                         - Florian Reuth <git@florianreuth.de>
  *                         - RK_01/RaphiMC
@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * https://github.com/blackd/Inventory-Profiles/tree/all-in-one is handling the offhand slot even when
  * ViaFabricPlus removes the slot in <= 1.8.9, so we have to cancel the handling of the offhand slot
  *
- * Fixes https://github.com/ViaVersion/ViaFabricPlus/issues/209
+ * Fixes https://github.com/Peaks2000/ViaFabricPlusPeaks/issues/209
  */
 @SuppressWarnings("UnresolvedMixinReference")
 @Pseudo
