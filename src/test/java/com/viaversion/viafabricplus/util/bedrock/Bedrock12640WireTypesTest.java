@@ -154,6 +154,16 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void repeatedMiningSwingsDoNotBecomeBedrockAttackAnimations() {
+        assertEquals(new ClientPlayerPackets.SwingHandling(false, false, false),
+            ClientPlayerPackets.swingHandling(true, true));
+        assertEquals(new ClientPlayerPackets.SwingHandling(false, true, false),
+            ClientPlayerPackets.swingHandling(true, false));
+        assertEquals(new ClientPlayerPackets.SwingHandling(true, false, true),
+            ClientPlayerPackets.swingHandling(false, true));
+    }
+
+    @Test
     public void boatRotationUsesBedrockQuarterTurnOffset() {
         final Position2f rotation = ClientPlayerEntity.bedrockBoatRotation(100F, 12F);
         assertEquals(12F, rotation.x());
