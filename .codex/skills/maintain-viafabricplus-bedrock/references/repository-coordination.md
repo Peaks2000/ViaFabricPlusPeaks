@@ -70,6 +70,13 @@ After synchronization, update the installed copy under the active Codex skills d
 
 Review `git diff --check`, `git diff --stat`, `git diff`, and `git status --short` separately in each repository. Create focused commits that describe only that repository's responsibility.
 
+Integrate an external pull request without losing contributor credit:
+
+1. Fetch and record the exact PR head commit, its authored commits, target branch, and GitHub PR URL before resolving it against newer maintenance work.
+2. Create a true, non-squashed merge whose parents include the current maintained branch and the exact PR head. Resolve or adapt the merge tree so current fork behavior remains intact; the contributor commits must stay reachable with their original author and committer metadata. Do not replace this with a squash, re-authored copy, or cherry-pick when preserving PR attribution is expected.
+3. Push that merge to the PR's intended base branch so GitHub can recognize the PR as merged. Verify both locally and remotely: `git log --graph` must contain the exact PR commits, `git log --format='%H %an <%ae> %s'` must show their original authors, and `gh pr view NUMBER --repo OWNER/REPO --json state,mergeCommit,mergedAt,url` must report `MERGED` with the delivered merge commit.
+4. During later upstream upgrades, classify the PR-derived behavior as **keep**, **drop**, **adapt**, or **quarantine** like every other fork delta. Preserve the historical merge and contributor attribution even when the implementation must be adapted to a newer codebase.
+
 For code changes, deliver in dependency order:
 
 1. Commit and push ViaBedrock.

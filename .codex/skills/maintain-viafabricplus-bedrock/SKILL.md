@@ -13,6 +13,8 @@ Keep the fork's Bedrock transports and ViaBedrock translation layer working acro
 
 Read `references/repository-coordination.md` before cloning, branching, changing dependencies, synchronizing the skill, committing, pushing, or building a release across repositories. Treat ViaFabricPlus, ViaBedrock, and the standalone skill as independent Git repositories with distinct ownership and histories. Keep the standalone skill canonical and mirror its files exactly under ViaFabricPlus's `.codex/skills/maintain-viafabricplus-bedrock/` directory.
 
+When integrating an external pull request, follow the contributor-attribution workflow in `references/repository-coordination.md`. Preserve the exact contributor-authored commits and GitHub PR relationship with a true merge while resolving the resulting tree against the maintained branch; do not squash, re-author, or overwrite newer fork behavior merely for convenience.
+
 Read the references selectively:
 
 - Read `references/upstream-release-playbook.md` first when any Bedrock, ViaBedrock, ViaFabricPlus, Minecraft Java, Fabric, or ViaVersion release changes the baseline.
