@@ -11,6 +11,7 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
+import com.viaversion.viaversion.api.minecraft.BlockPosition;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -31,7 +32,10 @@ import net.raphimc.viabedrock.protocol.model.FullContainerName;
 import net.raphimc.viabedrock.protocol.model.GameRule;
 import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
 import net.raphimc.viabedrock.protocol.model.Position2f;
+import net.raphimc.viabedrock.protocol.model.Position3f;
+import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
+import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
@@ -64,6 +68,35 @@ public final class Bedrock12640WireTypesTest {
         final BlockState blueBed = BedBlockEntityRewriter.coloredBedState(whiteBed, DyeColor.BLUE);
         assertEquals("blue_bed", blueBed.identifier());
         assertEquals(whiteBed.properties(), blueBed.properties());
+    }
+
+    @Test
+    public void levelEventPositionsFloorNegativeCoordinates() {
+        final BlockPosition position = WorldEffectPackets.levelEventBlockPosition(new Position3f(-4.5F, 72.5F, -9.5F));
+        assertEquals(-5, position.x());
+        assertEquals(72, position.y());
+        assertEquals(-10, position.z());
+    }
+
+    @Test
+    public void dyedParticleStatesShareTheirBlockFamily() {
+        assertEquals("wool", WorldEffectPackets.particleBlockFamily("light_blue_wool"));
+        assertEquals("wool", WorldEffectPackets.particleBlockFamily("cyan_wool"));
+        assertEquals("stone", WorldEffectPackets.particleBlockFamily("stone"));
+
+        final BlockState lightBlue = new BlockState("light_blue_wool", Map.of());
+        final BlockState cyan = new BlockState("cyan_wool", Map.of());
+        assertEquals(true, WorldEffectPackets.sameParticleBlockFamily(lightBlue, cyan));
+        assertEquals(false, WorldEffectPackets.sameParticleBlockFamily(lightBlue, new BlockState("cyan_concrete", Map.of())));
+    }
+
+    @Test
+    public void shulkerFacingUsesBedrockBlockEntityDirection() {
+        final BlockState base = new BlockState("light_blue_shulker_box", Map.of("facing", "down"));
+        assertEquals("up", ShulkerBoxBlockEntityRewriter.orientedState(base, 1).properties().get("facing"));
+        assertEquals("north", ShulkerBoxBlockEntityRewriter.orientedState(base, 2).properties().get("facing"));
+        assertEquals("east", ShulkerBoxBlockEntityRewriter.orientedState(base, 5).properties().get("facing"));
+        assertEquals("up", ShulkerBoxBlockEntityRewriter.orientedState(base, 99).properties().get("facing"));
     }
 
     @Test

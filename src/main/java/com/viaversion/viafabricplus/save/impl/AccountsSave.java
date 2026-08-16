@@ -65,6 +65,9 @@ public final class AccountsSave extends AbstractSave {
         handleAccount("bedrockV3", object, account -> bedrockAccount = BedrockAuthManager.fromJson(MinecraftAuth.createHttpClient(), ProtocolConstants.BEDROCK_VERSION_NAME, account));
         handleAccount("classicube", object, account -> classicubeAccount = CCAccount.fromJson(account));
         handleAccount("classicube_cookies", object, cookies -> {
+            if (classicubeAccount == null) {
+                return;
+            }
             final Map<String, String> cookieValues = new HashMap<>();
             cookies.entrySet().forEach(entry -> cookieValues.put(entry.getKey(), entry.getValue().getAsString()));
             classicubeAccount.cookieStore.merge(new CookieStore(cookieValues));
