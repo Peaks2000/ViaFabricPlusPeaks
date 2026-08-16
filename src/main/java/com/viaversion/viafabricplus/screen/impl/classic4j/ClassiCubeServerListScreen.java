@@ -22,6 +22,7 @@
 package com.viaversion.viafabricplus.screen.impl.classic4j;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import com.viaversion.viafabricplus.injection.access.core.IEditBox;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPList;
@@ -30,15 +31,18 @@ import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.settings.impl.AuthenticationSettings;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import de.florianreuth.classic4j.ClassiCubeHandler;
+import de.florianreuth.classic4j.api.LoginProcessHandler;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
 import de.florianreuth.classic4j.model.classicube.server.CCServerInfo;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 import org.jspecify.annotations.NonNull;
@@ -51,9 +55,52 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
 
     private static List<CCServerInfo> SERVER_LIST;
     private static final String CLASSICUBE_SERVER_LIST_URL = "https://www.classicube.net/server/list/";
+    private boolean reauthenticating;
+    private EditBox searchField;
+    private SlotList slotList;
 
     public ClassiCubeServerListScreen() {
         super("ClassiCube", true);
+    }
+
+    /**
+     * The server list API only returns an mppass for each server when the account is logged in.
+     * If the session expired, the servers are returned without an mppass, which would result in the servers
+     * kicking the client with "Unknown host" when trying to join.
+     */
+    private boolean needsReauthentication() {
+        return !SERVER_LIST.isEmpty() && SERVER_LIST.stream().noneMatch(server -> server.mpPass() != null && !server.mpPass().isEmpty());
+    }
+
+    private void reauthenticate(final CCAccount account) {
+        if (reauthenticating) {
+            return;
+        }
+        reauthenticating = true;
+
+        ClassiCubeHandler.requestAuthentication(account, null, new LoginProcessHandler() {
+
+            @Override
+            public void handleMfa(CCAccount account) {
+                reauthenticating = false;
+                SERVER_LIST = null;
+                ClassiCubeMFAScreen.INSTANCE.open(prevScreen);
+            }
+
+            @Override
+            public void handleSuccessfulLogin(CCAccount account) {
+                reauthenticating = false;
+                SERVER_LIST = null;
+                open(prevScreen);
+            }
+
+            @Override
+            public void handleException(Throwable throwable) {
+                reauthenticating = false;
+                ViaFabricPlusImpl.INSTANCE.getLogger().error("Error while re-authenticating to ClassiCube!", throwable);
+                showErrorScreen(INSTANCE.getTitle(), throwable, prevScreen);
+            }
+        });
     }
 
     @Override
@@ -62,6 +109,10 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         if (SERVER_LIST == null) {
             ClassiCubeHandler.requestServerList(account, serverList -> {
                 SERVER_LIST = new ArrayList<>(serverList.servers());
+                if (needsReauthentication()) {
+                    reauthenticate(account);
+                    return;
+                }
                 open(prevScreen);
                 setupUrlSubtitle(CLASSICUBE_SERVER_LIST_URL);
             }, throwable -> {
@@ -73,7 +124,14 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         }
 
         final int entryHeight = (font.lineHeight + 2) * 3; // title is 2
-        this.addRenderableWidget(new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight, -5, entryHeight));
+        final int searchBarY = 2 * SLOT_MARGIN + entryHeight;
+
+        this.addRenderableWidget(searchField = new EditBox(font, 5, searchBarY, width - 10, 20, Component.empty()));
+        searchField.setHint(Component.translatable("base.viafabricplus.search"));
+        searchField.setResponder(query -> updateSearch());
+        ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
+
+        this.addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, searchBarY + 24, -5, entryHeight, normalizeQuery(searchField.getValue())));
 
         this.addRenderableWidget(Button.builder(Component.translatable("base.viafabricplus.logout"), button -> {
             SaveManager.INSTANCE.getAccountsSave().setClassicubeAccount(null);
@@ -82,6 +140,28 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         }).pos(width - 60 - 5, 5).size(60, 20).build());
 
         super.init();
+    }
+
+    private void updateSearch() {
+        if (slotList == null) {
+            return;
+        }
+        removeWidget(slotList);
+        final int entryHeight = (font.lineHeight + 2) * 3;
+        addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight + 24, -5, entryHeight, normalizeQuery(searchField.getValue())));
+    }
+
+    private static String normalizeQuery(final String query) {
+        return query.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean matchesQuery(final CCServerInfo server, final String query) {
+        if (query.isEmpty()) {
+            return true;
+        }
+        return server.name().toLowerCase(Locale.ROOT).contains(query)
+            || server.software().toLowerCase(Locale.ROOT).contains(query)
+            || server.ip().toLowerCase(Locale.ROOT).contains(query);
     }
 
     @Override
@@ -105,11 +185,15 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
     public static class SlotList extends VFPList {
         private static double scrollAmount;
 
-        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight) {
+        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight, String query) {
             super(minecraftClient, width, height, top, bottom, entryHeight);
 
-            SERVER_LIST.forEach(serverInfo -> this.addEntry(new ServerSlot(serverInfo)));
-            initScrollY(scrollAmount);
+            SERVER_LIST.stream()
+                .filter(serverInfo -> matchesQuery(serverInfo, query))
+                .forEach(serverInfo -> this.addEntry(new ServerSlot(serverInfo)));
+            if (query.isEmpty()) {
+                initScrollY(scrollAmount);
+            }
         }
 
         @Override

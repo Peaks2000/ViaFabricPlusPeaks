@@ -70,7 +70,7 @@ public final class ClassiCubeLoginScreen extends VFPScreen {
         final AccountsSave accountsSave = SaveManager.INSTANCE.getAccountsSave();
         if (accountsSave.getClassicubeAccount() != null) {
             nameField.setValue(accountsSave.getClassicubeAccount().username());
-            passwordField.setValue(accountsSave.getClassicubeAccount().username());
+            passwordField.setValue(accountsSave.getClassicubeAccount().password());
         }
 
         this.addRenderableWidget(Button.builder(Component.translatable("base.viafabricplus.login"), button -> {
