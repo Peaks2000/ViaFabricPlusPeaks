@@ -5,7 +5,8 @@
     -fixed bedrock crafting
     -fixed creative menu
     -fixed many many inventory bugs
-    -working offhand (soon) 
+    -working offhand 
+    
 
 credit 
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
