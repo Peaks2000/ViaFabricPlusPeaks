@@ -314,6 +314,7 @@
     "features.movement.vehicle.MixinAbstractHorse",
     "features.movement.vehicle.MixinLocalPlayer",
     "features.networking.blocked_server.MixinConnectScreen",
+    "features.networking.blocked_server.MixinConnectScreen_1",
     "features.networking.blocked_server.MixinDisconnectedScreen",
     "features.networking.blocked_server.MixinServerNameResolver",
     "features.networking.config_state.MixinClientConfigurationPacketListenerImpl",

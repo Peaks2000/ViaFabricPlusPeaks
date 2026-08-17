@@ -45,6 +45,7 @@ public final class BlockedServerOverride {
 
     private static final OneShotGate<ServerAddress, ConnectionAttempt> GATE =
         new OneShotGate<>(TimeUnit.SECONDS.toNanos(30), System::nanoTime);
+    private static final ThreadLocal<ServerAddress> CONNECTION_RESOLUTION = new ThreadLocal<>();
 
     private BlockedServerOverride() {
     }
@@ -62,6 +63,18 @@ public final class BlockedServerOverride {
 
     public static boolean isCurrentAttempt(final ServerAddress address) {
         return GATE.isCurrent(address);
+    }
+
+    public static void beginConnectionResolution(final ServerAddress address) {
+        CONNECTION_RESOLUTION.set(address);
+    }
+
+    public static boolean isConnectionResolution(final ServerAddress address) {
+        return Objects.equals(CONNECTION_RESOLUTION.get(), address);
+    }
+
+    public static void finishConnectionResolution() {
+        CONNECTION_RESOLUTION.remove();
     }
 
     public static void markBlocked(final ServerAddress address) {

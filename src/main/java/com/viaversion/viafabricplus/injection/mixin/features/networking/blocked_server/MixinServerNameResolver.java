@@ -52,7 +52,8 @@ public abstract class MixinServerNameResolver {
                                            final CallbackInfoReturnable<Optional<ResolvedServerAddress>> cir,
                                            @Share("trackAttempt") final LocalBooleanRef trackAttempt) {
         final boolean track = BlockedServerOverride.isEligibleRoute()
-            && BlockedServerOverride.isCurrentAttempt(address);
+            && BlockedServerOverride.isCurrentAttempt(address)
+            && BlockedServerOverride.isConnectionResolution(address);
         trackAttempt.set(track);
         if (track && BlockedServerOverride.consumeBypass(address)) {
             cir.setReturnValue(BlockedServerOverride.resolveWithoutBlocklist(address, this.resolver, this.redirectHandler));

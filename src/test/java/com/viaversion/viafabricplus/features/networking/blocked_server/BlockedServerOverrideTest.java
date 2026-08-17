@@ -12,6 +12,8 @@
 package com.viaversion.viafabricplus.features.networking.blocked_server;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicBoolean;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,5 +63,24 @@ public final class BlockedServerOverrideTest {
         gate.markBlocked("different.example");
         clock.set(101);
         assertTrue(gate.consumeBlocked().isEmpty());
+    }
+
+    @Test
+    public void connectionResolutionScopeExcludesOtherThreads() throws InterruptedException {
+        final ServerAddress address = ServerAddress.parseString("blocked.example");
+        final AtomicBoolean visibleToServerPinger = new AtomicBoolean(true);
+
+        BlockedServerOverride.beginConnectionResolution(address);
+        try {
+            assertTrue(BlockedServerOverride.isConnectionResolution(address));
+            final Thread serverPinger = new Thread(() -> visibleToServerPinger.set(
+                BlockedServerOverride.isConnectionResolution(address)));
+            serverPinger.start();
+            serverPinger.join();
+            assertFalse(visibleToServerPinger.get());
+        } finally {
+            BlockedServerOverride.finishConnectionResolution();
+        }
+        assertFalse(BlockedServerOverride.isConnectionResolution(address));
     }
 }
