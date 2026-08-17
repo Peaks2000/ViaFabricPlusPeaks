@@ -58,27 +58,44 @@ public final class TorchWallAttachment {
         for (int sectionY = chunkAccess.getMinSectionY(); sectionY < chunkAccess.getMaxSectionY(); sectionY++) {
             final LevelChunkSection section = chunkAccess.getSection(chunkAccess.getSectionIndexFromSectionY(sectionY));
             if (section.hasOnlyAir() || !section.getStates().maybeHas(IS_TORCH)) {
-                continue;
+                // This section of the loaded chunk contains no torch, but torches in the neighboring
+                // chunks may have their wall inside this chunk. Re-evaluate the 1 block wide border
+                // against the sections that actually contain those blocks.
+                scanTorchesInRange(levelReader, blockPos, chunkBlockX - 1, chunkBlockZ - 1, chunkBlockX, chunkBlockZ + 17, sectionY);
+                scanTorchesInRange(levelReader, blockPos, chunkBlockX + 16, chunkBlockZ - 1, chunkBlockX + 17, chunkBlockZ + 17, sectionY);
+                scanTorchesInRange(levelReader, blockPos, chunkBlockX, chunkBlockZ - 1, chunkBlockX + 16, chunkBlockZ, sectionY);
+                scanTorchesInRange(levelReader, blockPos, chunkBlockX, chunkBlockZ + 16, chunkBlockX + 16, chunkBlockZ + 17, sectionY);
+            } else {
+                scanTorchesInRange(levelReader, blockPos, chunkBlockX - 1, chunkBlockZ - 1, chunkBlockX + 17, chunkBlockZ + 17, sectionY);
             }
+        }
+    }
 
-            final int baseY = SectionPos.sectionToBlockCoord(sectionY);
-            for (int x = -1; x <= 16; x++) {
+    private static void scanTorchesInRange(final LevelReader levelReader, final BlockPos.MutableBlockPos blockPos, final int minX, final int minZ, final int maxX, final int maxZ, final int sectionY) {
+        final int baseY = SectionPos.sectionToBlockCoord(sectionY);
+        for (int x = minX; x < maxX; x++) {
+            for (int z = minZ; z < maxZ; z++) {
+                final int chunkX = SectionPos.blockToSectionCoord(x);
+                final int chunkZ = SectionPos.blockToSectionCoord(z);
+                if (!levelReader.hasChunk(chunkX, chunkZ)) {
+                    continue;
+                }
+                final ChunkAccess chunk = levelReader.getChunk(chunkX, chunkZ);
+                final LevelChunkSection section = chunk.getSection(chunk.getSectionIndexFromSectionY(sectionY));
+                if (section.hasOnlyAir() || !section.getStates().maybeHas(IS_TORCH)) {
+                    continue;
+                }
+
                 for (int y = 0; y < 16; y++) {
-                    for (int z = -1; z <= 16; z++) {
-                        blockPos.set(chunkBlockX + x, baseY + y, chunkBlockZ + z);
-                        if (!levelReader.hasChunk(SectionPos.blockToSectionCoord(blockPos.getX()), SectionPos.blockToSectionCoord(blockPos.getZ()))) {
-                            continue;
-                        }
+                    blockPos.set(x, baseY + y, z);
+                    final BlockState blockState = levelReader.getBlockState(blockPos);
+                    if (!isTorch(blockState)) {
+                        continue;
+                    }
 
-                        final BlockState blockState = levelReader.getBlockState(blockPos);
-                        if (!isTorch(blockState)) {
-                            continue;
-                        }
-
-                        final BlockState newState = getAttachmentState(blockState, levelReader, blockPos);
-                        if (newState != blockState) {
-                            setAttachmentState(levelReader, blockPos, blockState, newState);
-                        }
+                    final BlockState newState = getAttachmentState(blockState, levelReader, blockPos);
+                    if (newState != blockState) {
+                        setAttachmentState(levelReader, blockPos, blockState, newState);
                     }
                 }
             }
