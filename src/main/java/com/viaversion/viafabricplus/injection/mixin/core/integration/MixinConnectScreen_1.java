@@ -23,19 +23,25 @@ package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.viaversion.viafabricplus.features.rendering.ShaderDisabler;
+import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
 import com.viaversion.viafabricplus.protocoltranslator.util.ProtocolVersionDetector;
 import com.viaversion.viafabricplus.save.SaveManager;
-import com.viaversion.viafabricplus.settings.impl.AuthenticationSettings;
+import com.viaversion.viafabricplus.screen.impl.classic4j.BetaCraftScreen;
+import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeServerListScreen;
+import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.Optional;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.multiplayer.ServerData;
@@ -68,6 +74,9 @@ public abstract class MixinConnectScreen_1 {
     @Unique
     private boolean viaFabricPlus$useClassiCubeAccount;
 
+    @Unique
+    private ConnectionType viaFabricPlus$connectionType = ConnectionType.NONE;
+
     @WrapOperation(method = "run", at = @At(value = "INVOKE", target = "Ljava/util/Optional;get()Ljava/lang/Object;", remap = false))
     private Object setServerInfoAndProtocolVersion(Optional<InetSocketAddress> instance, Operation<Object> original) throws Exception {
         final InetSocketAddress address = (InetSocketAddress) original.call(instance);
@@ -95,7 +104,8 @@ public abstract class MixinConnectScreen_1 {
         }
         targetVersion = BedrockProtocolCompatibility.routeForConnection(targetVersion, mixinServerInfo.viaFabricPlus$bedrockWireProtocol());
         ProtocolTranslator.setTargetVersion(targetVersion, true);
-        this.viaFabricPlus$useClassiCubeAccount = AuthenticationSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;
+        this.viaFabricPlus$useClassiCubeAccount = ClassiCubeSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;
+        this.viaFabricPlus$connectionType = viaFabricPlus$detectConnectionType(targetVersion);
 
         return address;
     }
@@ -103,7 +113,14 @@ public abstract class MixinConnectScreen_1 {
     @WrapOperation(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;connect(Ljava/net/InetSocketAddress;Lnet/minecraft/server/network/EventLoopGroupHolder;Lnet/minecraft/network/Connection;)Lio/netty/channel/ChannelFuture;"))
     private ChannelFuture resetProtocolVersionAfterDisconnect(InetSocketAddress address, EventLoopGroupHolder eventLoopGroupHolder, Connection connection, Operation<ChannelFuture> original) {
         final ChannelFuture future = original.call(address, eventLoopGroupHolder, connection);
-        ProtocolTranslator.injectPreviousVersionReset(future.channel());
+        final Channel channel = future.channel();
+        ProtocolTranslator.injectPreviousVersionReset(channel);
+
+        final ConnectionType connectionType = this.viaFabricPlus$connectionType;
+        if (connectionType != ConnectionType.NONE) {
+            Minecraft.getInstance().execute(() -> ShaderDisabler.onServerJoin(channel, connectionType));
+        }
+        channel.closeFuture().addListener(f -> Minecraft.getInstance().execute(() -> ShaderDisabler.onServerLeave(channel)));
         return future;
     }
 
@@ -116,6 +133,22 @@ public abstract class MixinConnectScreen_1 {
             }
         }
         return instance.getName();
+    }
+
+    @Unique
+    private ConnectionType viaFabricPlus$detectConnectionType(ProtocolVersion targetVersion) {
+        if (ClassiCubeServerListScreen.connecting) {
+            ClassiCubeServerListScreen.connecting = false;
+            return ConnectionType.CLASSICUBE;
+        }
+        if (BetaCraftScreen.connecting) {
+            BetaCraftScreen.connecting = false;
+            return ConnectionType.BETACRAFT;
+        }
+        if (ProtocolTranslator.isBedrock(targetVersion)) {
+            return ConnectionType.BEDROCK;
+        }
+        return ConnectionType.NONE;
     }
 
 }

@@ -34,6 +34,8 @@
   "setting_group_name.viafabricplus.debug": "디버그",
   "setting_group_name.viafabricplus.general": "일반",
   "setting_group_name.viafabricplus.bedrock": "베드락",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "버전 강제",
   "screen.viafabricplus.report_issues": "문제 제보",
   "screen.viafabricplus.server_list": "서버 리스트",

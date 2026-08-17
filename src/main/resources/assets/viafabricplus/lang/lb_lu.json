@@ -25,6 +25,8 @@
   "setting_group_name.viafabricplus.visual": "Visuell",
   "setting_group_name.viafabricplus.debug": "Debuggen",
   "setting_group_name.viafabricplus.general": "Allgemeng",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "general_settings.viafabricplus.save_selected_protocol_version": "Ausgewielte Protokollversion späichern",
   "general_settings.viafabricplus.show_classic_loading_progress": "Luedfiergang fier klassesch Versiounen bäim Verbannen mam Server uweisen",
   "general_settings.viafabricplus.multiplayer_screen_button_orientation": "Äusriichtung vum Knäppchen an der Serverlescht",

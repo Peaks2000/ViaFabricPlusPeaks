@@ -131,6 +131,8 @@
     "features.classic.cpe_extension.MixinLivingEntity",
     "features.classic.cpe_extension.MixinProtocolc0_30cpeToc0_28_30",
     "features.classic.torch_wall_attachment.MixinClientPacketListener",
+    "features.classic.torch_wall_attachment.MixinLevel",
+    "features.classic.walking_animation.MixinHumanoidModel",
     "features.classic.world_height.MixinEntityPacketRewriter1_17",
     "features.classic.world_height.MixinWorldPacketRewriter1_16_2",
     "features.classic.world_height.MixinWorldPacketRewriter1_17",

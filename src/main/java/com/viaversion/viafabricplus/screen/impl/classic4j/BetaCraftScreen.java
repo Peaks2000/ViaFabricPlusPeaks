@@ -47,6 +47,12 @@ public final class BetaCraftScreen extends VFPScreen {
 
     public static final BetaCraftScreen INSTANCE = new BetaCraftScreen();
 
+    /**
+     * Whether the current connection attempt was started from the BetaCraft server list.
+     * It is set when clicking a server and consumed when the connection is started.
+     */
+    public static boolean connecting;
+
     public static BCServerList SERVER_LIST;
     private static final String BETA_CRAFT_SERVER_LIST_URL = "https://betacraft.uk/serverlist/";
 
@@ -155,6 +161,7 @@ public final class BetaCraftScreen extends VFPScreen {
 
         @Override
         public void mappedMouseClicked(double mouseX, double mouseY, int button) {
+            connecting = true;
             ConnectionUtil.connect(server.name(), server.socket(), BetaCraftServerListSupport.determineVersion(server));
             super.mappedMouseClicked(mouseX, mouseY, button);
         }

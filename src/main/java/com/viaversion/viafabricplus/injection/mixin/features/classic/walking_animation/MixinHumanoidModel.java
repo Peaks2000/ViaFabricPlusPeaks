@@ -19,9 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.viaversion.viafabricplus.visuals.injection.mixin.classic.walking_animation;
+package com.viaversion.viafabricplus.injection.mixin.features.classic.walking_animation;
 
-import com.viaversion.viafabricplus.visuals.settings.VisualSettings;
+import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
@@ -47,10 +47,10 @@ public abstract class MixinHumanoidModel<T extends HumanoidRenderState> {
 
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/geom/ModelPart;zRot:F", ordinal = 1, shift = At.Shift.AFTER, opcode = Opcodes.PUTFIELD))
     private void addOldWalkAnimation(T state, CallbackInfo ci) {
-        if (VisualSettings.INSTANCE.oldWalkingAnimation.isEnabled()) {
+        if (ClassiCubeSettings.INSTANCE.oldWalkingAnimation.isEnabled()) {
             final float limbSwingAnimationProgress = state.walkAnimationPos;
             final float limbSwingAmplitude = state.walkAnimationSpeed;
-            final float speed = VisualSettings.INSTANCE.slowDownClassicAnimation.getValue() ? 0.7F : 1.0F;
+            final float speed = ClassiCubeSettings.INSTANCE.slowDownClassicAnimation.getValue() ? 0.7F : 1.0F;
 
             this.rightArm.xRot = Mth.cos(limbSwingAnimationProgress * 0.6662F * speed + 3.1415927F) * 2.0F * limbSwingAmplitude;
             this.rightArm.zRot = (Mth.cos(limbSwingAnimationProgress * 0.2312F * speed) + 1.0F) * 1.0F * limbSwingAmplitude;
