@@ -22,6 +22,7 @@
 package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.save.impl.SettingsSave;
 import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
@@ -60,6 +61,9 @@ public abstract class MixinServerData implements IServerData {
     @Unique
     private String viaFabricPlus$clientHostedNonce;
 
+    @Unique
+    private ConnectionType viaFabricPlus$shaderConnectionType = ConnectionType.NONE;
+
     @Inject(method = "write", at = @At("TAIL"))
     private void saveForcedVersion(CallbackInfoReturnable<CompoundTag> cir, @Local(name = "tag") CompoundTag tag) {
         if (viaFabricPlus$forcedVersion != null) {
@@ -83,6 +87,7 @@ public abstract class MixinServerData implements IServerData {
         viaFabricPlus$setBedrockWireProtocol(((IServerData) other).viaFabricPlus$bedrockWireProtocol());
         viaFabricPlus$setUseBedrockAccount(((IServerData) other).viaFabricPlus$useBedrockAccount());
         viaFabricPlus$setClientHostedNonce(((IServerData) other).viaFabricPlus$clientHostedNonce());
+        viaFabricPlus$setShaderConnectionType(((IServerData) other).viaFabricPlus$shaderConnectionType());
     }
 
     @Override
@@ -143,6 +148,16 @@ public abstract class MixinServerData implements IServerData {
     @Override
     public void viaFabricPlus$setClientHostedNonce(final String nonce) {
         viaFabricPlus$clientHostedNonce = nonce;
+    }
+
+    @Override
+    public ConnectionType viaFabricPlus$shaderConnectionType() {
+        return viaFabricPlus$shaderConnectionType;
+    }
+
+    @Override
+    public void viaFabricPlus$setShaderConnectionType(final ConnectionType connectionType) {
+        viaFabricPlus$shaderConnectionType = connectionType;
     }
 
 }

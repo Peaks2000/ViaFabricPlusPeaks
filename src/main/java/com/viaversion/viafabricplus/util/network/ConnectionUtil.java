@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.util.network;
 
+import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IServerAddress;
 import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
@@ -47,6 +48,11 @@ public final class ConnectionUtil {
         connect(name, address, version, BedrockProtocolCompatibility.UNKNOWN_PROTOCOL);
     }
 
+    public static void connect(final String name, final String address, final ProtocolVersion version,
+                               final ConnectionType shaderConnectionType) {
+        connect(name, address, version, BedrockProtocolCompatibility.UNKNOWN_PROTOCOL, true, null, shaderConnectionType);
+    }
+
     public static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol) {
         connect(name, address, version, bedrockWireProtocol, true);
     }
@@ -58,6 +64,12 @@ public final class ConnectionUtil {
 
     public static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol,
                                final boolean useBedrockAccount, final String clientHostedNonce) {
+        connect(name, address, version, bedrockWireProtocol, useBedrockAccount, clientHostedNonce, ConnectionType.NONE);
+    }
+
+    private static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol,
+                                final boolean useBedrockAccount, final String clientHostedNonce,
+                                final ConnectionType shaderConnectionType) {
         final ServerAddress serverAddress = ServerAddress.parseString(address);
         final ServerData entry = new ServerData(name, serverAddress.getHost(), ServerData.Type.OTHER);
 
@@ -67,6 +79,7 @@ public final class ConnectionUtil {
         ((IServerData) entry).viaFabricPlus$setBedrockWireProtocol(bedrockWireProtocol);
         ((IServerData) entry).viaFabricPlus$setUseBedrockAccount(useBedrockAccount);
         ((IServerData) entry).viaFabricPlus$setClientHostedNonce(clientHostedNonce);
+        ((IServerData) entry).viaFabricPlus$setShaderConnectionType(shaderConnectionType);
         ConnectScreen.startConnecting(Minecraft.getInstance().gui.screen(), Minecraft.getInstance(), serverAddress, entry, false, null);
     }
 

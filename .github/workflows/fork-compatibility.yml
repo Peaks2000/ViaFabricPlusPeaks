@@ -23,13 +23,14 @@ env:
 jobs:
   preserve-fork:
     name: Quality and preservation gate
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Checkout ViaFabricPlus fork
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: ViaFabricPlus
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Checkout pinned ViaBedrock fork
@@ -59,7 +60,7 @@ jobs:
 
       - name: Check source quality
         working-directory: ViaFabricPlus
-        run: git diff --check HEAD^
+        run: git diff --check HEAD^ HEAD
 
       - name: Compile against pinned ViaBedrock
         working-directory: ViaFabricPlus
