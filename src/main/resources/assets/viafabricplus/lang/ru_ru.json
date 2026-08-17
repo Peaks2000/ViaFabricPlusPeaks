@@ -34,6 +34,8 @@
   "setting_group_name.viafabricplus.debug": "Отладка",
   "setting_group_name.viafabricplus.general": "Основные",
   "setting_group_name.viafabricplus.bedrock": "Bedrock",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "Меню принудительного выбора версии сервера",
   "screen.viafabricplus.report_issues": "Меню обратной связи",
   "screen.viafabricplus.server_list": "Серверы",

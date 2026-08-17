@@ -27,6 +27,8 @@
   "setting_group_name.viafabricplus.authentication": "Doğrulama",
   "setting_group_name.viafabricplus.visual": "Görünüm",
   "setting_group_name.viafabricplus.general": "Genel",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "Zorunlu Sürüm",
   "screen.viafabricplus.report_issues": "Hata Bildir",
   "screen.viafabricplus.server_list": "Sunucu Listesi",

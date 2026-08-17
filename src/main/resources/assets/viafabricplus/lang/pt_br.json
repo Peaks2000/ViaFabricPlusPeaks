@@ -33,6 +33,8 @@
   "setting_group_name.viafabricplus.debug": "Depuração",
   "setting_group_name.viafabricplus.general": "Geral",
   "setting_group_name.viafabricplus.bedrock": "Bedrock",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "Forçar Versão",
   "screen.viafabricplus.report_issues": "Reportar problemas",
   "screen.viafabricplus.server_list": "Listas de servidores",

@@ -33,6 +33,8 @@
   "setting_group_name.viafabricplus.debug": "勘",
   "setting_group_name.viafabricplus.general": "常",
   "setting_group_name.viafabricplus.bedrock": "基石版",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "強用版",
   "screen.viafabricplus.report_issues": "報誤",
   "screen.viafabricplus.server_list": "伺服器之列",

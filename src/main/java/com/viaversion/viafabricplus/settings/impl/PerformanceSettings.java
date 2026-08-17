@@ -25,15 +25,16 @@ import com.viaversion.viafabricplus.api.settings.SettingGroup;
 import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
 import net.minecraft.network.chat.Component;
 
-public final class AuthenticationSettings extends SettingGroup {
+public final class PerformanceSettings extends SettingGroup {
 
-    public static final AuthenticationSettings INSTANCE = new AuthenticationSettings();
+    public static final PerformanceSettings INSTANCE = new PerformanceSettings();
 
-    public final BooleanSetting useBetaCraftAuthentication = new BooleanSetting(this, Component.translatable("authentication_settings.viafabricplus.use_beta_craft_authentication"), true);
-    public final BooleanSetting verifySessionForOnlineModeServers = new BooleanSetting(this, Component.translatable("authentication_settings.viafabricplus.verify_session_for_online_mode"), true);
+    public final BooleanSetting disableShadersOnClassicubeServers = new BooleanSetting(this, Component.translatable("performance_settings.viafabricplus.disable_shaders_on_classicube_servers"), false);
+    public final BooleanSetting disableShadersOnBetacraftServers = new BooleanSetting(this, Component.translatable("performance_settings.viafabricplus.disable_shaders_on_betacraft_servers"), false);
+    public final BooleanSetting disableShadersOnBedrockServers = new BooleanSetting(this, Component.translatable("performance_settings.viafabricplus.disable_shaders_on_bedrock_servers"), false);
 
-    public AuthenticationSettings() {
-        super(Component.translatable("setting_group_name.viafabricplus.authentication"));
+    public PerformanceSettings() {
+        super(Component.translatable("setting_group_name.viafabricplus.performance"));
     }
 
 }

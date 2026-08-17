@@ -38,6 +38,8 @@
   "setting_group_name.viafabricplus.debug": "Debug",
   "setting_group_name.viafabricplus.general": "General",
   "setting_group_name.viafabricplus.bedrock": "Bedrock",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
 
   "screen.viafabricplus.force_version": "Force Version",
   "screen.viafabricplus.report_issues": "Report issues",
@@ -62,6 +64,10 @@
   "general_settings.viafabricplus.save_scroll_position_in_slot_screens": "Save scroll position in slot screens",
   "general_settings.viafabricplus.experimental_block_connections": "Experimental block connections",
   "general_settings.viafabricplus.torches_stick_to_walls_classicube": "Torches stick to walls (ClassiCube)",
+
+  "performance_settings.viafabricplus.disable_shaders_on_classicube_servers": "Disable shaders on ClassiCube servers",
+  "performance_settings.viafabricplus.disable_shaders_on_betacraft_servers": "Disable shaders on BetaCraft servers",
+  "performance_settings.viafabricplus.disable_shaders_on_bedrock_servers": "Disable shaders on Bedrock servers",
 
   "bedrock_settings.viafabricplus.click_to_set_bedrock_account": "Click to set account for Bedrock Edition",
   "bedrock_settings.viafabricplus.replace_default_port": "Replace default port in server list",

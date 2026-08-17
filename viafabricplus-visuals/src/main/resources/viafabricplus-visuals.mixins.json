@@ -5,7 +5,6 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "classic.creative_menu.MixinCreativeModeInventoryScreen",
-    "classic.walking_animation.MixinHumanoidModel",
     "filter_game_mode_selections.MixinGameModeSwitcherScreen",
     "filter_game_mode_selections.MixinGameModeSwitcherScreen_GameModeIcon",
     "force_unicode_font.MixinLanguageManager",

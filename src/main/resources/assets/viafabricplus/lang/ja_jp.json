@@ -35,6 +35,8 @@
   "setting_group_name.viafabricplus.debug": "開発者向け",
   "setting_group_name.viafabricplus.general": "全般",
   "setting_group_name.viafabricplus.bedrock": "統合版",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "強制的なバージョン",
   "screen.viafabricplus.report_issues": "問題を報告",
   "screen.viafabricplus.server_list": "サーバーリスト",

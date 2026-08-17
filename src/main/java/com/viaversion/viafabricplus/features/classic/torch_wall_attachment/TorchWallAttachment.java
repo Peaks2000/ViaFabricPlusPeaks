@@ -22,7 +22,7 @@
 package com.viaversion.viafabricplus.features.classic.torch_wall_attachment;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.settings.impl.GeneralSettings;
+import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -145,7 +145,7 @@ public final class TorchWallAttachment {
     }
 
     public static boolean isApplicable() {
-        return GeneralSettings.INSTANCE.torchesStickToWallsClassicube.getValue() && ProtocolTranslator.getTargetVersion().equals(c0_30cpe);
+        return ClassiCubeSettings.INSTANCE.torchesStickToWallsClassicube.getValue() && ProtocolTranslator.getTargetVersion().equals(c0_30cpe);
     }
 
     private static void setAttachmentState(final LevelReader levelReader, final BlockPos blockPos, final BlockState oldState, final BlockState newState) {

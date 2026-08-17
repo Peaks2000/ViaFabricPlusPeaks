@@ -35,6 +35,8 @@
   "setting_group_name.viafabricplus.debug": "调试",
   "setting_group_name.viafabricplus.general": "通用",
   "setting_group_name.viafabricplus.bedrock": "基岩版",
+  "setting_group_name.viafabricplus.classicube": "ClassiCube",
+  "setting_group_name.viafabricplus.performance": "Performance",
   "screen.viafabricplus.force_version": "强制使用版本",
   "screen.viafabricplus.report_issues": "报告问题",
   "screen.viafabricplus.server_list": "服务器列表",

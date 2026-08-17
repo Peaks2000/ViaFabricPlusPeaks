@@ -28,7 +28,7 @@ import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
-import com.viaversion.viafabricplus.settings.impl.AuthenticationSettings;
+import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import de.florianreuth.classic4j.ClassiCubeHandler;
 import de.florianreuth.classic4j.api.LoginProcessHandler;
@@ -52,6 +52,12 @@ import static com.viaversion.viafabricplus.screen.VFPListEntry.SLOT_MARGIN;
 public final class ClassiCubeServerListScreen extends VFPScreen {
 
     public static final ClassiCubeServerListScreen INSTANCE = new ClassiCubeServerListScreen();
+
+    /**
+     * Whether the current connection attempt was started from the ClassiCube server list.
+     * It is set when clicking a server and consumed when the connection is started.
+     */
+    public static boolean connecting;
 
     private static List<CCServerInfo> SERVER_LIST;
     private static final String CLASSICUBE_SERVER_LIST_URL = "https://www.classicube.net/server/list/";
@@ -221,7 +227,8 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
 
         @Override
         public void mappedMouseClicked(double mouseX, double mouseY, int button) {
-            final boolean selectCPE = AuthenticationSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
+            connecting = true;
+            final boolean selectCPE = ClassiCubeSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
             ViaFabricPlusClassicMPPassProvider.classicubeMPPass = classiCubeServerInfo.mpPass();
 
             ConnectionUtil.connect(classiCubeServerInfo.name(), classiCubeServerInfo.ip() + ":" + classiCubeServerInfo.port(), selectCPE ? LegacyProtocolVersion.c0_30cpe : null);
