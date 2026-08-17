@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.classic.torch_wall_attachment;
 
+import com.viaversion.viafabricplus.features.classic.block_sounds.ClassicubeBlockSounds;
 import com.viaversion.viafabricplus.features.classic.torch_wall_attachment.TorchWallAttachment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -37,17 +38,17 @@ public abstract class MixinLevel {
     @Redirect(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/chunk/LevelChunk;setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState;"))
     private BlockState viafabricplus$redirectSetBlockState(final LevelChunk chunk, final BlockPos pos, final BlockState state, final int flags) {
+        BlockState newState = state;
         if (TorchWallAttachment.isApplicable()) {
-            BlockState newState = state;
             if (state.getBlock() == Blocks.TORCH) {
                 newState = TorchWallAttachment.getAttachmentState(state, (Level) (Object) this, pos);
             }
             if (!newState.isSolid()) {
                 TorchWallAttachment.updateWallTorchNeighbors((Level) (Object) this, pos);
             }
-            return chunk.setBlockState(pos, newState, flags);
         }
-        return chunk.setBlockState(pos, state, flags);
+        ClassicubeBlockSounds.playSounds((Level) (Object) this, pos, newState, flags);
+        return chunk.setBlockState(pos, newState, flags);
     }
 
 }
