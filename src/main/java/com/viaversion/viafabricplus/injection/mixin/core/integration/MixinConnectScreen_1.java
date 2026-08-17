@@ -36,6 +36,7 @@ import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -73,6 +74,9 @@ public abstract class MixinConnectScreen_1 {
     @Unique
     private boolean viaFabricPlus$useClassiCubeAccount;
 
+    @Unique
+    private ConnectionType viaFabricPlus$connectionType = ConnectionType.NONE;
+
     @WrapOperation(method = "run", at = @At(value = "INVOKE", target = "Ljava/util/Optional;get()Ljava/lang/Object;", remap = false))
     private Object setServerInfoAndProtocolVersion(Optional<InetSocketAddress> instance, Operation<Object> original) throws Exception {
         final InetSocketAddress address = (InetSocketAddress) original.call(instance);
@@ -101,11 +105,7 @@ public abstract class MixinConnectScreen_1 {
         targetVersion = BedrockProtocolCompatibility.routeForConnection(targetVersion, mixinServerInfo.viaFabricPlus$bedrockWireProtocol());
         ProtocolTranslator.setTargetVersion(targetVersion, true);
         this.viaFabricPlus$useClassiCubeAccount = ClassiCubeSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;
-
-        final ConnectionType connectionType = viaFabricPlus$detectConnectionType(targetVersion);
-        if (connectionType != ConnectionType.NONE) {
-            Minecraft.getInstance().execute(() -> ShaderDisabler.onServerJoin(connectionType));
-        }
+        this.viaFabricPlus$connectionType = viaFabricPlus$detectConnectionType(targetVersion);
 
         return address;
     }
@@ -113,8 +113,14 @@ public abstract class MixinConnectScreen_1 {
     @WrapOperation(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;connect(Ljava/net/InetSocketAddress;Lnet/minecraft/server/network/EventLoopGroupHolder;Lnet/minecraft/network/Connection;)Lio/netty/channel/ChannelFuture;"))
     private ChannelFuture resetProtocolVersionAfterDisconnect(InetSocketAddress address, EventLoopGroupHolder eventLoopGroupHolder, Connection connection, Operation<ChannelFuture> original) {
         final ChannelFuture future = original.call(address, eventLoopGroupHolder, connection);
-        ProtocolTranslator.injectPreviousVersionReset(future.channel());
-        future.channel().closeFuture().addListener(f -> Minecraft.getInstance().execute(ShaderDisabler::onServerLeave));
+        final Channel channel = future.channel();
+        ProtocolTranslator.injectPreviousVersionReset(channel);
+
+        final ConnectionType connectionType = this.viaFabricPlus$connectionType;
+        if (connectionType != ConnectionType.NONE) {
+            Minecraft.getInstance().execute(() -> ShaderDisabler.onServerJoin(channel, connectionType));
+        }
+        channel.closeFuture().addListener(f -> Minecraft.getInstance().execute(() -> ShaderDisabler.onServerLeave(channel)));
         return future;
     }
 

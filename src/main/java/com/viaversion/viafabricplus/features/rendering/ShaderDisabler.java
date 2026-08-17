@@ -24,6 +24,7 @@ package com.viaversion.viafabricplus.features.rendering;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.injection.ViaFabricPlusMixinPlugin;
 import com.viaversion.viafabricplus.settings.impl.PerformanceSettings;
+import io.netty.channel.Channel;
 import java.lang.reflect.Method;
 
 /**
@@ -50,7 +51,11 @@ public final class ShaderDisabler {
     private static Method setShadersEnabledAndApply;
     private static boolean irisApiUnavailable;
 
-    private static boolean shadersDisabled;
+    /**
+     * The channel of the server connection for which the shaders were disabled.
+     * Shaders are only restored once this exact connection has been closed.
+     */
+    private static Channel activeChannel;
 
     public static boolean shouldDisableShaders(final ConnectionType type) {
         return switch (type) {
@@ -63,9 +68,13 @@ public final class ShaderDisabler {
 
     /**
      * Must be called on the render thread when a connection to a server is started.
+     * <p>
+     * The channel is used to make this robust against connections that fail before this
+     * deferred call is executed: if the connection already closed, the shaders are not
+     * disabled, so they can never be left disabled after leaving the server.
      */
-    public static void onServerJoin(final ConnectionType type) {
-        if (!ViaFabricPlusMixinPlugin.IRIS_PRESENT || irisApiUnavailable || shadersDisabled || !shouldDisableShaders(type)) {
+    public static void onServerJoin(final Channel channel, final ConnectionType type) {
+        if (!ViaFabricPlusMixinPlugin.IRIS_PRESENT || irisApiUnavailable || activeChannel != null || !channel.isOpen() || !shouldDisableShaders(type)) {
             return;
         }
 
@@ -78,7 +87,7 @@ public final class ShaderDisabler {
             final Object config = getConfig.invoke(irisApi);
             if ((boolean) areShadersEnabled.invoke(config)) {
                 setShadersEnabledAndApply.invoke(config, false);
-                shadersDisabled = true;
+                activeChannel = channel;
                 ViaFabricPlusImpl.INSTANCE.getLogger().info("Disabled Iris shaders while connected to a {} server", type.name().toLowerCase());
             }
         } catch (ReflectiveOperationException | LinkageError e) {
@@ -90,14 +99,14 @@ public final class ShaderDisabler {
     /**
      * Must be called on the render thread when the connection to the server is closed.
      */
-    public static void onServerLeave() {
-        if (!ViaFabricPlusMixinPlugin.IRIS_PRESENT || irisApiUnavailable || !shadersDisabled) {
+    public static void onServerLeave(final Channel channel) {
+        if (!ViaFabricPlusMixinPlugin.IRIS_PRESENT || irisApiUnavailable || activeChannel != channel) {
             return;
         }
 
+        activeChannel = null;
         try {
             setShadersEnabledAndApply.invoke(getConfig.invoke(irisApi), true);
-            shadersDisabled = false;
             ViaFabricPlusImpl.INSTANCE.getLogger().info("Re-enabled Iris shaders");
         } catch (ReflectiveOperationException | LinkageError e) {
             irisApiUnavailable = true;

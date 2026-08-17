@@ -32,8 +32,8 @@ public final class ClassiCubeSettings extends SettingGroup {
 
     public static final ClassiCubeSettings INSTANCE = new ClassiCubeSettings();
 
-    public final BooleanSetting automaticallySelectCPEInClassiCubeServerList = new BooleanSetting(this, Component.translatable("authentication_settings.viafabricplus.automatically_select_cpe_when_using_classicube"), true);
-    public final BooleanSetting setSessionNameToClassiCubeNameInServerList = new BooleanSetting(this, Component.translatable("authentication_settings.viafabricplus.set_session_name_to_classicube_name"), true);
+    public final BooleanSetting automaticallySelectCPEInClassiCubeServerList = AuthenticationSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList;
+    public final BooleanSetting setSessionNameToClassiCubeNameInServerList = AuthenticationSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList;
     public final BooleanSetting torchesStickToWallsClassicube = new BooleanSetting(this, Component.translatable("general_settings.viafabricplus.torches_stick_to_walls_classicube"), false);
     public final VersionedBooleanSetting oldWalkingAnimation = new VersionedBooleanSetting(this, Component.translatable("visual_settings.viafabricplus.old_walking_animation"), ProtocolVersionRange.andOlder(LegacyProtocolVersion.c0_28toc0_30));
     public final BooleanSetting slowDownClassicAnimation = new BooleanSetting(this, Component.translatable("visual_settings.viafabricplus.slow_down_classic_animation"), true);
@@ -41,6 +41,8 @@ public final class ClassiCubeSettings extends SettingGroup {
     public ClassiCubeSettings() {
         super(Component.translatable("setting_group_name.viafabricplus.classicube"));
         torchesStickToWallsClassicube.lockValue();
+        getSettings().add(automaticallySelectCPEInClassiCubeServerList);
+        getSettings().add(setSessionNameToClassiCubeNameInServerList);
     }
 
 }
