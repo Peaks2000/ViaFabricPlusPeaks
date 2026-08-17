@@ -24,7 +24,6 @@ package com.viaversion.viafabricplus.injection.mixin.features.classic.torch_wall
 import com.viaversion.viafabricplus.features.classic.torch_wall_attachment.TorchWallAttachment;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,11 +40,6 @@ public abstract class MixinClientPacketListener {
     @Inject(method = "updateLevelChunk", at = @At("TAIL"))
     private void updateTorchAttachments(int x, int z, ClientboundLevelChunkPacketData chunkData, CallbackInfo ci) {
         TorchWallAttachment.updateChunkConnections(this.level, x, z);
-    }
-
-    @Inject(method = "handleBlockUpdate", at = @At("TAIL"))
-    private void updateTorchAttachments(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
-        TorchWallAttachment.updateBlockConnections(this.level, packet.getPos());
     }
 
 }
