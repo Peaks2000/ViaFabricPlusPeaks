@@ -229,7 +229,8 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             return;
         }
 
-        pendingServerAddress = input;
+        // Only direct connects from the "My servers" tab add the address to the personal server list
+        pendingServerAddress = showMyServers ? input : null;
         if (input.contains("/play/") || input.matches("[0-9a-fA-F]{32}")) {
             joinClassiCubeServer(extractHash(input));
         } else {
