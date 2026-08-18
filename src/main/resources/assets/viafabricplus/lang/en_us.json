@@ -32,9 +32,6 @@
   "base.viafabricplus.code": "Code",
   "base.viafabricplus.accept": "Accept",
   "base.viafabricplus.refresh": "Refresh",
-  "base.viafabricplus.join_blocked_server_anyway": "Join anyway",
-  "base.viafabricplus.possible_blacklisted_server": "(This might be a blacklisted server)",
-
   "setting_group_name.viafabricplus.authentication": "Authentication",
   "setting_group_name.viafabricplus.visual": "Visual",
   "setting_group_name.viafabricplus.debug": "Debug",
