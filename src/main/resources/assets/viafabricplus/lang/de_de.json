@@ -121,6 +121,8 @@
   "classicube.viafabricplus.loading": "Profilinformationen und Serverliste werden geladen...",
   "classicube.viafabricplus.profile": "ClassiCube Profil:",
   "classicube.viafabricplus.warning": "Diese Funktion sendet API-Anfragen an die ClassiCube-API.",
+  "classicube.viafabricplus.play_link_hint": "ClassiCube Play-Link",
+  "classicube.viafabricplus.join_by_link": "Beitreten",
   "betacraft.viafabricplus.failed_to_verify_session": "ViaFabricPlus konnte deine Sitzung nicht verifizieren! Bitte melde dich bei einem Konto an oder deaktiviere die BetaCraft-Authentifizierung in den ViaFabricPlus-Einstellungen",
   "betacraft.viafabricplus.loading": "Laden...",
   "betacraft.viafabricplus.warning": "Durch Drücken dieser Schaltfläche werden API-Anfragen an \"betacraft.de/serverlist\" gesendet.",

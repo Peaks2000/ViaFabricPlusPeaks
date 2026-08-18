@@ -143,6 +143,8 @@
   "classicube.viafabricplus.loading": "Loading profile information and server list...",
   "classicube.viafabricplus.profile": "ClassiCube Profile:",
   "classicube.viafabricplus.warning": "This feature will send API requests to the ClassiCube API.",
+  "classicube.viafabricplus.play_link_hint": "ClassiCube play link",
+  "classicube.viafabricplus.join_by_link": "Join",
 
   "betacraft.viafabricplus.failed_to_verify_session": "ViaFabricPlus couldn't verify your session! Please log in to an account or disable the BetaCraft authentication in the ViaFabricPlus Settings",
   "betacraft.viafabricplus.loading": "Loading...",
