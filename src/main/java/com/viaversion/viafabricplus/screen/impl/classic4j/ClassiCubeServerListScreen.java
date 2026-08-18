@@ -189,12 +189,21 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
     }
 
     private void joinByPlayLink() {
-        final CCAccount account = SaveManager.INSTANCE.getAccountsSave().getClassicubeAccount();
-        if (account == null) {
+        final String input = playLinkField.getValue().trim();
+        if (input.isEmpty()) {
             return;
         }
-        final String hash = extractHash(playLinkField.getValue());
-        if (hash.isEmpty()) {
+
+        if (input.contains("/play/") || input.matches("[0-9a-fA-F]{32}")) {
+            joinClassiCubeServer(extractHash(input));
+        } else {
+            joinDirectly(input);
+        }
+    }
+
+    private void joinClassiCubeServer(final String hash) {
+        final CCAccount account = SaveManager.INSTANCE.getAccountsSave().getClassicubeAccount();
+        if (account == null) {
             return;
         }
         ClassiCubeHandler.requestServerInfo(account, List.of(hash), serverList -> {
@@ -209,6 +218,12 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
 
             ConnectionUtil.connect(server.name(), server.ip() + ":" + server.port(), selectCPE ? LegacyProtocolVersion.c0_30cpe : null);
         }, throwable -> showErrorScreen(getTitle(), throwable, prevScreen));
+    }
+
+    private void joinDirectly(final String address) {
+        connecting = true;
+        final boolean selectCPE = ClassiCubeSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
+        ConnectionUtil.connect(address, address, selectCPE ? LegacyProtocolVersion.c0_30cpe : null);
     }
 
     @Override
