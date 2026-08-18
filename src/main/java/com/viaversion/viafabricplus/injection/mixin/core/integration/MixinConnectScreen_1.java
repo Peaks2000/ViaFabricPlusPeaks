@@ -143,11 +143,14 @@ public abstract class MixinConnectScreen_1 {
         }
         if (BetaCraftScreen.connecting) {
             BetaCraftScreen.connecting = false;
+            ClassiCubeServerListScreen.pendingServerAddress = null;
             return ConnectionType.BETACRAFT;
         }
         if (ProtocolTranslator.isBedrock(targetVersion)) {
+            ClassiCubeServerListScreen.pendingServerAddress = null;
             return ConnectionType.BEDROCK;
         }
+        ClassiCubeServerListScreen.pendingServerAddress = null;
         return ConnectionType.NONE;
     }
 

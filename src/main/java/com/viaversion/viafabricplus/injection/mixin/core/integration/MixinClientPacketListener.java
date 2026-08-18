@@ -21,6 +21,8 @@
 package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
+import com.viaversion.viafabricplus.save.SaveManager;
+import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeServerListScreen;
 import com.viaversion.viafabricplus.util.bedrock.BedrockCreativeInventory;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.connection.ConnectionDetails;
@@ -49,6 +51,14 @@ public abstract class MixinClientPacketListener {
 
     @Inject(method = "handleLogin", at = @At("RETURN"))
     public void sendConnectionDetails(ClientboundLoginPacket packet, CallbackInfo ci) {
+        // The connection to a server was established successfully, so add the address
+        // (IP or play link) to the personal ClassiCube server list if one is pending.
+        final String pendingServerAddress = ClassiCubeServerListScreen.pendingServerAddress;
+        if (pendingServerAddress != null) {
+            ClassiCubeServerListScreen.pendingServerAddress = null;
+            SaveManager.INSTANCE.getClassiCubeServerSave().addServer(pendingServerAddress);
+        }
+
         final UserConnection user = ((IConnection) getConnection()).viaFabricPlus$getUserConnection();
         if (user != null) {
             ConnectionDetails.sendConnectionDetails(user, ConnectionDetails.MOD_CHANNEL);
