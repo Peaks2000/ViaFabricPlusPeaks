@@ -141,6 +141,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
 
         this.addRenderableWidget(playLinkField = new EditBox(font, 5, linkBarY, width - 70, 20, Component.empty()));
+        playLinkField.setMaxLength(Integer.MAX_VALUE);
         playLinkField.setHint(Component.translatable("classicube.viafabricplus.play_link_hint"));
         ((IEditBox) playLinkField).viaFabricPlus$unlockForbiddenCharacters();
         this.addRenderableWidget(joinButton = Button.builder(Component.translatable("classicube.viafabricplus.join_by_link"), button -> joinByPlayLink()).pos(width - 60, linkBarY).size(55, 20).build());
