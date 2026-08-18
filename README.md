@@ -23,7 +23,7 @@ install the mod from releases then launch Minecraft click on "ViaFabricPlus" the
 
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
-  <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlus logo">
+  <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlusPeaks logo">
   <h1>ViaFabricPlus</h1>
   <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Mod%20Loader-Fabric-lightyellow?logo=fabric" alt="Mod Loader: Fabric"></a>
   <img src="https://img.shields.io/badge/Environment-Client-purple" alt="Environment: Client">
