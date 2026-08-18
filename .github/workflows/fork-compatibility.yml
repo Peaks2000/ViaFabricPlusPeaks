@@ -6,11 +6,13 @@ on:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
+      - modrinth/26.2
   push:
     branches:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
+      - modrinth/26.2
   workflow_dispatch:
 
 permissions:
