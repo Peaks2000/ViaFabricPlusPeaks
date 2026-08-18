@@ -36,6 +36,7 @@ import net.minecraft.client.multiplayer.resolver.ResolvedServerAddress;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.client.multiplayer.resolver.ServerAddressResolver;
 import net.minecraft.client.multiplayer.resolver.ServerRedirectHandler;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -87,6 +88,12 @@ public final class BlockedServerOverride {
 
     public static Optional<ConnectionAttempt> consumeBlockedAttempt() {
         return GATE.consumeBlocked();
+    }
+
+    public static Component confirmedBlockedReason(final Component originalReason) {
+        return originalReason.copy()
+            .append(" ")
+            .append(Component.translatable("base.viafabricplus.possible_blacklisted_server"));
     }
 
     public static boolean consumeBypass(final ServerAddress address) {

@@ -11,16 +11,32 @@
 
 package com.viaversion.viafabricplus.features.networking.blocked_server;
 
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class BlockedServerOverrideTest {
+
+    @Test
+    public void confirmedBlockReasonIsAnnotatedWithoutChangingVanillaErrors() {
+        final Component vanillaReason = Component.literal("Unknown host");
+        final Component annotatedReason = BlockedServerOverride.confirmedBlockedReason(vanillaReason);
+
+        assertEquals("Unknown host", vanillaReason.getString());
+        assertEquals(2, annotatedReason.getSiblings().size());
+        assertEquals(" ", annotatedReason.getSiblings().getFirst().getString());
+        final TranslatableContents annotation = assertInstanceOf(TranslatableContents.class,
+            annotatedReason.getSiblings().get(1).getContents());
+        assertEquals("base.viafabricplus.possible_blacklisted_server", annotation.getKey());
+    }
 
     @Test
     public void onlyOffersExplicitlyBlockedAttemptOnce() {
