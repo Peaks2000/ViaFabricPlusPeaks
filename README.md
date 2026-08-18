@@ -3,7 +3,6 @@
 and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)!
 # What changed from ViaFabricPlus
     -in server lists added a menu for LAN worlds and XBOX friends
-    -Adds a join anyway button to bypass Mojang Blacklisted servers
     -fixed bedrock crafting
     -fixed creative menu
     -fixed many many inventory bugs
