@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "viafabricplus",
   "version": "${version}",
-  "name": "ViaFabricPlus",
+  "name": "ViaFabricPlusPeaks",
   "description": "${description}",
   "authors": [
     {
