@@ -25,6 +25,7 @@ install the mod from releases then launch Minecraft click on "ViaFabricPlus" the
 <div align="center">
   <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlusPeaks logo">
   <h1>ViaFabricPlusPeaks</h1>
+    (these figures of socials are not accurate at all I am going to change soon)
   <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Mod%20Loader-Fabric-lightyellow?logo=fabric" alt="Mod Loader: Fabric"></a>
   <img src="https://img.shields.io/badge/Environment-Client-purple" alt="Environment: Client">
   <a href="https://discord.gg/9caMssM2BK"><img src="https://img.shields.io/discord/316206679014244363?color=0098DB&label=Discord&logo=discord&logoColor=0098DB" alt="Discord"></a><br/>
