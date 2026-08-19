@@ -4,9 +4,13 @@ on:
   pull_request:
     branches:
       - ver/26.2
+      - experiment/4.6.14
+      - experiment/4.6.15
   push:
     branches:
       - ver/26.2
+      - experiment/4.6.14
+      - experiment/4.6.15
   workflow_dispatch:
 
 permissions:
@@ -14,18 +18,19 @@ permissions:
 
 env:
   VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
-  VIABEDROCK_REF: 0998cd74edd40a2a4c2a2b816c740610f248203b
+  VIABEDROCK_REF: 765849e201f846ff1d8b8f9b80e425bc0d98ccfc
 
 jobs:
   preserve-fork:
-    name: Preserve fork behavior
-    runs-on: ubuntu-26.04
+    name: Quality and preservation gate
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Checkout ViaFabricPlus fork
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: ViaFabricPlus
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Checkout pinned ViaBedrock fork
@@ -53,6 +58,10 @@ jobs:
         working-directory: ViaBedrock
         run: test "$(git rev-parse HEAD)" = "${VIABEDROCK_REF}"
 
+      - name: Check source quality
+        working-directory: ViaFabricPlus
+        run: git diff --check HEAD^ HEAD
+
       - name: Compile against pinned ViaBedrock
         working-directory: ViaFabricPlus
         run: ./gradlew --include-build ../ViaBedrock compileJava --stacktrace
@@ -63,7 +72,7 @@ jobs:
 
       - name: Build distributable
         working-directory: ViaFabricPlus
-        run: ./gradlew --include-build ../ViaBedrock build --stacktrace
+        run: ./gradlew --include-build ../ViaBedrock build -I .github/gradle/enable-vfp-tests.gradle --stacktrace
 
       - name: Audit fork JAR invariants
         working-directory: ViaFabricPlus

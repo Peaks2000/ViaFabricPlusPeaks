@@ -1,0 +1,65 @@
+name: Malware and Source Security
+
+on:
+  pull_request:
+  push:
+    branches:
+      - ver/26.2
+      - experiment/4.6.14
+      - experiment/4.6.15
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-security:
+    name: Malware and source-integrity scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reject hidden executable content
+        shell: bash
+        run: |
+          set -euo pipefail
+          unexpected=false
+          while read -r mode object stage path; do
+            if [[ "$mode" == "120000" ]]; then
+              echo "Symbolic links are not accepted: $path" >&2
+              unexpected=true
+            elif [[ "$mode" == "100755" && "$path" != "gradlew" ]]; then
+              echo "Unexpected executable file: $path" >&2
+              unexpected=true
+            fi
+          done < <(git ls-files --stage)
+          if [[ "$unexpected" == "true" ]]; then
+            exit 1
+          fi
+          git diff --check HEAD^ HEAD
+
+      - name: Install current ClamAV definitions
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes clamav
+          sudo systemctl stop clamav-freshclam.service || true
+          sudo freshclam
+
+      - name: Scan tracked repository content for malware
+        shell: bash
+        run: |
+          set -euo pipefail
+          clamscan --recursive --infected \
+            --exclude-dir='^\./\.git$' \
+            --exclude-dir='^\./\.gradle$' \
+            --exclude-dir='^\./build$' \
+            --exclude-dir='^\./run$' \
+            --exclude-dir='^\./logs$' \
+            .

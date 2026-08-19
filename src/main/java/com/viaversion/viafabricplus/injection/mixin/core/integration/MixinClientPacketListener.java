@@ -44,7 +44,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinClientPacketListener {
 
     @Unique
+    private static final int viaFabricPlus$REJECTED_CREATIVE_CURSOR_GUARD_TICKS = 20;
+
+    @Unique
     private ItemStack viaFabricPlus$pendingRejectedCreativeCursor = ItemStack.EMPTY;
+
+    @Unique
+    private int viaFabricPlus$pendingRejectedCreativeCursorTicks;
+
+    @Unique
+    private boolean viaFabricPlus$restoreRejectedCreativeCursorAfterContent;
 
     @Shadow
     public abstract Connection getConnection();
@@ -65,6 +74,30 @@ public abstract class MixinClientPacketListener {
         }
     }
 
+    @Inject(method = "handleContainerContent", at = @At("HEAD"))
+    private void guardMaintainedBedrockCreativeCursor(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+        final var screen = Minecraft.getInstance().gui.screen();
+        final ItemStack currentCursor = screen instanceof CreativeModeInventoryScreen creativeScreen
+                ? creativeScreen.getMenu().getCarried()
+                : ItemStack.EMPTY;
+        final boolean currentCursorMatchesPending = !currentCursor.isEmpty()
+                && currentCursor.getCount() == viaFabricPlus$pendingRejectedCreativeCursor.getCount()
+                && ItemStack.isSameItemSameComponents(currentCursor, viaFabricPlus$pendingRejectedCreativeCursor);
+
+        viaFabricPlus$restoreRejectedCreativeCursorAfterContent =
+                BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                        ((IConnection) getConnection()).viaFabricPlus$getTargetVersion(),
+                        packet.containerId(),
+                        packet.carriedItem().isEmpty(),
+                        viaFabricPlus$pendingRejectedCreativeCursor.isEmpty(),
+                        currentCursorMatchesPending,
+                        screen instanceof CreativeModeInventoryScreen);
+
+        if (!viaFabricPlus$pendingRejectedCreativeCursor.isEmpty() && !currentCursorMatchesPending) {
+            viaFabricPlus$clearRejectedCreativeCursorGuard();
+        }
+    }
+
     @Inject(method = "handleContainerContent", at = @At("RETURN"))
     private void restoreMaintainedBedrockCreativeCursor(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
         final var screen = Minecraft.getInstance().gui.screen();
@@ -73,25 +106,31 @@ public abstract class MixinClientPacketListener {
                 packet.containerId(),
                 packet.carriedItem().isEmpty(),
                 screen instanceof CreativeModeInventoryScreen)) {
-            // Apply immediately, then once more after this connection's packet batch. A
-            // trailing creative inventory update can otherwise erase Bedrock's rejected item.
+            // Keep a bounded copy so a later authoritative empty-cursor packet cannot erase
+            // Bedrock's rejected item after the initial rollback packet has been handled.
             viaFabricPlus$pendingRejectedCreativeCursor = packet.carriedItem().copy();
+            viaFabricPlus$pendingRejectedCreativeCursorTicks = viaFabricPlus$REJECTED_CREATIVE_CURSOR_GUARD_TICKS;
             ((CreativeModeInventoryScreen) screen).getMenu().setCarried(viaFabricPlus$pendingRejectedCreativeCursor.copy());
+        } else if (viaFabricPlus$restoreRejectedCreativeCursorAfterContent
+                && screen instanceof CreativeModeInventoryScreen creativeScreen) {
+            creativeScreen.getMenu().setCarried(viaFabricPlus$pendingRejectedCreativeCursor.copy());
         }
+        viaFabricPlus$restoreRejectedCreativeCursorAfterContent = false;
     }
 
     @Inject(method = "tick", at = @At("TAIL"))
-    private void applyDeferredMaintainedBedrockCreativeCursor(CallbackInfo ci) {
-        final ItemStack pendingCursor = viaFabricPlus$pendingRejectedCreativeCursor;
-        viaFabricPlus$pendingRejectedCreativeCursor = ItemStack.EMPTY;
-
+    private void expireMaintainedBedrockCreativeCursorGuard(CallbackInfo ci) {
         final var screen = Minecraft.getInstance().gui.screen();
-        if (BedrockCreativeInventory.shouldApplyDeferredCursorRestore(
-                ((IConnection) getConnection()).viaFabricPlus$getTargetVersion(),
-                pendingCursor.isEmpty(),
-                screen instanceof CreativeModeInventoryScreen)) {
-            ((CreativeModeInventoryScreen) screen).getMenu().setCarried(pendingCursor);
+        if (!(screen instanceof CreativeModeInventoryScreen) || --viaFabricPlus$pendingRejectedCreativeCursorTicks <= 0) {
+            viaFabricPlus$clearRejectedCreativeCursorGuard();
         }
+    }
+
+    @Unique
+    private void viaFabricPlus$clearRejectedCreativeCursorGuard() {
+        viaFabricPlus$pendingRejectedCreativeCursor = ItemStack.EMPTY;
+        viaFabricPlus$pendingRejectedCreativeCursorTicks = 0;
+        viaFabricPlus$restoreRejectedCreativeCursorAfterContent = false;
     }
 
 }

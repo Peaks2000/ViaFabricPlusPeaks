@@ -1,15 +1,16 @@
 
 ## ViaFabricPlusPeaks is ViaFabricPlus with the ability to join Xbox Friends and LAN worlds. 
-and some classicube fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)!
+and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)!
 # What changed from ViaFabricPlus
-    -in server lists added a menu for LAN worlds and XBOX friends
-    -fixed bedrock crafting
-    -fixed creative menu
-    -fixed many many inventory bugs
-    -working offhand 
-    -fixed a bug in ViaFabricPlus forcing a relogin for classicube every time you restart your game thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)
-    -added Version detection to Betacraft thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)
-
+    -In server lists added a menu for LAN worlds and XBOX friends
+    -Adds a join anyway button to bypass Mojang Blacklisted servers
+    -Fixed bedrock crafting
+    -Fixed creative menu
+    -Fixed many many inventory bugs
+    -Working offhand 
+    -Fixed a bug in ViaFabricPlus forcing a relogin for classicube every time you restart your game thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)
+    -Added Version detection to Betacraft thanks to SC-MC-Mod-Dev 
+    -Added ClassiCube Search bar and ability to join hidden servers thanks to SC-MC-Mod-Dev (again)
 credit 
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
 
@@ -22,7 +23,7 @@ install the mod from releases then launch Minecraft click on "ViaFabricPlus" the
 
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
-  <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlus logo">
+  <img src="src/main/resources/assets/viafabricplus/icon.png" width="150" alt="ViaFabricPlusPeaks logo">
   <h1>ViaFabricPlus</h1>
   <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Mod%20Loader-Fabric-lightyellow?logo=fabric" alt="Mod Loader: Fabric"></a>
   <img src="https://img.shields.io/badge/Environment-Client-purple" alt="Environment: Client">

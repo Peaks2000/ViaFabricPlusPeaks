@@ -22,6 +22,7 @@
 package com.viaversion.viafabricplus.screen.impl.classic4j;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
 import com.viaversion.viafabricplus.injection.access.core.IEditBox;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
 import com.viaversion.viafabricplus.save.SaveManager;
@@ -55,12 +56,6 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
     public static final ClassiCubeServerListScreen INSTANCE = new ClassiCubeServerListScreen();
 
     /**
-     * Whether the current connection attempt was started from the ClassiCube server list.
-     * It is set when clicking a server and consumed when the connection is started.
-     */
-    public static boolean connecting;
-
-    /**
      * The play link or IP which was used to start a direct connection from the play link field.
      * It is only set when joining from the play link field and consumed when the connection
      * was established successfully, so the server gets added to the personal server list.
@@ -69,6 +64,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
 
     private static List<CCServerInfo> SERVER_LIST;
     private static final String CLASSICUBE_SERVER_LIST_URL = "https://www.classicube.net/server/list/";
+    private static final int MAX_JOIN_TARGET_LENGTH = 2_048;
     private boolean reauthenticating;
     private boolean showMyServers;
     private EditBox searchField;
@@ -165,7 +161,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
 
         this.addRenderableWidget(playLinkField = new EditBox(font, 5, linkBarY, width - 70, 20, Component.empty()));
-        playLinkField.setMaxLength(Integer.MAX_VALUE);
+        playLinkField.setMaxLength(MAX_JOIN_TARGET_LENGTH);
         playLinkField.setHint(Component.translatable("classicube.viafabricplus.play_link_hint"));
         ((IEditBox) playLinkField).viaFabricPlus$unlockForbiddenCharacters();
         this.addRenderableWidget(joinButton = Button.builder(Component.translatable("classicube.viafabricplus.join_by_link"), button -> joinByPlayLink()).pos(width - 60, linkBarY).size(55, 20).build());
@@ -266,18 +262,18 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
                 return;
             }
             final CCServerInfo server = serverList.servers().get(0);
-            connecting = true;
             final boolean selectCPE = ClassiCubeSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
             ViaFabricPlusClassicMPPassProvider.classicubeMPPass = server.mpPass();
 
-            ConnectionUtil.connect(server.name(), server.ip() + ":" + server.port(), selectCPE ? LegacyProtocolVersion.c0_30cpe : null);
+            ConnectionUtil.connect(server.name(), server.ip() + ":" + server.port(),
+                selectCPE ? LegacyProtocolVersion.c0_30cpe : null, ConnectionType.CLASSICUBE);
         }, throwable -> showErrorScreen(getTitle(), throwable, prevScreen));
     }
 
     private void joinDirectly(final String address) {
-        connecting = true;
         final boolean selectCPE = ClassiCubeSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
-        ConnectionUtil.connect(address, address, selectCPE ? LegacyProtocolVersion.c0_30cpe : null);
+        ViaFabricPlusClassicMPPassProvider.classicubeMPPass = null;
+        ConnectionUtil.connect(address, address, selectCPE ? LegacyProtocolVersion.c0_30cpe : null, ConnectionType.CLASSICUBE);
     }
 
     @Override
@@ -338,11 +334,11 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         @Override
         public void mappedMouseClicked(double mouseX, double mouseY, int button) {
             pendingServerAddress = null; // Only the play link field adds servers to the personal server list
-            connecting = true;
             final boolean selectCPE = ClassiCubeSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
             ViaFabricPlusClassicMPPassProvider.classicubeMPPass = classiCubeServerInfo.mpPass();
 
-            ConnectionUtil.connect(classiCubeServerInfo.name(), classiCubeServerInfo.ip() + ":" + classiCubeServerInfo.port(), selectCPE ? LegacyProtocolVersion.c0_30cpe : null);
+            ConnectionUtil.connect(classiCubeServerInfo.name(), classiCubeServerInfo.ip() + ":" + classiCubeServerInfo.port(),
+                selectCPE ? LegacyProtocolVersion.c0_30cpe : null, ConnectionType.CLASSICUBE);
         }
 
         @Override

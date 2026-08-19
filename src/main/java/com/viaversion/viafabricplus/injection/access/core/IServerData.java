@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.injection.access.core;
 
+import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 
 public interface IServerData {
@@ -48,5 +49,9 @@ public interface IServerData {
     String viaFabricPlus$clientHostedNonce();
 
     void viaFabricPlus$setClientHostedNonce(final String nonce);
+
+    ConnectionType viaFabricPlus$shaderConnectionType();
+
+    void viaFabricPlus$setShaderConnectionType(final ConnectionType connectionType);
 
 }

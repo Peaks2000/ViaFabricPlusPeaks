@@ -30,8 +30,6 @@ import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
 import com.viaversion.viafabricplus.protocoltranslator.util.ProtocolVersionDetector;
 import com.viaversion.viafabricplus.save.SaveManager;
-import com.viaversion.viafabricplus.screen.impl.classic4j.BetaCraftScreen;
-import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeServerListScreen;
 import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
@@ -105,7 +103,10 @@ public abstract class MixinConnectScreen_1 {
         targetVersion = BedrockProtocolCompatibility.routeForConnection(targetVersion, mixinServerInfo.viaFabricPlus$bedrockWireProtocol());
         ProtocolTranslator.setTargetVersion(targetVersion, true);
         this.viaFabricPlus$useClassiCubeAccount = ClassiCubeSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;
-        this.viaFabricPlus$connectionType = viaFabricPlus$detectConnectionType(targetVersion);
+        final ConnectionType markedConnectionType = mixinServerInfo.viaFabricPlus$shaderConnectionType();
+        this.viaFabricPlus$connectionType = markedConnectionType != ConnectionType.NONE
+            ? markedConnectionType
+            : ProtocolTranslator.isBedrock(targetVersion) ? ConnectionType.BEDROCK : ConnectionType.NONE;
 
         return address;
     }
@@ -133,25 +134,6 @@ public abstract class MixinConnectScreen_1 {
             }
         }
         return instance.getName();
-    }
-
-    @Unique
-    private ConnectionType viaFabricPlus$detectConnectionType(ProtocolVersion targetVersion) {
-        if (ClassiCubeServerListScreen.connecting) {
-            ClassiCubeServerListScreen.connecting = false;
-            return ConnectionType.CLASSICUBE;
-        }
-        if (BetaCraftScreen.connecting) {
-            BetaCraftScreen.connecting = false;
-            ClassiCubeServerListScreen.pendingServerAddress = null;
-            return ConnectionType.BETACRAFT;
-        }
-        if (ProtocolTranslator.isBedrock(targetVersion)) {
-            ClassiCubeServerListScreen.pendingServerAddress = null;
-            return ConnectionType.BEDROCK;
-        }
-        ClassiCubeServerListScreen.pendingServerAddress = null;
-        return ConnectionType.NONE;
     }
 
 }
