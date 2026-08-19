@@ -13,6 +13,8 @@ and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 
     -Added ClassiCube Search bar and ability to join hidden servers thanks to SC-MC-Mod-Dev (again)
 credit 
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
+SC-MC-Mod-Dev for the logo!
+
 
 # How to Join a LAN world!
 install the mod from releases then launch Minecraft click on "ViaFabricPlus" then in the bottom left you should see "Server Lists" click it then Click "Bedrock friends & LAN" then the LAN worlds should show up
