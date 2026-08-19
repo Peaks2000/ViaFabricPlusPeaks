@@ -24,6 +24,7 @@ package com.viaversion.viafabricplus.save;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
 import com.viaversion.viafabricplus.save.impl.AccountsSave;
+import com.viaversion.viafabricplus.save.impl.ClassiCubeServerSave;
 import com.viaversion.viafabricplus.save.impl.SettingsSave;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ public final class SaveManager {
 
     private SettingsSave settingsSave;
     private AccountsSave accountsSave;
+    private ClassiCubeServerSave classiCubeServerSave;
 
     public void init() {
         ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.PRE_FILES_LOAD);
@@ -44,7 +46,8 @@ public final class SaveManager {
         // Register saves
         add(
             settingsSave = new SettingsSave(),
-            accountsSave = new AccountsSave()
+            accountsSave = new AccountsSave(),
+            classiCubeServerSave = new ClassiCubeServerSave()
         );
 
         // Load save files
@@ -77,6 +80,10 @@ public final class SaveManager {
 
     public AccountsSave getAccountsSave() {
         return accountsSave;
+    }
+
+    public ClassiCubeServerSave getClassiCubeServerSave() {
+        return classiCubeServerSave;
     }
 
 }

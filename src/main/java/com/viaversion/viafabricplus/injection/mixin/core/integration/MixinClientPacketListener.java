@@ -21,12 +21,16 @@
 package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
+import com.viaversion.viafabricplus.injection.access.core.IServerData;
+import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.BedrockCreativeInventory;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.connection.ConnectionDetails;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
@@ -39,7 +43,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
-public abstract class MixinClientPacketListener {
+public abstract class MixinClientPacketListener extends ClientCommonPacketListenerImpl {
 
     @Unique
     private static final int viaFabricPlus$REJECTED_CREATIVE_CURSOR_GUARD_TICKS = 20;
@@ -56,8 +60,23 @@ public abstract class MixinClientPacketListener {
     @Shadow
     public abstract Connection getConnection();
 
+    protected MixinClientPacketListener(final Minecraft minecraft, final Connection connection,
+                                        final CommonListenerCookie cookie) {
+        super(minecraft, connection, cookie);
+    }
+
     @Inject(method = "handleLogin", at = @At("RETURN"))
     public void sendConnectionDetails(ClientboundLoginPacket packet, CallbackInfo ci) {
+        // Save only the address owned by this exact successful ClassiCube connection.
+        if (serverData != null) {
+            final IServerData viaFabricPlusServerData = (IServerData) serverData;
+            final String classiCubeSaveAddress = viaFabricPlusServerData.viaFabricPlus$classiCubeSaveAddress();
+            if (classiCubeSaveAddress != null) {
+                viaFabricPlusServerData.viaFabricPlus$setClassiCubeSaveAddress(null);
+                SaveManager.INSTANCE.getClassiCubeServerSave().addServer(classiCubeSaveAddress);
+            }
+        }
+
         final UserConnection user = ((IConnection) getConnection()).viaFabricPlus$getUserConnection();
         if (user != null) {
             ConnectionDetails.sendConnectionDetails(user, ConnectionDetails.MOD_CHANNEL);

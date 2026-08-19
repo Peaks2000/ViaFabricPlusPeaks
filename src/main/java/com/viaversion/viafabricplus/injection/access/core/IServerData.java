@@ -50,6 +50,10 @@ public interface IServerData {
 
     void viaFabricPlus$setClientHostedNonce(final String nonce);
 
+    String viaFabricPlus$classiCubeSaveAddress();
+
+    void viaFabricPlus$setClassiCubeSaveAddress(final String address);
+
     ConnectionType viaFabricPlus$shaderConnectionType();
 
     void viaFabricPlus$setShaderConnectionType(final ConnectionType connectionType);
