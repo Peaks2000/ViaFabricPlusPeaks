@@ -146,8 +146,8 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
     private void createView() {
         final int entryHeight = (font.lineHeight + 2) * 3; // title is 2
         final int searchBarY = 2 * SLOT_MARGIN + entryHeight;
-        final int linkBarY = searchBarY + 24;
-        final int listTop = linkBarY + 48; // Below the "My servers" toggle button
+        final int toggleBarY = searchBarY + 24;
+        final int listTop = showMyServers ? toggleBarY + 48 : toggleBarY + 24; // Below the play link/toggle buttons
 
         if (showMyServers) {
             this.setupSubtitle(Component.translatable("classicube.viafabricplus.my_servers_hint"));
@@ -160,15 +160,18 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         searchField.setResponder(query -> updateSearch());
         ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
 
-        this.addRenderableWidget(playLinkField = new EditBox(font, 5, linkBarY, width - 70, 20, Component.empty()));
-        playLinkField.setMaxLength(MAX_JOIN_TARGET_LENGTH);
-        playLinkField.setHint(Component.translatable("classicube.viafabricplus.play_link_hint"));
-        ((IEditBox) playLinkField).viaFabricPlus$unlockForbiddenCharacters();
-        this.addRenderableWidget(joinButton = Button.builder(Component.translatable("classicube.viafabricplus.join_by_link"), button -> joinByPlayLink()).pos(width - 60, linkBarY).size(55, 20).build());
-        joinButton.active = false;
-        playLinkField.setResponder(text -> joinButton.active = !text.trim().isEmpty());
+        if (showMyServers) {
+            this.addRenderableWidget(playLinkField = new EditBox(font, 5, toggleBarY, width - 70, 20, Component.empty()));
+            playLinkField.setMaxLength(MAX_JOIN_TARGET_LENGTH);
+            playLinkField.setHint(Component.translatable("classicube.viafabricplus.play_link_hint"));
+            ((IEditBox) playLinkField).viaFabricPlus$unlockForbiddenCharacters();
+            this.addRenderableWidget(joinButton = Button.builder(Component.translatable("classicube.viafabricplus.join_by_link"), button -> joinByPlayLink()).pos(width - 60, toggleBarY).size(55, 20).build());
+            joinButton.active = false;
+            playLinkField.setResponder(text -> joinButton.active = !text.trim().isEmpty());
+        }
 
-        this.addRenderableWidget(Button.builder(Component.translatable(showMyServers ? "classicube.viafabricplus.featured_servers" : "classicube.viafabricplus.my_servers"), button -> switchMode()).pos(width / 2 - 75, linkBarY + 24).size(150, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable(showMyServers ? "classicube.viafabricplus.featured_servers" : "classicube.viafabricplus.my_servers"), button -> switchMode())
+            .pos(width / 2 - 75, showMyServers ? toggleBarY + 24 : toggleBarY).size(150, 20).build());
 
         this.addRenderableWidget(slotList = showMyServers
             ? new SavedServersSlotList(this.minecraft, width, height, listTop, -5, entryHeight)
@@ -195,7 +198,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         }
         removeWidget(slotList);
         final int entryHeight = (font.lineHeight + 2) * 3;
-        final int listTop = 2 * SLOT_MARGIN + entryHeight + 72;
+        final int listTop = 2 * SLOT_MARGIN + entryHeight + 48;
         addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, listTop, -5, entryHeight, normalizeQuery(searchField.getValue())));
     }
 
