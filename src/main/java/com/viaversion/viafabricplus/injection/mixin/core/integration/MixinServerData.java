@@ -62,6 +62,9 @@ public abstract class MixinServerData implements IServerData {
     private String viaFabricPlus$clientHostedNonce;
 
     @Unique
+    private String viaFabricPlus$classiCubeSaveAddress;
+
+    @Unique
     private ConnectionType viaFabricPlus$shaderConnectionType = ConnectionType.NONE;
 
     @Inject(method = "write", at = @At("TAIL"))
@@ -87,6 +90,7 @@ public abstract class MixinServerData implements IServerData {
         viaFabricPlus$setBedrockWireProtocol(((IServerData) other).viaFabricPlus$bedrockWireProtocol());
         viaFabricPlus$setUseBedrockAccount(((IServerData) other).viaFabricPlus$useBedrockAccount());
         viaFabricPlus$setClientHostedNonce(((IServerData) other).viaFabricPlus$clientHostedNonce());
+        viaFabricPlus$setClassiCubeSaveAddress(((IServerData) other).viaFabricPlus$classiCubeSaveAddress());
         viaFabricPlus$setShaderConnectionType(((IServerData) other).viaFabricPlus$shaderConnectionType());
     }
 
@@ -148,6 +152,16 @@ public abstract class MixinServerData implements IServerData {
     @Override
     public void viaFabricPlus$setClientHostedNonce(final String nonce) {
         viaFabricPlus$clientHostedNonce = nonce;
+    }
+
+    @Override
+    public String viaFabricPlus$classiCubeSaveAddress() {
+        return viaFabricPlus$classiCubeSaveAddress;
+    }
+
+    @Override
+    public void viaFabricPlus$setClassiCubeSaveAddress(final String address) {
+        viaFabricPlus$classiCubeSaveAddress = address;
     }
 
     @Override

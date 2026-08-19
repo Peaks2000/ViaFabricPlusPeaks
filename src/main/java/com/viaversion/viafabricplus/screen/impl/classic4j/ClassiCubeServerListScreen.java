@@ -44,6 +44,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 import org.jspecify.annotations.NonNull;
@@ -58,10 +59,11 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
     private static final String CLASSICUBE_SERVER_LIST_URL = "https://www.classicube.net/server/list/";
     private static final int MAX_JOIN_TARGET_LENGTH = 2_048;
     private boolean reauthenticating;
+    private boolean showMyServers;
     private EditBox searchField;
     private EditBox playLinkField;
     private Button joinButton;
-    private SlotList slotList;
+    private VFPList slotList;
 
     public ClassiCubeServerListScreen() {
         super("ClassiCube", true);
@@ -109,6 +111,10 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
 
     @Override
     protected void init() {
+        // Reset to the featured servers whenever the screen is opened again,
+        // e.g. when leaving the ClassiCube menu or when returning after leaving a server.
+        this.showMyServers = false;
+
         final CCAccount account = SaveManager.INSTANCE.getAccountsSave().getClassicubeAccount();
         if (SERVER_LIST == null) {
             ClassiCubeHandler.requestServerList(account, serverList -> {
@@ -127,24 +133,40 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             return;
         }
 
+        createView();
+    }
+
+    private void createView() {
         final int entryHeight = (font.lineHeight + 2) * 3; // title is 2
         final int searchBarY = 2 * SLOT_MARGIN + entryHeight;
-        final int linkBarY = searchBarY + 24;
+        final int toggleBarY = searchBarY + 24;
+        final int listTop = showMyServers ? toggleBarY + 48 : toggleBarY + 24; // Below the play link/toggle buttons
+
+        if (showMyServers) {
+            this.setupSubtitle(Component.translatable("classicube.viafabricplus.my_servers_hint"));
+        } else {
+            this.setupUrlSubtitle(CLASSICUBE_SERVER_LIST_URL);
+        }
 
         this.addRenderableWidget(searchField = new EditBox(font, 5, searchBarY, width - 10, 20, Component.empty()));
         searchField.setHint(Component.translatable("base.viafabricplus.search"));
         searchField.setResponder(query -> updateSearch());
         ((IEditBox) searchField).viaFabricPlus$unlockForbiddenCharacters();
 
-        this.addRenderableWidget(playLinkField = new EditBox(font, 5, linkBarY, width - 70, 20, Component.empty()));
-        playLinkField.setMaxLength(MAX_JOIN_TARGET_LENGTH);
-        playLinkField.setHint(Component.translatable("classicube.viafabricplus.play_link_hint"));
-        ((IEditBox) playLinkField).viaFabricPlus$unlockForbiddenCharacters();
-        this.addRenderableWidget(joinButton = Button.builder(Component.translatable("classicube.viafabricplus.join_by_link"), button -> joinByPlayLink()).pos(width - 60, linkBarY).size(55, 20).build());
-        joinButton.active = false;
-        playLinkField.setResponder(text -> joinButton.active = !text.trim().isEmpty());
+        if (showMyServers) {
+            this.addRenderableWidget(playLinkField = new EditBox(font, 5, toggleBarY, width - 70, 20, Component.empty()));
+            playLinkField.setMaxLength(MAX_JOIN_TARGET_LENGTH);
+            playLinkField.setHint(Component.translatable("classicube.viafabricplus.play_link_hint"));
+            ((IEditBox) playLinkField).viaFabricPlus$unlockForbiddenCharacters();
+            this.addRenderableWidget(joinButton = Button.builder(Component.translatable("classicube.viafabricplus.join_by_link"), button -> joinByPlayLink()).pos(width - 60, toggleBarY).size(55, 20).build());
+            joinButton.active = false;
+            playLinkField.setResponder(text -> joinButton.active = !text.trim().isEmpty());
+        }
 
-        this.addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, linkBarY + 24, -5, entryHeight, normalizeQuery(searchField.getValue())));
+        this.addRenderableWidget(Button.builder(Component.translatable(showMyServers ? "classicube.viafabricplus.featured_servers" : "classicube.viafabricplus.my_servers"), button -> switchMode())
+            .pos(width / 2 - 75, showMyServers ? toggleBarY + 24 : toggleBarY).size(150, 20).build());
+
+        this.addRenderableWidget(slotList = createServerList(listTop, entryHeight));
 
         this.addRenderableWidget(Button.builder(Component.translatable("base.viafabricplus.logout"), button -> {
             SaveManager.INSTANCE.getAccountsSave().setClassicubeAccount(null);
@@ -155,13 +177,27 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
         super.init();
     }
 
+    private void switchMode() {
+        showMyServers = !showMyServers;
+        this.clearWidgets();
+        createView();
+    }
+
     private void updateSearch() {
         if (slotList == null) {
             return;
         }
         removeWidget(slotList);
         final int entryHeight = (font.lineHeight + 2) * 3;
-        addRenderableWidget(slotList = new SlotList(this.minecraft, width, height, 2 * SLOT_MARGIN + entryHeight + 48, -5, entryHeight, normalizeQuery(searchField.getValue())));
+        final int listTop = 2 * SLOT_MARGIN + entryHeight + (showMyServers ? 72 : 48);
+        addRenderableWidget(slotList = createServerList(listTop, entryHeight));
+    }
+
+    private VFPList createServerList(final int listTop, final int entryHeight) {
+        final String query = normalizeQuery(searchField.getValue());
+        return showMyServers
+            ? new SavedServersSlotList(this.minecraft, width, height, listTop, -5, entryHeight, query)
+            : new SlotList(this.minecraft, width, height, listTop, -5, entryHeight, query);
     }
 
     private static String normalizeQuery(final String query) {
@@ -190,14 +226,32 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             return;
         }
 
+        // Carry the address on the exact connection so a failed attempt cannot leak into a later login.
+        final String saveAddress = showMyServers ? input : null;
         if (input.contains("/play/") || input.matches("[0-9a-fA-F]{32}")) {
-            joinClassiCubeServer(extractHash(input));
+            joinClassiCubeServer(extractHash(input), saveAddress);
         } else {
-            joinDirectly(input);
+            joinDirectly(input, saveAddress);
         }
     }
 
-    private void joinClassiCubeServer(final String hash) {
+    private void joinSavedServer(final String address) {
+        if (address.contains("/play/") || address.matches("[0-9a-fA-F]{32}")) {
+            joinClassiCubeServer(extractHash(address), null);
+        } else {
+            joinDirectly(address, null);
+        }
+    }
+
+    private void deleteSavedServer(final String address) {
+        SaveManager.INSTANCE.getClassiCubeServerSave().removeServer(address);
+        removeWidget(slotList);
+        final int entryHeight = (font.lineHeight + 2) * 3;
+        final int listTop = 2 * SLOT_MARGIN + entryHeight + 72;
+        addRenderableWidget(slotList = createServerList(listTop, entryHeight));
+    }
+
+    private void joinClassiCubeServer(final String hash, final String saveAddress) {
         final CCAccount account = SaveManager.INSTANCE.getAccountsSave().getClassicubeAccount();
         if (account == null) {
             return;
@@ -212,14 +266,15 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             ViaFabricPlusClassicMPPassProvider.classicubeMPPass = server.mpPass();
 
             ConnectionUtil.connect(server.name(), server.ip() + ":" + server.port(),
-                selectCPE ? LegacyProtocolVersion.c0_30cpe : null, ConnectionType.CLASSICUBE);
+                selectCPE ? LegacyProtocolVersion.c0_30cpe : null, ConnectionType.CLASSICUBE, saveAddress);
         }, throwable -> showErrorScreen(getTitle(), throwable, prevScreen));
     }
 
-    private void joinDirectly(final String address) {
+    private void joinDirectly(final String address, final String saveAddress) {
         final boolean selectCPE = ClassiCubeSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList.getValue();
         ViaFabricPlusClassicMPPassProvider.classicubeMPPass = null;
-        ConnectionUtil.connect(address, address, selectCPE ? LegacyProtocolVersion.c0_30cpe : null, ConnectionType.CLASSICUBE);
+        ConnectionUtil.connect(address, address, selectCPE ? LegacyProtocolVersion.c0_30cpe : null,
+            ConnectionType.CLASSICUBE, saveAddress);
     }
 
     @Override
@@ -294,6 +349,68 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             context.text(textRenderer, classiCubeServerInfo.software().replace('&', ChatFormatting.PREFIX_CODE), 1, 1, -1);
             final String playerText = classiCubeServerInfo.players() + "/" + classiCubeServerInfo.maxPlayers();
             context.text(textRenderer, playerText, entryWidth - textRenderer.width(playerText) - 1, 1, -1);
+        }
+    }
+
+    public static class SavedServersSlotList extends VFPList {
+        private static double scrollAmount;
+
+        public SavedServersSlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight, String query) {
+            super(minecraftClient, width, height, top, bottom, entryHeight);
+
+            SaveManager.INSTANCE.getClassiCubeServerSave().getServers().stream()
+                .filter(address -> ClassiCubeServerListSupport.matchesSavedQuery(address, query))
+                .forEach(address -> this.addEntry(new SavedServerSlot(address)));
+            if (query.isEmpty()) {
+                initScrollY(scrollAmount);
+            }
+        }
+
+        @Override
+        public int getRowWidth() {
+            return super.getRowWidth() + 140;
+        }
+
+        @Override
+        protected void updateSlotAmount(double amount) {
+            scrollAmount = amount;
+        }
+    }
+
+    public static class SavedServerSlot extends VFPListEntry {
+        private final String address;
+
+        public SavedServerSlot(String address) {
+            this.address = address;
+        }
+
+        @Override
+        public Component getNarration() {
+            return Component.nullToEmpty(address);
+        }
+
+        @Override
+        public boolean mouseClicked(final MouseButtonEvent click, final boolean doubled) {
+            if (click.button() != 0) {
+                return false;
+            }
+            if (click.hasShiftDown()) {
+                INSTANCE.deleteSavedServer(address);
+            } else {
+                INSTANCE.joinSavedServer(address);
+            }
+            return super.mouseClicked(click, doubled);
+        }
+
+        @Override
+        public void mappedMouseClicked(double mouseX, double mouseY, int button) {
+            // The action is handled in mouseClicked so that shift-clicking deletes the server
+        }
+
+        @Override
+        public void mappedRender(GuiGraphicsExtractor context, int x, int y, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            renderScrollableText(Component.literal(address), 1);
+            renderTooltip(Component.translatable("classicube.viafabricplus.delete_hint"), mouseX, mouseY);
         }
     }
 

@@ -50,7 +50,13 @@ public final class ConnectionUtil {
 
     public static void connect(final String name, final String address, final ProtocolVersion version,
                                final ConnectionType shaderConnectionType) {
-        connect(name, address, version, BedrockProtocolCompatibility.UNKNOWN_PROTOCOL, true, null, shaderConnectionType);
+        connect(name, address, version, shaderConnectionType, null);
+    }
+
+    public static void connect(final String name, final String address, final ProtocolVersion version,
+                               final ConnectionType shaderConnectionType, final String classiCubeSaveAddress) {
+        connect(name, address, version, BedrockProtocolCompatibility.UNKNOWN_PROTOCOL, true, null,
+            shaderConnectionType, classiCubeSaveAddress);
     }
 
     public static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol) {
@@ -64,12 +70,12 @@ public final class ConnectionUtil {
 
     public static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol,
                                final boolean useBedrockAccount, final String clientHostedNonce) {
-        connect(name, address, version, bedrockWireProtocol, useBedrockAccount, clientHostedNonce, ConnectionType.NONE);
+        connect(name, address, version, bedrockWireProtocol, useBedrockAccount, clientHostedNonce, ConnectionType.NONE, null);
     }
 
     private static void connect(final String name, final String address, final ProtocolVersion version, final int bedrockWireProtocol,
                                 final boolean useBedrockAccount, final String clientHostedNonce,
-                                final ConnectionType shaderConnectionType) {
+                                final ConnectionType shaderConnectionType, final String classiCubeSaveAddress) {
         final ServerAddress serverAddress = ServerAddress.parseString(address);
         final ServerData entry = new ServerData(name, serverAddress.getHost(), ServerData.Type.OTHER);
 
@@ -79,6 +85,7 @@ public final class ConnectionUtil {
         ((IServerData) entry).viaFabricPlus$setBedrockWireProtocol(bedrockWireProtocol);
         ((IServerData) entry).viaFabricPlus$setUseBedrockAccount(useBedrockAccount);
         ((IServerData) entry).viaFabricPlus$setClientHostedNonce(clientHostedNonce);
+        ((IServerData) entry).viaFabricPlus$setClassiCubeSaveAddress(classiCubeSaveAddress);
         ((IServerData) entry).viaFabricPlus$setShaderConnectionType(shaderConnectionType);
         ConnectScreen.startConnecting(Minecraft.getInstance().gui.screen(), Minecraft.getInstance(), serverAddress, entry, false, null);
     }

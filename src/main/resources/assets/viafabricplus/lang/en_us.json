@@ -147,6 +147,10 @@
   "classicube.viafabricplus.warning": "This feature will send API requests to the ClassiCube API.",
   "classicube.viafabricplus.play_link_hint": "Play link, IP or hostname",
   "classicube.viafabricplus.join_by_link": "Join",
+  "classicube.viafabricplus.featured_servers": "Featured servers",
+  "classicube.viafabricplus.my_servers": "My servers",
+  "classicube.viafabricplus.my_servers_hint": "Click a server to join it. Shift-click to delete it.",
+  "classicube.viafabricplus.delete_hint": "Shift-click to delete",
 
   "betacraft.viafabricplus.failed_to_verify_session": "ViaFabricPlus couldn't verify your session! Please log in to an account or disable the BetaCraft authentication in the ViaFabricPlus Settings",
   "betacraft.viafabricplus.loading": "Loading...",
