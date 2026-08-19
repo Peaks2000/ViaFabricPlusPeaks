@@ -13,6 +13,7 @@ and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 
     -Added ClassiCube Search bar and ability to join hidden servers thanks to SC-MC-Mod-Dev (again)
 credit 
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
+
 SC-MC-Mod-Dev for the logo!
 
 
