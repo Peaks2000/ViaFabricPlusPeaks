@@ -70,7 +70,7 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 
 - [Step-by-step installation and usage guide](docs/USAGE.md)
 - Found a Bedrock fork bug? Please report it on the [fork issue tracker](https://github.com/Peaks2000/ViaFabricPlusBedrock/issues)
-- Got questions? Join the [ViaVersion Discord](https://discord.gg/viaversion)
+- Got questions? Join the [ViaVersion Discord](https://discord.gg/9caMssM2BK)
 
 ### Supported Server versions
 
