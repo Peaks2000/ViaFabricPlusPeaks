@@ -12,6 +12,7 @@ and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 
     -Added Version detection to Betacraft thanks to SC-MC-Mod-Dev 
     -Added ClassiCube Search bar and ability to join hidden servers thanks to SC-MC-Mod-Dev (again)
 credit 
+
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
 
 SC-MC-Mod-Dev for the logo!
@@ -33,7 +34,7 @@ install the mod from releases then launch Minecraft click on "ViaFabricPlus" the
   <img src="https://img.shields.io/badge/Environment-Client-purple" alt="Environment: Client">
   <a href="https://discord.gg/9caMssM2BK"><img src="https://img.shields.io/discord/316206679014244363?color=0098DB&label=Discord&logo=discord&logoColor=0098DB" alt="Discord"></a><br/>
   <a href="https://modrinth.com/mod/viafabricpluspeaks"><img src="https://img.shields.io/badge/dynamic/json?color=158000&label=downloads&prefix=+%20&query=downloads&url=https://api.modrinth.com/v2/project/rIC2XJV4&logo=modrinth" alt="Modrinth Downloads"></a>
-  <a href="https://curseforge.com/minecraft/mc-mods/viafabricplus"><img src="https://cf.way2muchnoise.eu/full_830604_downloads.svg" alt="CurseForge Downloads"></a>
+  <a href="https://curseforge.com/minecraft/mc-mods/viafabricplus(https://www.curseforge.com/minecraft/mc-mods/viafabricpluspeaks/preview)"><img src="https://cf.way2muchnoise.eu/full_830604_downloads.svg" alt="CurseForge Downloads"></a>
   <a href="https://github.com/Peaks2000/ViaFabricPlusPeaks/actions/workflows/build.yml"><img src="https://github.com/Peaks2000/ViaFabricPlusPeaks/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
 
   <p><strong>Minecraft Fabric mod that allows you to join <em>every</em> Minecraft server version (Classic, Alpha, Beta, Release, April Fools, Bedrock)</strong></p>
