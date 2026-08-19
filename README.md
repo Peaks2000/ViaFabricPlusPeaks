@@ -8,7 +8,7 @@ and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 
     -Fixed creative menu
     -Fixed many many inventory bugs
     -Working offhand 
-    -Fixed a bug in ViaFabricPlus forcing a relogin for classicube every time you restart your game thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)
+    -Fixed a bug in ViaFabricPlus forcing a relogin for classicube every time you restart your game thanks to SC-MC-Mod-Dev (shunnoni on Discord)
     -Added Version detection to Betacraft thanks to SC-MC-Mod-Dev 
     -Added ClassiCube Search bar and ability to join hidden servers thanks to SC-MC-Mod-Dev (again)
 credit 
