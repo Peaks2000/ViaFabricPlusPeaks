@@ -27,7 +27,7 @@ install the mod from releases then launch Minecraft click on "ViaFabricPlus" the
   <h1>ViaFabricPlusPeaks</h1>
   <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Mod%20Loader-Fabric-lightyellow?logo=fabric" alt="Mod Loader: Fabric"></a>
   <img src="https://img.shields.io/badge/Environment-Client-purple" alt="Environment: Client">
-  <a href="https://discord.gg/viaversion"><img src="https://img.shields.io/discord/316206679014244363?color=0098DB&label=Discord&logo=discord&logoColor=0098DB" alt="Discord"></a><br/>
+  <a href="https://discord.gg/9caMssM2BK"><img src="https://img.shields.io/discord/316206679014244363?color=0098DB&label=Discord&logo=discord&logoColor=0098DB" alt="Discord"></a><br/>
   <a href="https://modrinth.com/mod/viafabricpluspeaks"><img src="https://img.shields.io/badge/dynamic/json?color=158000&label=downloads&prefix=+%20&query=downloads&url=https://api.modrinth.com/v2/project/rIC2XJV4&logo=modrinth" alt="Modrinth Downloads"></a>
   <a href="https://curseforge.com/minecraft/mc-mods/viafabricplus"><img src="https://cf.way2muchnoise.eu/full_830604_downloads.svg" alt="CurseForge Downloads"></a>
   <a href="https://github.com/Peaks2000/ViaFabricPlusPeaks/actions/workflows/build.yml"><img src="https://github.com/Peaks2000/ViaFabricPlusPeaks/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
