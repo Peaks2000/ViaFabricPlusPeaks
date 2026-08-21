@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,6 +77,22 @@ public final class BedrockSkinBridgeTest {
 
         assertFalse(BedrockSkinBridge.applyClientSkinClaims(claims, javaSkin, false, false, null));
         assertFalse(claims.containsKey("TrustedSkin"));
+    }
+
+    @Test
+    public void bundledDefaultSkinIsAValidOfflineTrustedSource() {
+        assertTrue(BedrockSkinBridge.isTrustedClientSource(false, false, true));
+        assertTrue(BedrockSkinBridge.isTrustedClientSource(true, true, false));
+        assertFalse(BedrockSkinBridge.isTrustedClientSource(false, true, false));
+        assertFalse(BedrockSkinBridge.isTrustedClientSource(true, false, false));
+    }
+
+    @Test
+    public void preparedJavaSkinWinsOnlyForTheLocalPlayer() {
+        final UUID profileId = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef");
+        assertTrue(BedrockSkinBridge.shouldPreferPreparedClientSkin(profileId, profileId));
+        assertFalse(BedrockSkinBridge.shouldPreferPreparedClientSkin(
+                profileId, UUID.fromString("fedcba98-7654-3210-fedc-ba9876543210")));
     }
 
 }

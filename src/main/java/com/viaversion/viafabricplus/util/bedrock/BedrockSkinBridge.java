@@ -17,6 +17,8 @@ import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -31,8 +33,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.ClientAsset;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.raphimc.viabedrock.protocol.model.SkinData;
@@ -51,6 +55,7 @@ public final class BedrockSkinBridge {
     private static final int JAVA_CAPE_HEIGHT = 32;
     private static final int MAX_SOURCE_DIMENSION = 1024;
     private static final long CLIENT_SKIN_WAIT_SECONDS = 5L;
+    private static final long OFFLINE_FALLBACK_DELAY_SECONDS = 4L;
     private static final String WIDE_RESOURCE_PATCH = "{\"geometry\":{\"default\":\"geometry.humanoid.custom\"}}";
     private static final String SLIM_RESOURCE_PATCH = "{\"geometry\":{\"default\":\"geometry.humanoid.customSlim\"}}";
 
@@ -59,28 +64,35 @@ public final class BedrockSkinBridge {
 
     private static volatile UserConnection activeConnection;
     private static volatile CompletableFuture<ClientSkin> preparedClientSkin = CompletableFuture.completedFuture(null);
+    private static volatile ClientSkin latestClientSkin;
 
     private BedrockSkinBridge() {
     }
 
     /**
      * Starts Minecraft's normal signed skin lookup before the Bedrock login packet needs it.
-     * The lookup uses Mojang's own session service and texture cache.
+     * The lookup uses Mojang's own session service and texture cache. If that cannot complete
+     * offline, the profile's deterministic bundled Minecraft skin is used instead.
      */
     public static void prepareClientSkin() {
         final Minecraft minecraft = Minecraft.getInstance();
         final CompletableFuture<ClientSkin> prepared = new CompletableFuture<>();
         preparedClientSkin = prepared;
+        latestClientSkin = null;
 
         minecraft.execute(() -> {
             final GameProfile profile = minecraft.getGameProfile();
+            final ClientSkin fallback = captureBuiltInClientSkin(minecraft, profile);
+            CompletableFuture.delayedExecutor(OFFLINE_FALLBACK_DELAY_SECONDS, TimeUnit.SECONDS)
+                    .execute(() -> acceptPreparedClientSkin(prepared, fallback, false));
             minecraft.getSkinManager().get(profile).whenComplete((skin, error) -> minecraft.execute(() -> {
                 if (error != null) {
                     ViaFabricPlusImpl.INSTANCE.getLogger().debug("Could not prepare the local Java skin for Bedrock", error);
-                    prepared.complete(null);
+                    acceptPreparedClientSkin(prepared, fallback, false);
                     return;
                 }
-                prepared.complete(captureClientSkin(minecraft, profile, skin));
+                final ClientSkin captured = captureClientSkin(minecraft, profile, skin);
+                acceptPreparedClientSkin(prepared, captured != null ? captured : fallback, captured != null);
             }));
         });
     }
@@ -91,6 +103,7 @@ public final class BedrockSkinBridge {
         }
         activeConnection = connection;
         releaseAllRegisteredSkins();
+        preparedClientSkin.thenAccept(clientSkin -> installClientSkin(connection, clientSkin));
     }
 
     public static void endConnection(final UserConnection connection) {
@@ -122,6 +135,12 @@ public final class BedrockSkinBridge {
 
     public static void installBedrockSkin(final UserConnection connection, final UUID playerUuid, final SkinData skin) {
         if (connection != activeConnection || skin.skinData() == null) {
+            return;
+        }
+
+        final ClientSkin clientSkin = latestClientSkin;
+        if (clientSkin != null && shouldPreferPreparedClientSkin(clientSkin.profileId(), playerUuid)) {
+            installClientSkin(connection, clientSkin);
             return;
         }
 
@@ -216,8 +235,10 @@ public final class BedrockSkinBridge {
             return null;
         }
         final PlayerSkin playerSkin = optionalSkin.get();
-        if (!playerSkin.secure() || !(playerSkin.body() instanceof ClientAsset.DownloadedTexture downloaded)
-                || !isOfficialTexture(downloaded.url())) {
+        final boolean downloadedFromMojang = playerSkin.body() instanceof ClientAsset.DownloadedTexture downloaded
+                && isOfficialTexture(downloaded.url());
+        final boolean builtInResource = playerSkin.body() instanceof ClientAsset.ResourceTexture;
+        if (!isTrustedClientSource(playerSkin.secure(), downloadedFromMojang, builtInResource)) {
             return null;
         }
 
@@ -227,6 +248,41 @@ public final class BedrockSkinBridge {
         }
         final BufferedImage cape = copyTexturePixels(minecraft, playerSkin.cape());
         return new ClientSkin(profile.id(), skin, cape, playerSkin.model() == PlayerModelType.SLIM, true);
+    }
+
+    private static ClientSkin captureBuiltInClientSkin(final Minecraft minecraft, final GameProfile profile) {
+        return captureClientSkin(minecraft, profile, Optional.of(DefaultPlayerSkin.get(profile)));
+    }
+
+    static boolean isTrustedClientSource(final boolean secure, final boolean downloadedFromMojang,
+                                         final boolean builtInResource) {
+        return builtInResource || secure && downloadedFromMojang;
+    }
+
+    static boolean shouldPreferPreparedClientSkin(final UUID profileId, final UUID incomingPlayerId) {
+        return profileId != null && profileId.equals(incomingPlayerId);
+    }
+
+    private static void acceptPreparedClientSkin(final CompletableFuture<ClientSkin> prepared,
+                                                 final ClientSkin clientSkin,
+                                                 final boolean replaceCompletedFallback) {
+        if (preparedClientSkin != prepared) {
+            return;
+        }
+        if (clientSkin == null) {
+            prepared.complete(null);
+            return;
+        }
+
+        final boolean firstResult = prepared.complete(clientSkin);
+        if (!firstResult && !replaceCompletedFallback) {
+            return;
+        }
+        latestClientSkin = clientSkin;
+        final UserConnection connection = activeConnection;
+        if (connection != null) {
+            installClientSkin(connection, clientSkin);
+        }
     }
 
     private static boolean isOfficialTexture(final String url) {
@@ -244,11 +300,25 @@ public final class BedrockSkinBridge {
             return null;
         }
         final AbstractTexture abstractTexture = minecraft.getTextureManager().getTexture(texture.texturePath());
-        if (!(abstractTexture instanceof DynamicTexture dynamicTexture) || dynamicTexture.getPixels() == null) {
-            return null;
+        if (abstractTexture instanceof DynamicTexture dynamicTexture && dynamicTexture.getPixels() != null) {
+            return copyPixels(dynamicTexture.getPixels());
         }
 
-        final NativeImage pixels = dynamicTexture.getPixels();
+        if (texture instanceof ClientAsset.ResourceTexture) {
+            final Optional<Resource> resource = minecraft.getResourceManager().getResource(texture.texturePath());
+            if (resource.isPresent()) {
+                try (InputStream stream = resource.get().open(); NativeImage pixels = NativeImage.read(stream)) {
+                    return copyPixels(pixels);
+                } catch (IOException e) {
+                    ViaFabricPlusImpl.INSTANCE.getLogger().debug(
+                            "Could not read bundled fallback skin {}", texture.texturePath(), e);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static BufferedImage copyPixels(final NativeImage pixels) {
         final BufferedImage image = new BufferedImage(pixels.getWidth(), pixels.getHeight(), BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < pixels.getHeight(); y++) {
             for (int x = 0; x < pixels.getWidth(); x++) {
@@ -256,6 +326,21 @@ public final class BedrockSkinBridge {
             }
         }
         return image;
+    }
+
+    private static void installClientSkin(final UserConnection connection, final ClientSkin clientSkin) {
+        if (clientSkin == null || !clientSkin.secure() || connection != activeConnection) {
+            return;
+        }
+        final BufferedImage normalizedSkin = normalizeSkin(clientSkin.skin());
+        if (normalizedSkin == null) {
+            return;
+        }
+        final BufferedImage normalizedCape = normalizeCape(clientSkin.cape());
+        final PlayerModelType model = clientSkin.slim() ? PlayerModelType.SLIM : PlayerModelType.WIDE;
+        final Minecraft minecraft = Minecraft.getInstance();
+        minecraft.execute(() -> registerBedrockSkin(
+                minecraft, connection, clientSkin.profileId(), normalizedSkin, normalizedCape, model));
     }
 
     private static void registerBedrockSkin(final Minecraft minecraft, final UserConnection connection,
