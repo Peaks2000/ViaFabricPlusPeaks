@@ -34,7 +34,7 @@ public abstract class MixinSkinProvider {
         claims.put("GameVersion", BedrockProtocolCompatibility.gameVersion(
             handshake.protocolVersion(), ProtocolConstants.BEDROCK_VERSION_NAME
         ));
-        BedrockSkinBridge.applyClientPlayerSkin(claims);
+        BedrockSkinBridge.applyClientPlayerSkin(user, claims);
         return claims;
     }
 
