@@ -28,6 +28,7 @@ import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentity;
+import com.viaversion.viafabricplus.util.bedrock.BedrockSkinBridge;
 import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.io.IOException;
@@ -58,6 +59,10 @@ public abstract class MixinConnectScreen_1 {
         final UserConnection connection = ((IConnection) clientConnection).viaFabricPlus$getUserConnection();
 
         if (ProtocolTranslator.isBedrock()) {
+            if (!StockViaBedrockRuntime.isStock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
+                BedrockSkinBridge.beginConnection(connection);
+                connection.getChannel().closeFuture().addListener(future -> BedrockSkinBridge.endConnection(connection));
+            }
             final BedrockAuthManager bedrockSession = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
             final IServerData serverData = (IServerData) this.val$server;
             final boolean useBedrockAccount = serverData.viaFabricPlus$useBedrockAccount();
