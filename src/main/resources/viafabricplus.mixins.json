@@ -371,7 +371,6 @@
     "features.screen_changes.MixinStructureBlockEditScreen_1",
     "features.screen_changes.MixinWorldOptionsScreen",
     "features.sign_editor_reach.MixinAbstractSignEditScreen",
-    "features.skin_loading.MixinPlayerInfo",
     "features.skin_loading.MixinSkinManager",
     "features.swinging.MixinLivingEntity",
     "features.swinging.MixinMinecraft",

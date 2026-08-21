@@ -32,7 +32,6 @@ import com.viaversion.viafabricplus.protocoltranslator.util.ProtocolVersionDetec
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
-import com.viaversion.viafabricplus.util.bedrock.BedrockSkinBridge;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
 import io.netty.channel.Channel;
@@ -48,7 +47,6 @@ import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.network.EventLoopGroupHolder;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -104,9 +102,6 @@ public abstract class MixinConnectScreen_1 {
         }
         targetVersion = BedrockProtocolCompatibility.routeForConnection(targetVersion, mixinServerInfo.viaFabricPlus$bedrockWireProtocol());
         ProtocolTranslator.setTargetVersion(targetVersion, true);
-        if (targetVersion.equals(BedrockProtocolVersion.bedrockLatest)) {
-            BedrockSkinBridge.prepareClientSkin();
-        }
         this.viaFabricPlus$useClassiCubeAccount = ClassiCubeSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;
         final ConnectionType markedConnectionType = mixinServerInfo.viaFabricPlus$shaderConnectionType();
         this.viaFabricPlus$connectionType = markedConnectionType != ConnectionType.NONE
