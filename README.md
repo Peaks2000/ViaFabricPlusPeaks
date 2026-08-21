@@ -3,13 +3,12 @@
 and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)!
 # What changed from ViaFabricPlus
     -In server lists added a menu for LAN worlds and XBOX friends
-    -Adds a join anyway button to bypass Mojang Blacklisted servers
     -Fixed bedrock crafting
     -Fixed creative menu
     -Fixed many many inventory bugs
-    -Working offhand 
+    -Working offhand
     -Fixed a bug in ViaFabricPlus forcing a relogin for classicube every time you restart your game thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)
-    -Added Version detection to Betacraft thanks to SC-MC-Mod-Dev 
+    -Added Version detection to Betacraft thanks to SC-MC-Mod-Dev
     -Added ClassiCube Search bar and ability to join hidden servers thanks to SC-MC-Mod-Dev (again)
 credit 
 inventory concepts adapted from [Exterminate5573/ViaBedrock PR #3](https://github.com/Exterminate5573/ViaBedrock/pull/3)
