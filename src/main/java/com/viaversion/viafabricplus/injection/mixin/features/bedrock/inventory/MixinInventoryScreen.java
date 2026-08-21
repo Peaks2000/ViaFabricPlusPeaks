@@ -22,7 +22,7 @@
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.inventory;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
+import com.viaversion.viafabricplus.util.bedrock.CompatibilityViaBedrockRuntime;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
 import com.viaversion.viaversion.api.type.Types;
@@ -48,8 +48,8 @@ public abstract class MixinInventoryScreen {
             return;
         }
 
-        if (StockViaBedrockRuntime.isStock(ProtocolTranslator.getTargetVersion(connection.getChannel()))) {
-            StockViaBedrockRuntime.sendOpenInventory(connection);
+        if (CompatibilityViaBedrockRuntime.isCompatibility(ProtocolTranslator.getTargetVersion(connection.getChannel()))) {
+            CompatibilityViaBedrockRuntime.sendOpenInventory(connection);
             return;
         }
 

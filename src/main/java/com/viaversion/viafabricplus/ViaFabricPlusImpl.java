@@ -22,10 +22,7 @@
 package com.viaversion.viafabricplus;
 
 import com.viaversion.viafabricplus.api.ViaFabricPlusBase;
-import com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusLoadEntrypoint;
-import com.viaversion.viafabricplus.api.events.ChangeProtocolVersionCallback;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
+import com.viaversion.viafabricplus.api.ChangeProtocolVersionCallback;
 import com.viaversion.viafabricplus.features.FeaturesLoading;
 import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
 import com.viaversion.viafabricplus.features.item.negative_item_count.NegativeItemUtil;
@@ -35,10 +32,7 @@ import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.translator.ItemTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
-import com.viaversion.viafabricplus.screen.impl.ProtocolSelectionScreen;
-import com.viaversion.viafabricplus.screen.impl.SettingsScreen;
 import com.viaversion.viafabricplus.settings.SettingsManager;
-import com.viaversion.viafabricplus.util.ChatUtil;
 import com.viaversion.viafabricplus.util.ClassLoaderPriorityUtil;
 import com.viaversion.viafabricplus.util.network.SyncTasks;
 import com.viaversion.viaversion.api.connection.UserConnection;
@@ -48,15 +42,12 @@ import io.netty.channel.Channel;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.core.Holder;
 import net.minecraft.network.Connection;
@@ -64,20 +55,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.level.block.entity.BannerPattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import static com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusLoadEntrypoint.KEY;
-
 public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
-
-    public static final Event<LoadingCycleCallback> LOADING_CYCLE = EventFactory.createArrayBacked(LoadingCycleCallback.class, listeners -> state -> {
-        for (final LoadingCycleCallback listener : listeners) {
-            listener.onLoadCycle(state);
-        }
-    });
 
     public static final Event<ChangeProtocolVersionCallback> CHANGE_PROTOCOL_VERSION = EventFactory.createArrayBacked(ChangeProtocolVersionCallback.class, listeners -> (oldVersion, newVersion) -> {
         for (final ChangeProtocolVersionCallback listener : listeners) {
@@ -101,10 +83,6 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
         version = metadata.getVersion().getFriendlyString();
         implVersion = metadata.getCustomValue("vfp:implVersion").getAsString();
 
-        for (final EntrypointContainer<ViaFabricPlusLoadEntrypoint> container : FabricLoader.getInstance().getEntrypointContainers(KEY, ViaFabricPlusLoadEntrypoint.class)) {
-            container.getEntrypoint().onPlatformLoad(INSTANCE);
-        }
-
         try {
             Files.createDirectories(path);
         } catch (final IOException e) {
@@ -118,14 +96,13 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
         FeaturesLoading.init();
 
         this.loadingFuture = ProtocolTranslator.init(path);
-        LOADING_CYCLE.register(cycle -> {
-            if (cycle == LoadingCycleCallback.LoadingCycle.POST_GAME_LOAD) {
-                this.loadingFuture.join();
-                FeaturesLoading.postInit();
-                SaveManager.INSTANCE.postInit();
-            }
-        });
-        LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.FINAL_LOAD);
+    }
+
+    // Make sure this is called *after* ViaVersion has been initialized
+    public void postInit() {
+        this.loadingFuture.join();
+        FeaturesLoading.postInit();
+        SaveManager.INSTANCE.postInit();
     }
 
     // --------------------------------------------------------------------------------------------
@@ -152,27 +129,25 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
     }
 
     @Override
-    public void setTargetVersion(ProtocolVersion newVersion) {
-        ProtocolTranslator.setTargetVersion(newVersion);
+    public void setTargetVersion(ProtocolVersion targetVersion) throws IllegalStateException {
+        if (Minecraft.getInstance().getConnection() != null) {
+            throw new IllegalStateException("Cannot set target version while connected!");
+        }
+
+        ProtocolTranslator.setTargetVersion(targetVersion);
     }
 
     @Override
-    public @Nullable ProtocolVersion getTargetVersion(Channel channel) {
-        return ProtocolTranslator.getTargetVersion(channel);
+    public void setTargetVersion(ProtocolVersion targetVersion, boolean revertOnDisconnect) throws IllegalStateException {
+        if (Minecraft.getInstance().getConnection() != null) {
+            throw new IllegalStateException("Cannot set target version while connected!");
+        }
+
+        ProtocolTranslator.setTargetVersion(targetVersion, revertOnDisconnect);
     }
 
     @Override
-    public @Nullable ProtocolVersion getTargetVersion(Connection connection) {
-        return ((IConnection) connection).viaFabricPlus$getTargetVersion();
-    }
-
-    @Override
-    public void setTargetVersion(ProtocolVersion newVersion, boolean revertOnDisconnect) {
-        ProtocolTranslator.setTargetVersion(newVersion, revertOnDisconnect);
-    }
-
-    @Override
-    public @Nullable UserConnection getPlayNetworkUserConnection() {
+    public @Nullable UserConnection getUserConnection() {
         return ProtocolTranslator.getPlayNetworkUserConnection();
     }
 
@@ -192,43 +167,23 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
     }
 
     @Override
-    public void registerLoadingCycleCallback(LoadingCycleCallback callback) {
-        LOADING_CYCLE.register(callback);
-    }
-
-    @Override
     public int getMaxChatLength(ProtocolVersion version) {
         return MaxChatLength.getChatLength();
     }
 
     @Override
-    public List<SettingGroup> getSettingGroups() {
-        return Collections.unmodifiableList(SettingsManager.INSTANCE.getGroups());
+    public boolean getBooleanSetting(final String translationKey) {
+        return false;
     }
 
     @Override
-    public void addSettingGroup(SettingGroup group) {
-        SettingsManager.INSTANCE.addGroup(group);
+    public String getModeSetting(final String translationKey) {
+        return "";
     }
 
     @Override
-    public @Nullable SettingGroup getSettingGroup(String translationKey) {
-        for (final SettingGroup group : SettingsManager.INSTANCE.getGroups()) {
-            if (ChatUtil.uncoverTranslationKey(group.getName()).equals(translationKey)) {
-                return group;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void openProtocolSelectionScreen(Screen parent) {
-        ProtocolSelectionScreen.INSTANCE.open(parent);
-    }
-
-    @Override
-    public void openSettingsScreen(Screen parent) {
-        SettingsScreen.INSTANCE.open(parent);
+    public String getAutoVersionSetting(final String translationKey) {
+        return "";
     }
 
     @Override
@@ -254,11 +209,6 @@ public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
     @Override
     public boolean effectExists(Holder<MobEffect> effect, ProtocolVersion version) {
         return VersionedRegistries.containsEffect(effect, version);
-    }
-
-    @Override
-    public boolean bannerPatternExists(ResourceKey<BannerPattern> pattern, ProtocolVersion version) {
-        return VersionedRegistries.containsBannerPattern(pattern, version);
     }
 
     @Override

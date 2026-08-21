@@ -26,10 +26,12 @@ import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.features.block.connections.BlockConnectionsEmulation1_12_2;
 import com.viaversion.viafabricplus.features.block.shape.CollisionShapes;
 import com.viaversion.viafabricplus.features.classic.cpe_extension.CPEAdditions;
+import com.viaversion.viafabricplus.features.classic.creative_menu.GridItemSelectionScreen;
 import com.viaversion.viafabricplus.features.entity.attribute.EnchantmentAttributesEmulation1_20_6;
 import com.viaversion.viafabricplus.features.entity.dimensions.EntityDimensionDiff;
 import com.viaversion.viafabricplus.features.font.FontCacheReload;
 import com.viaversion.viafabricplus.features.font.RenderableGlyphDiff;
+import com.viaversion.viafabricplus.features.force_unicode_font.UnicodeFontFix1_12_2;
 import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
 import com.viaversion.viafabricplus.features.networking.armor_hud.ArmorHudEmulation1_8;
 import com.viaversion.viafabricplus.features.networking.resource_pack_header.ResourcePackHeaderDiff;
@@ -38,6 +40,7 @@ import com.viaversion.viafabricplus.features.world.footstep_particle.FootStepPar
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 
 public final class FeaturesLoading {
 
@@ -47,6 +50,7 @@ public final class FeaturesLoading {
         RenderableGlyphDiff.init();
         FootStepParticle1_12_2.init();
         CPEAdditions.init();
+        UnicodeFontFix1_12_2.init();
 
         ViaFabricPlusImpl.CHANGE_PROTOCOL_VERSION.register((oldVersion, newVersion) -> Minecraft.getInstance().execute(() -> {
             CollisionShapes.reloadBlockShapes();
@@ -60,12 +64,14 @@ public final class FeaturesLoading {
             if (newVersion.olderThanOrEqualTo(ProtocolVersion.v1_11_1)) {
                 Recipes1_11_2.reset();
             }
+            if (newVersion.olderThanOrEqualTo(LegacyProtocolVersion.c0_28toc0_30)) {
+                GridItemSelectionScreen.INSTANCE.itemGrid = null;
+            }
 
             EnvironmentAttributes.RESPAWN_ANCHOR_WORKS.isSyncable = newVersion.olderThanOrEqualTo(ProtocolVersion.v1_21_9);
         }));
     }
 
-    // Make sure this is called *after* ViaVersion has been initialized
     public static void postInit() {
         VersionedRegistries.init();
         EntityDimensionDiff.init();

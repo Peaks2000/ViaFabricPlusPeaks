@@ -6,11 +6,13 @@ on:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
+      - next/v5
   push:
     branches:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
+      - next/v5
   workflow_dispatch:
 
 permissions:
@@ -78,12 +80,12 @@ jobs:
         working-directory: ViaFabricPlus
         shell: bash
         run: |
-          mapfile -t artifacts < <(find build/libs -maxdepth 1 -type f -name 'ViaFabricPlus-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print)
+          mapfile -t artifacts < <(find build/libs -maxdepth 1 -type f -name 'ViaFabricPlusPeaks-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print)
           test "${#artifacts[@]}" -eq 1
           jar_path="${artifacts[0]}"
           unzip -t "$jar_path"
           zipinfo -1 "$jar_path" | grep -Eq '^META-INF/jars/ViaBedrock-.*\.jar$'
-          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/stock/ViaBedrock-stock-1.26.30.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/compatibility/ViaBedrock-compatibility-1.26.30.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-linux-x86_64.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-macos-aarch64.jar'

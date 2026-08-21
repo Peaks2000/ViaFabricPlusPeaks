@@ -59,7 +59,7 @@ public final class BedrockProtocolCompatibility {
     }
 
     /**
-     * Keeps the normal multiplayer menu on stock ViaBedrock while the dedicated LAN/friends
+     * Keeps the normal multiplayer menu on compatibility ViaBedrock while the dedicated LAN/friends
      * menu opts into the maintained route by carrying its wire protocol on the server entry.
      * Keeping that identity on the entry is important because Minecraft's reconnect button starts
      * a fresh connection after the one-shot handshake state has already been consumed.
@@ -77,9 +77,9 @@ public final class BedrockProtocolCompatibility {
             return requestedVersion;
         }
         NEXT_CONNECTION_PROTOCOL.set(UNKNOWN_PROTOCOL);
-        final ProtocolVersion stockVersion = StockViaBedrockRuntime.stockVersion();
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected stock Bedrock route for normal server menu: {}", stockVersion.getName());
-        return stockVersion;
+        final ProtocolVersion compatibilityVersion = CompatibilityViaBedrockRuntime.compatibilityVersion();
+        ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected compatibility Bedrock route for normal server menu: {}", compatibilityVersion.getName());
+        return compatibilityVersion;
     }
 
     public static int consumeConnectionProtocol(final int fallbackProtocolVersion) {

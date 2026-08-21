@@ -22,14 +22,14 @@
 package com.viaversion.viafabricplus.save.impl;
 
 import com.google.gson.JsonObject;
-import com.viaversion.viafabricplus.api.settings.AbstractSetting;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viafabricplus.save.AbstractSave;
 import com.viaversion.viafabricplus.settings.SettingsManager;
 import com.viaversion.viafabricplus.settings.impl.GeneralSettings;
 import com.viaversion.viafabricplus.util.ChatUtil;
+import com.viaversion.viafabricplus.util.bedrock.CompatibilityViaBedrockRuntime;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 
 public final class SettingsSave extends AbstractSave {
@@ -85,6 +85,7 @@ public final class SettingsSave extends AbstractSave {
         if (selectedProtocolVersion == null) {
             return;
         }
+
         // Set target version AFTER protocol loading, so we can reach all versions
         if (GeneralSettings.INSTANCE.saveSelectedProtocolVersion.getValue()) {
             final ProtocolVersion protocolVersion = protocolVersionByName(selectedProtocolVersion);
@@ -102,10 +103,9 @@ public final class SettingsSave extends AbstractSave {
         }
 
         if (name.contains("Bedrock")) {
-            return StockViaBedrockRuntime.stockVersion();
-        } else {
-            return ProtocolVersion.getClosest(name);
+            return CompatibilityViaBedrockRuntime.compatibilityVersion();
         }
+        return ProtocolVersion.getClosest(name);
     }
 
 }

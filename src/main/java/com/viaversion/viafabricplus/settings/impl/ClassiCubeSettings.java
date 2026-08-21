@@ -21,12 +21,9 @@
 
 package com.viaversion.viafabricplus.settings.impl;
 
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
-import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
-import com.viaversion.viafabricplus.api.settings.type.VersionedBooleanSetting;
-import com.viaversion.viaversion.api.protocol.version.ProtocolVersionRange;
+import com.viaversion.viafabricplus.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.type.BooleanSetting;
 import net.minecraft.network.chat.Component;
-import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 
 public final class ClassiCubeSettings extends SettingGroup {
 
@@ -35,8 +32,6 @@ public final class ClassiCubeSettings extends SettingGroup {
     public final BooleanSetting automaticallySelectCPEInClassiCubeServerList = AuthenticationSettings.INSTANCE.automaticallySelectCPEInClassiCubeServerList;
     public final BooleanSetting setSessionNameToClassiCubeNameInServerList = AuthenticationSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList;
     public final BooleanSetting torchesStickToWallsClassicube = new BooleanSetting(this, Component.translatable("general_settings.viafabricplus.torches_stick_to_walls_classicube"), false);
-    public final VersionedBooleanSetting oldWalkingAnimation = new VersionedBooleanSetting(this, Component.translatable("visual_settings.viafabricplus.old_walking_animation"), ProtocolVersionRange.andOlder(LegacyProtocolVersion.c0_28toc0_30));
-    public final BooleanSetting slowDownClassicAnimation = new BooleanSetting(this, Component.translatable("visual_settings.viafabricplus.slow_down_classic_animation"), true);
 
     public ClassiCubeSettings() {
         super(Component.translatable("setting_group_name.viafabricplus.classicube"));
