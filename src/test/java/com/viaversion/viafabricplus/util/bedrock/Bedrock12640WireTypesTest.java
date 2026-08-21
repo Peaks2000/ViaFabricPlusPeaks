@@ -28,6 +28,7 @@ import net.raphimc.viabedrock.api.model.container.MerchantContainer;
 import net.raphimc.viabedrock.api.model.container.player.HudContainer;
 import net.raphimc.viabedrock.api.model.container.player.OffhandContainer;
 import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
+import net.raphimc.viabedrock.api.model.entity.LivingEntity;
 import net.raphimc.viabedrock.api.util.PacketFactory;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
@@ -39,6 +40,7 @@ import net.raphimc.viabedrock.protocol.data.generated.bedrock.CustomBlockTags;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
 import net.raphimc.viabedrock.protocol.model.BedrockTradeOffer;
 import net.raphimc.viabedrock.protocol.model.CommandOriginData;
+import net.raphimc.viabedrock.protocol.model.EntityAttribute;
 import net.raphimc.viabedrock.protocol.model.FullContainerName;
 import net.raphimc.viabedrock.protocol.model.GameRule;
 import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
@@ -59,6 +61,7 @@ import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
 import net.raphimc.viabedrock.protocol.types.item.BedrockItemType;
+import net.raphimc.viabedrock.protocol.util.BoundedDiagnosticLimiter;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
@@ -72,6 +75,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void repeatedWorldDiagnosticsAreBoundedPerConnection() {
+        final BoundedDiagnosticLimiter limiter = new BoundedDiagnosticLimiter(2);
+
+        assertTrue(limiter.shouldLog(11L));
+        assertFalse(limiter.shouldLog(11L));
+        assertTrue(limiter.shouldLog(12L));
+        assertTrue(limiter.isFull());
+        assertFalse(limiter.shouldLog(13L));
+    }
+
+    @Test
+    public void remotePlayerRespawnRestoresHealthFromTheDeadSnapshot() {
+        final EntityAttribute deadHealth = new EntityAttribute("minecraft:health", 0F, 0F, 40F);
+        final EntityAttribute restoredHealth = LivingEntity.respawnHealthAttribute(deadHealth);
+
+        assertEquals(0F, deadHealth.currentValue());
+        assertEquals(40F, restoredHealth.currentValue());
+    }
 
     @Test
     public void placementAcknowledgementsWaitForAuthoritativeUpdatesInSequenceOrder() {
