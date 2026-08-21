@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.screen.impl.settings;
 
-import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
+import com.viaversion.viafabricplus.settings.type.BooleanSetting;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import java.awt.*;
 import net.minecraft.ChatFormatting;

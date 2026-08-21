@@ -74,7 +74,7 @@ public abstract class MixinPlayer extends MixinLivingEntity {
             this.viaFabricPlus$ticksSinceSwimming = 0;
         }
 
-        if (this.viaFabricPlus$ticksSinceSwimming > 0 && this.viaFabricPlus$ticksSinceSwimming < 10 && this.isJumping()) {
+        if (this.viaFabricPlus$ticksSinceSwimming > 0 && this.viaFabricPlus$ticksSinceSwimming < 10 && ((Player) (Object) this).isJumping()) {
             this.setDeltaMovement(this.getDeltaMovement().x(), 0, this.getDeltaMovement().z());
         }
     }

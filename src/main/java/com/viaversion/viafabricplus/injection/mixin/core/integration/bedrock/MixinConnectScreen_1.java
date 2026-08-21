@@ -28,7 +28,8 @@ import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentity;
-import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
+import com.viaversion.viafabricplus.util.bedrock.BedrockSkinBridge;
+import com.viaversion.viafabricplus.util.bedrock.CompatibilityViaBedrockRuntime;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.io.IOException;
 import java.security.KeyPair;
@@ -58,6 +59,10 @@ public abstract class MixinConnectScreen_1 {
         final UserConnection connection = ((IConnection) clientConnection).viaFabricPlus$getUserConnection();
 
         if (ProtocolTranslator.isBedrock()) {
+            if (!CompatibilityViaBedrockRuntime.isCompatibility(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
+                BedrockSkinBridge.beginConnection(connection);
+                connection.getChannel().closeFuture().addListener(future -> BedrockSkinBridge.endConnection(connection));
+            }
             final BedrockAuthManager bedrockSession = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
             final IServerData serverData = (IServerData) this.val$server;
             final boolean useBedrockAccount = serverData.viaFabricPlus$useBedrockAccount();
@@ -77,11 +82,11 @@ public abstract class MixinConnectScreen_1 {
                 final KeyPair sessionKeyPair = bedrockSession.getSessionKeyPair();
                 final UUID deviceId = bedrockSession.getDeviceId();
 
-                if (StockViaBedrockRuntime.isStock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
+                if (CompatibilityViaBedrockRuntime.isCompatibility(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
                     if (clientHostedNonce != null) {
                         throw new IOException("Client-hosted nonce authentication is only available on the maintained Bedrock route");
                     }
-                    StockViaBedrockRuntime.putAuthData(connection, multiplayerToken.getToken(), sessionKeyPair, deviceId);
+                    CompatibilityViaBedrockRuntime.putAuthData(connection, multiplayerToken.getToken(), sessionKeyPair, deviceId);
                 } else {
                     final AuthData authData = new AuthData(multiplayerToken.getToken(), sessionKeyPair, deviceId);
                     authData.setClientHostedNonce(clientHostedNonce);

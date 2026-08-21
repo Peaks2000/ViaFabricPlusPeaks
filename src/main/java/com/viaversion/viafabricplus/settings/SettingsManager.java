@@ -21,9 +21,6 @@
 
 package com.viaversion.viafabricplus.settings;
 
-import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.api.events.LoadingCycleCallback;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
 import com.viaversion.viafabricplus.injection.ViaFabricPlusMixinPlugin;
 import com.viaversion.viafabricplus.settings.impl.AuthenticationSettings;
 import com.viaversion.viafabricplus.settings.impl.BedrockSettings;
@@ -31,6 +28,7 @@ import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import com.viaversion.viafabricplus.settings.impl.DebugSettings;
 import com.viaversion.viafabricplus.settings.impl.GeneralSettings;
 import com.viaversion.viafabricplus.settings.impl.PerformanceSettings;
+import com.viaversion.viafabricplus.settings.impl.VisualSettings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,18 +40,14 @@ public final class SettingsManager {
     private final List<SettingGroup> groups = new ArrayList<>();
 
     public void init() {
-        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.PRE_SETTINGS_LOAD);
-
         addGroup(
             GeneralSettings.INSTANCE,
             BedrockSettings.INSTANCE,
             AuthenticationSettings.INSTANCE,
-            DebugSettings.INSTANCE
+            DebugSettings.INSTANCE,
+            VisualSettings.INSTANCE,
+            ClassiCubeSettings.INSTANCE
         );
-
-        ViaFabricPlusImpl.LOADING_CYCLE.invoker().onLoadCycle(LoadingCycleCallback.LoadingCycle.POST_SETTINGS_LOAD);
-
-        addGroup(ClassiCubeSettings.INSTANCE);
         if (ViaFabricPlusMixinPlugin.IRIS_PRESENT) {
             addGroup(PerformanceSettings.INSTANCE);
         }

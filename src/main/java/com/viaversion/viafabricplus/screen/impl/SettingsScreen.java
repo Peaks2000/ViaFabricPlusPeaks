@@ -22,12 +22,12 @@
 package com.viaversion.viafabricplus.screen.impl;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.api.settings.AbstractSetting;
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
-import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
-import com.viaversion.viafabricplus.api.settings.type.ButtonSetting;
-import com.viaversion.viafabricplus.api.settings.type.ModeSetting;
-import com.viaversion.viafabricplus.api.settings.type.VersionedBooleanSetting;
+import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.type.BooleanSetting;
+import com.viaversion.viafabricplus.settings.type.ButtonSetting;
+import com.viaversion.viafabricplus.settings.type.ModeSetting;
+import com.viaversion.viafabricplus.settings.type.AutoVersionSetting;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.screen.impl.settings.BooleanListEntry;
@@ -69,8 +69,8 @@ public final class SettingsScreen extends VFPScreen {
                         case final BooleanSetting booleanSetting -> this.addEntry(new BooleanListEntry(booleanSetting));
                         case final ButtonSetting buttonSetting -> this.addEntry(new ButtonListEntry(buttonSetting));
                         case final ModeSetting modeSetting -> this.addEntry(new ModeListEntry(modeSetting));
-                        case final VersionedBooleanSetting versionedBooleanSetting ->
-                            this.addEntry(new VersionedBooleanListEntry(versionedBooleanSetting));
+                        case final AutoVersionSetting autoVersionSetting ->
+                            this.addEntry(new VersionedBooleanListEntry(autoVersionSetting));
                         default ->
                             ViaFabricPlusImpl.INSTANCE.getLogger().warn("Unknown setting type: {}", setting.getClass().getName());
                     }

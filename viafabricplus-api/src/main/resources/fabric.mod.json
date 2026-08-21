@@ -3,7 +3,6 @@
   "id": "viafabricplus-api",
   "version": "${version}",
   "name": "ViaFabricPlus API",
-  "description": "${description}",
   "authors": [
     {
       "name": "Florian Reuth (EnZaXD)",
@@ -27,24 +26,18 @@
       "contact": {
         "homepage": "https://github.com/ViaVersion/ViaFabricPlus/graphs/contributors"
       }
-    },
-    {
-      "name": "ViaFabricPlusPeaks contributors",
-      "contact": {
-        "homepage": "https://github.com/Peaks2000/ViaFabricPlusPeaks/graphs/contributors"
-      }
     }
   ],
   "contact": {
     "homepage": "https://florianreuth.de/",
-    "sources": "https://github.com/Peaks2000/ViaFabricPlusPeaks",
-    "issues": "https://github.com/Peaks2000/ViaFabricPlusPeaks/issues",
+    "sources": "https://github.com/ViaVersion/ViaFabricPlus",
+    "issues": "https://github.com/ViaVersion/ViaFabricPlus/issues",
     "email": "florian@florianreuth.de"
   },
-  "license": "GPL-v3",
+  "license": "MIT",
   "environment": "client",
   "depends": {
-    "viafabricplus": ">=4.6.0"
+    "viafabricplus": ">=5.0.0"
   },
   "custom": {
     "modmenu": {

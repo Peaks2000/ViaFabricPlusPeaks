@@ -21,9 +21,9 @@
 
 package com.viaversion.viafabricplus.settings.impl;
 
-import com.viaversion.viafabricplus.api.settings.SettingGroup;
-import com.viaversion.viafabricplus.api.settings.type.BooleanSetting;
-import com.viaversion.viafabricplus.api.settings.type.ButtonSetting;
+import com.viaversion.viafabricplus.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.type.BooleanSetting;
+import com.viaversion.viafabricplus.settings.type.ButtonSetting;
 import com.viaversion.viafabricplus.injection.access.core.bedrock.IConfirmScreen;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;

@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.screen.impl.settings;
 
-import com.viaversion.viafabricplus.api.settings.type.ModeSetting;
+import com.viaversion.viafabricplus.settings.type.ModeSetting;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import java.util.Arrays;
 import net.minecraft.ChatFormatting;

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="ViaFabricPlus" pattern="com.viaversion.viafabricplus..*&amp;&amp;!src[viafabricplus.viafabricplus-api*]:*..*" />
+</component>

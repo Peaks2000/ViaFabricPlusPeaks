@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.screen.impl.settings;
 
-import com.viaversion.viafabricplus.api.settings.type.ButtonSetting;
+import com.viaversion.viafabricplus.settings.type.ButtonSetting;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
