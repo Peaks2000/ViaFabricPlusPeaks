@@ -22,6 +22,8 @@
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.movement;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.util.bedrock.BedrockRemotePlayerRespawn;
+import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -35,6 +37,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
@@ -42,6 +45,15 @@ public abstract class MixinLivingEntity {
 
     @Shadow
     public abstract @Nullable MobEffectInstance getEffect(final Holder<MobEffect> effect);
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void resetRemoteBedrockPlayerDeathTime(final CallbackInfo ci) {
+        final LivingEntity entity = (LivingEntity) (Object) this;
+        if (BedrockRemotePlayerRespawn.shouldResetDeathTime(
+                ProtocolTranslator.isBedrock(), entity instanceof RemotePlayer, entity.getHealth(), entity.deathTime)) {
+            entity.deathTime = 0;
+        }
+    }
 
     @Redirect(method = "getFluidFallingAdjustedMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSprinting()Z"))
     private boolean changeFluidGravityCondition(LivingEntity instance) {
