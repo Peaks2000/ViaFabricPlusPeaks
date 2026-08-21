@@ -80,7 +80,7 @@ jobs:
         working-directory: ViaFabricPlus
         shell: bash
         run: |
-          mapfile -t artifacts < <(find build/libs -maxdepth 1 -type f -name 'ViaFabricPlus-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print)
+          mapfile -t artifacts < <(find build/libs -maxdepth 1 -type f -name 'ViaFabricPlusPeaks-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print)
           test "${#artifacts[@]}" -eq 1
           jar_path="${artifacts[0]}"
           unzip -t "$jar_path"
