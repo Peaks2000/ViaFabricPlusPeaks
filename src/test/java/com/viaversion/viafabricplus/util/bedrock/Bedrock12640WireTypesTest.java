@@ -46,6 +46,7 @@ import net.raphimc.viabedrock.protocol.model.GameRule;
 import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
 import net.raphimc.viabedrock.protocol.model.Position2f;
 import net.raphimc.viabedrock.protocol.model.Position3f;
+import net.raphimc.viabedrock.protocol.model.SkinData;
 import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
 import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
 import net.raphimc.viabedrock.protocol.packet.InventoryPackets;
@@ -64,6 +65,7 @@ import net.raphimc.viabedrock.protocol.types.item.BedrockItemType;
 import net.raphimc.viabedrock.protocol.util.BoundedDiagnosticLimiter;
 import org.junit.jupiter.api.Test;
 
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +77,70 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void creatorPlayerSkinConsumesTheProtocol2168Layout() {
+        final ByteBuf buffer = Unpooled.buffer();
+        try {
+            BedrockTypes.STRING.write(buffer, "creator-skin");
+            BedrockTypes.STRING.write(buffer, "playfab-id");
+            BedrockTypes.STRING.write(buffer, "{\"geometry\":{\"default\":\"geometry.humanoid.customSlim\"}}");
+            BedrockTypes.IMAGE.write(buffer, new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB));
+
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 1); // animations
+            BedrockTypes.IMAGE.write(buffer, null);
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 2); // animation type
+            buffer.writeFloatLE(3.5F);
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 1); // expression type
+
+            BedrockTypes.IMAGE.write(buffer, null); // cape
+            BedrockTypes.STRING.write(buffer, "geometry-data");
+            BedrockTypes.STRING.write(buffer, "1.21.0");
+            BedrockTypes.STRING.write(buffer, "animation-data");
+            BedrockTypes.STRING.write(buffer, "cape-id");
+            BedrockTypes.STRING.write(buffer, "full-skin-id");
+            buffer.writeByte(0); // slim arm size
+            buffer.writeIntLE(0xFF123456);
+
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 1); // persona pieces
+            BedrockTypes.STRING.write(buffer, "piece-id");
+            buffer.writeIntLE(14); // hair
+            BedrockTypes.UUID.write(buffer, UUID.fromString("01234567-89ab-cdef-0123-456789abcdef"));
+            buffer.writeBoolean(false);
+            BedrockTypes.STRING.write(buffer, "product-id");
+
+            BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 1); // persona tints
+            BedrockTypes.STRING.write(buffer, "persona_hair");
+            buffer.writeIntLE(0xFF010203);
+            buffer.writeIntLE(0xFF040506);
+            buffer.writeIntLE(0xFF070809);
+            buffer.writeIntLE(0xFF0A0B0C);
+
+            buffer.writeBoolean(true); // premium
+            buffer.writeBoolean(true); // persona
+            buffer.writeBoolean(false); // cape on classic
+            buffer.writeBoolean(false); // primary user
+            buffer.writeBoolean(true); // overriding appearance
+            BedrockTypes.STRING.write(buffer, "true"); // trusted
+            BedrockTypes.STRING.write(buffer, "profile-hash");
+            BedrockTypes.STRING.write(buffer, "new-skin-name"); // next PLAYER_SKIN field
+
+            final SkinData skin = BedrockTypes.SKIN.read(buffer);
+            assertEquals("creator-skin", skin.skinId());
+            assertEquals(128, skin.skinData().getWidth());
+            assertEquals(1, skin.animations().size());
+            assertEquals(2, skin.animations().getFirst().type());
+            assertEquals("Slim", skin.armSize());
+            assertEquals("Hair", skin.personaPieces().getFirst().type());
+            assertEquals("persona_hair", skin.tintColors().getFirst().type());
+            assertTrue(skin.persona());
+            assertTrue(skin.overridingPlayerAppearance());
+            assertEquals("new-skin-name", BedrockTypes.STRING.read(buffer));
+            assertEquals(0, buffer.readableBytes());
+        } finally {
+            buffer.release();
+        }
+    }
 
     @Test
     public void repeatedWorldDiagnosticsAreBoundedPerConnection() {
