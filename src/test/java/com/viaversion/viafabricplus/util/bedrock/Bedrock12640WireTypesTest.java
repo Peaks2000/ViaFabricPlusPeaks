@@ -11,6 +11,7 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
+import com.viaversion.nbt.tag.CompoundTag;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.BlockPosition;
 import com.viaversion.viaversion.api.minecraft.VillagerData;
@@ -19,6 +20,8 @@ import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPackets26_1;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import net.raphimc.viabedrock.api.chunk.BedrockBlockEntity;
+import net.raphimc.viabedrock.api.chunk.section.BedrockChunkSectionImpl;
 import net.raphimc.viabedrock.api.model.BlockState;
 import net.raphimc.viabedrock.api.model.container.ChestContainer;
 import net.raphimc.viabedrock.api.model.container.Container;
@@ -30,6 +33,7 @@ import net.raphimc.viabedrock.api.model.container.player.OffhandContainer;
 import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
 import net.raphimc.viabedrock.api.model.entity.LivingEntity;
 import net.raphimc.viabedrock.api.util.PacketFactory;
+import net.raphimc.viabedrock.protocol.BedrockProtocol;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
@@ -52,9 +56,11 @@ import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
 import net.raphimc.viabedrock.protocol.packet.InventoryPackets;
 import net.raphimc.viabedrock.experimental.rewriter.EntityMetadataRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
+import net.raphimc.viabedrock.protocol.rewriter.blockentity.BrewingStandBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.storage.BlockPlacementPredictionTracker;
 import net.raphimc.viabedrock.protocol.storage.BreakingTracker;
+import net.raphimc.viabedrock.protocol.storage.ChunkTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryRequestTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryTracker;
 import net.raphimc.viabedrock.protocol.storage.MovementPredictionTracker;
@@ -78,6 +84,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void emptyPendingChunkSectionReadsAsAirInsteadOfDisconnecting() {
+        assertFalse(ChunkTracker.hasBlockPalette(new BedrockChunkSectionImpl()));
+        assertFalse(ChunkTracker.hasBlockPalette(null));
+    }
+
+    @Test
+    public void isolatedServerRouteKeepsItsRouteIdentityOffTheBedrockWire() {
+        assertEquals(2168, new BedrockProtocol(2168).wireProtocolVersion(1001));
+        assertEquals(2169, new BedrockProtocol().wireProtocolVersion(2169));
+    }
+
+    @Test
+    public void brewingStandWithoutAnItemsListStillOpensSafely() {
+        final CompoundTag bedrockTag = new CompoundTag();
+        final CompoundTag javaTag = new BrewingStandBlockEntityRewriter()
+                .toJava(null, new BedrockBlockEntity(bedrockTag)).tag();
+
+        assertTrue(javaTag.getListTag("Items", CompoundTag.class).isEmpty());
+    }
 
     @Test
     public void creatorPlayerSkinConsumesTheProtocol2168Layout() {

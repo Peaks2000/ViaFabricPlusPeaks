@@ -18,6 +18,7 @@ import com.viaversion.viaversion.api.protocol.Protocol;
 import com.viaversion.viaversion.api.protocol.packet.PacketType;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import com.viaversion.viaversion.protocol.SpecialProtocolVersion;
 import com.viaversion.viaversion.api.type.Type;
 import com.viaversion.viaversion.api.type.Types;
 import com.viaversion.viaversion.platform.ViaDecodeHandler;
@@ -42,15 +43,18 @@ import net.minecraft.network.HandlerNames;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
 /**
- * Loads ViaBedrock's stable protocol implementation in a child-first class loader. This keeps
- * its packet tables, mappings, providers, and static state independent from the maintained
- * 1.26.40 implementation while both routes remain available in the same ViaVersion manager.
+ * Loads the ordinary-server ViaBedrock implementation in a child-first class loader. It shares
+ * the maintained 1.26.40 gameplay fixes but keeps packet tables, mappings, providers, static
+ * state, and authentication independent from the LAN/friends runtime.
  */
 public final class CompatibilityViaBedrockRuntime {
 
-    private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.30.jar";
+    private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.40.jar";
     private static final String VIA_BEDROCK_PACKAGE = "net.raphimc.viabedrock.";
     private static final String VIA_BEDROCK_ASSETS = "assets/viabedrock";
+    private static final int ROUTE_PROTOCOL_VERSION = 1001;
+    private static final String ROUTE_PROTOCOL_NAME = "Bedrock 1.26.40 (isolated servers)";
+    private static final int WIRE_PROTOCOL_VERSION = 2168;
 
     private static ProtocolVersion compatibilityVersion;
     private static ChildFirstClassLoader classLoader;
@@ -65,7 +69,7 @@ public final class CompatibilityViaBedrockRuntime {
 
         try {
             final Path runtimeFolder = dataFolder.resolve("compatibility-viabedrock");
-            final Path runtimeJar = runtimeFolder.resolve("ViaBedrock-compatibility-1.26.30.jar");
+            final Path runtimeJar = runtimeFolder.resolve("ViaBedrock-compatibility-1.26.40.jar");
             Files.createDirectories(runtimeFolder);
             try (InputStream input = CompatibilityViaBedrockRuntime.class.getResourceAsStream(EMBEDDED_JAR)) {
                 if (input == null) {
@@ -79,9 +83,11 @@ public final class CompatibilityViaBedrockRuntime {
             final ClassLoader previousContextLoader = thread.getContextClassLoader();
             try {
                 thread.setContextClassLoader(classLoader);
-                classLoader.loadClass("net.raphimc.viabedrock.ViaBedrockPlatformImpl").getConstructor().newInstance();
-                compatibilityVersion = (ProtocolVersion) classLoader.loadClass("net.raphimc.viabedrock.api.BedrockProtocolVersion")
-                    .getField("bedrockLatest").get(null);
+                compatibilityVersion = isolatedRouteVersion();
+                ProtocolVersion.register(compatibilityVersion);
+                classLoader.loadClass("net.raphimc.viabedrock.ViaBedrockPlatformImpl")
+                    .getConstructor(ProtocolVersion.class, int.class)
+                    .newInstance(compatibilityVersion, WIRE_PROTOCOL_VERSION);
             } finally {
                 thread.setContextClassLoader(previousContextLoader);
             }
@@ -99,11 +105,29 @@ public final class CompatibilityViaBedrockRuntime {
     }
 
     public static boolean isCompatibility(final ProtocolVersion version) {
-        return compatibilityVersion != null && compatibilityVersion.equals(version);
+        return version != null && version.getVersion() == ROUTE_PROTOCOL_VERSION
+                && ROUTE_PROTOCOL_NAME.equals(version.getName());
     }
 
     public static boolean isBedrock(final ProtocolVersion version) {
         return BedrockProtocolVersion.bedrockLatest.equals(version) || isCompatibility(version);
+    }
+
+    static int routeProtocolVersion() {
+        return ROUTE_PROTOCOL_VERSION;
+    }
+
+    static int wireProtocolVersion() {
+        return WIRE_PROTOCOL_VERSION;
+    }
+
+    static ProtocolVersion isolatedRouteVersion() {
+        return new SpecialProtocolVersion(ROUTE_PROTOCOL_VERSION, ROUTE_PROTOCOL_NAME, ProtocolVersion.v26_2) {
+            @Override
+            public ProtocolVersion getBaseProtocolVersion() {
+                return null;
+            }
+        };
     }
 
     public static void installCompatibilityPipeline(final ChannelPipeline pipeline) {

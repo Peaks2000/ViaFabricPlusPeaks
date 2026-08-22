@@ -17,6 +17,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.raphimc.viabedrock.protocol.storage.AuthData;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,8 +31,9 @@ public final class BedrockSkinBridgeTest {
     @Test
     public void creatorTextureIsReducedToAnOpaqueStandardJavaModel() {
         final BufferedImage creatorSkin = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
-        creatorSkin.setRGB(20, 20, 0x00112233);
+        creatorSkin.setRGB(20, 20, 0xFF112233);
         creatorSkin.setRGB(80, 16, 0x00445566);
+        creatorSkin.setRGB(80, 64, 0xFFCA8642); // right-arm overlay
 
         final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(creatorSkin);
 
@@ -40,6 +42,9 @@ public final class BedrockSkinBridgeTest {
         assertEquals(64, normalized.getHeight());
         assertEquals(0xFF112233, normalized.getRGB(10, 10));
         assertEquals(0x00445566, normalized.getRGB(40, 8));
+        assertEquals(0xFFCA8642, normalized.getRGB(40, 16));
+        assertEquals(0xFF000000, normalized.getRGB(20, 52) & 0xFF000000);
+        assertTrue((normalized.getRGB(20, 52) & 0x00FFFFFF) != 0);
     }
 
     @Test
@@ -60,6 +65,7 @@ public final class BedrockSkinBridgeTest {
         assertTrue(BedrockSkinBridge.applyClientSkinClaims(claims, javaSkin, true, true, null));
         assertEquals(true, claims.get("TrustedSkin"));
         assertEquals(false, claims.get("PersonaSkin"));
+        assertEquals(true, claims.get("OverrideSkin"));
         assertEquals("slim", claims.get("ArmSize"));
         assertEquals(64, claims.get("SkinImageWidth"));
         assertEquals(64, claims.get("SkinImageHeight"));
@@ -68,6 +74,15 @@ public final class BedrockSkinBridgeTest {
         final String resourcePatch = new String(Base64.getDecoder().decode(
                 (String) claims.get("SkinResourcePatch")), StandardCharsets.UTF_8);
         assertTrue(resourcePatch.contains("geometry.humanoid.customSlim"));
+    }
+
+    @Test
+    public void authenticatedPlayFabIdentityIsAvailableForTheLoginSkin() {
+        final String header = Base64.getUrlEncoder().withoutPadding().encodeToString("{}".getBytes(StandardCharsets.UTF_8));
+        final String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(
+                "{\"mid\":\"ABCDEF0123456789\"}".getBytes(StandardCharsets.UTF_8));
+
+        assertEquals("ABCDEF0123456789", new AuthData(header + "." + payload, null).getPlayFabId());
     }
 
     @Test
