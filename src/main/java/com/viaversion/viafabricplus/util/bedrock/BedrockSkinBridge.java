@@ -54,6 +54,8 @@ public final class BedrockSkinBridge {
     private static final int JAVA_CAPE_WIDTH = 64;
     private static final int JAVA_CAPE_HEIGHT = 32;
     private static final int MAX_SOURCE_DIMENSION = 1024;
+    private static final int OPAQUE_ALPHA = 0xFF;
+    private static final int DEFAULT_MISSING_BASE_COLOR = 0xFFB57B61;
     private static final long CLIENT_SKIN_WAIT_SECONDS = 5L;
     private static final long OFFLINE_FALLBACK_DELAY_SECONDS = 4L;
     private static final String WIDE_RESOURCE_PATCH = "{\"geometry\":{\"default\":\"geometry.humanoid.custom\"}}";
@@ -194,9 +196,19 @@ public final class BedrockSkinBridge {
             return null;
         }
 
-        forceOpaque(normalized, 0, 0, 32, 16);
-        forceOpaque(normalized, 0, 16, 64, 32);
-        forceOpaque(normalized, 16, 48, 48, 64);
+        // Persona/creator geometry may deliberately leave parts of the ordinary skin base layer
+        // transparent because Bedrock renders those pixels through custom bones. Java discards
+        // base-layer alpha, which used to turn those transparent black pixels into solid black
+        // arms and legs. Flatten the matching legal overlay into each missing base part first and
+        // use a representative opaque colour only where the creator texture has no legal pixels.
+        final int globalFallback = representativeOpaqueColor(normalized, 0, 0,
+                normalized.getWidth(), normalized.getHeight(), 0, 0, 0, 0, DEFAULT_MISSING_BASE_COLOR);
+        repairBaseLayerPart(normalized, 0, 0, 32, 16, 32, 0, globalFallback);       // head
+        repairBaseLayerPart(normalized, 0, 16, 16, 16, 0, 32, globalFallback);      // right leg
+        repairBaseLayerPart(normalized, 16, 16, 24, 16, 16, 32, globalFallback);    // body
+        repairBaseLayerPart(normalized, 40, 16, 16, 16, 40, 32, globalFallback);    // right arm
+        repairBaseLayerPart(normalized, 16, 48, 16, 16, 0, 48, globalFallback);     // left leg
+        repairBaseLayerPart(normalized, 32, 48, 16, 16, 48, 48, globalFallback);    // left arm
         return normalized;
     }
 
@@ -228,7 +240,10 @@ public final class BedrockSkinBridge {
         claims.put("PremiumSkin", false);
         claims.put("PersonaSkin", false);
         claims.put("TrustedSkin", true);
-        claims.put("OverrideSkin", false);
+        // This is an intentional replacement for the Bedrock account's equipped appearance. A
+        // false value lets trusted-skins-only peers retain the old/default appearance even though
+        // the signed Java pixels were included in the login client data.
+        claims.put("OverrideSkin", true);
         claims.put("AnimatedImageData", java.util.List.of());
         claims.put("PersonaPieces", java.util.List.of());
         claims.put("PieceTintColors", java.util.List.of());
@@ -485,13 +500,76 @@ public final class BedrockSkinBridge {
         }
     }
 
-    private static void forceOpaque(final BufferedImage image, final int minX, final int minY,
-                                    final int maxX, final int maxY) {
-        for (int y = minY; y < maxY; y++) {
-            for (int x = minX; x < maxX; x++) {
-                image.setRGB(x, y, image.getRGB(x, y) | 0xFF000000);
+    private static void repairBaseLayerPart(final BufferedImage image,
+                                            final int baseX, final int baseY,
+                                            final int width, final int height,
+                                            final int overlayX, final int overlayY,
+                                            final int globalFallback) {
+        final int fallback = representativeOpaqueColor(image, baseX, baseY, width, height,
+                overlayX, overlayY, width, height, globalFallback);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                final int base = image.getRGB(baseX + x, baseY + y);
+                final int overlay = image.getRGB(overlayX + x, overlayY + y);
+                final int background = compositeOpaque(overlay, fallback);
+                image.setRGB(baseX + x, baseY + y, compositeOpaque(base, background));
             }
         }
+    }
+
+    private static int representativeOpaqueColor(final BufferedImage image,
+                                                  final int firstX, final int firstY,
+                                                  final int firstWidth, final int firstHeight,
+                                                  final int secondX, final int secondY,
+                                                  final int secondWidth, final int secondHeight,
+                                                  final int defaultColor) {
+        final long[] totals = new long[4];
+        accumulateVisibleColor(image, firstX, firstY, firstWidth, firstHeight, totals);
+        accumulateVisibleColor(image, secondX, secondY, secondWidth, secondHeight, totals);
+        if (totals[3] == 0) {
+            return defaultColor;
+        }
+        return 0xFF000000
+                | (int) (totals[0] / totals[3]) << 16
+                | (int) (totals[1] / totals[3]) << 8
+                | (int) (totals[2] / totals[3]);
+    }
+
+    private static void accumulateVisibleColor(final BufferedImage image,
+                                               final int minX, final int minY,
+                                               final int width, final int height,
+                                               final long[] totals) {
+        for (int y = minY; y < minY + height; y++) {
+            for (int x = minX; x < minX + width; x++) {
+                final int argb = image.getRGB(x, y);
+                final int alpha = argb >>> 24;
+                if (alpha == 0) {
+                    continue;
+                }
+                totals[0] += (long) ((argb >>> 16) & 0xFF) * alpha;
+                totals[1] += (long) ((argb >>> 8) & 0xFF) * alpha;
+                totals[2] += (long) (argb & 0xFF) * alpha;
+                totals[3] += alpha;
+            }
+        }
+    }
+
+    private static int compositeOpaque(final int foreground, final int opaqueBackground) {
+        final int alpha = foreground >>> 24;
+        if (alpha == OPAQUE_ALPHA) {
+            return foreground;
+        }
+        if (alpha == 0) {
+            return opaqueBackground | 0xFF000000;
+        }
+        final int inverseAlpha = OPAQUE_ALPHA - alpha;
+        final int red = (((foreground >>> 16) & 0xFF) * alpha
+                + ((opaqueBackground >>> 16) & 0xFF) * inverseAlpha + 127) / OPAQUE_ALPHA;
+        final int green = (((foreground >>> 8) & 0xFF) * alpha
+                + ((opaqueBackground >>> 8) & 0xFF) * inverseAlpha + 127) / OPAQUE_ALPHA;
+        final int blue = ((foreground & 0xFF) * alpha
+                + (opaqueBackground & 0xFF) * inverseAlpha + 127) / OPAQUE_ALPHA;
+        return 0xFF000000 | red << 16 | green << 8 | blue;
     }
 
     private static String shortHash(final byte[] data) {
