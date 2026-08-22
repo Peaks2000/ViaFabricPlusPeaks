@@ -21,6 +21,7 @@ import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPack
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.chunk.BedrockBlockEntity;
+import net.raphimc.viabedrock.api.chunk.section.BedrockChunkSectionImpl;
 import net.raphimc.viabedrock.api.model.BlockState;
 import net.raphimc.viabedrock.api.model.container.ChestContainer;
 import net.raphimc.viabedrock.api.model.container.Container;
@@ -59,6 +60,7 @@ import net.raphimc.viabedrock.protocol.rewriter.blockentity.BrewingStandBlockEnt
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.storage.BlockPlacementPredictionTracker;
 import net.raphimc.viabedrock.protocol.storage.BreakingTracker;
+import net.raphimc.viabedrock.protocol.storage.ChunkTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryRequestTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryTracker;
 import net.raphimc.viabedrock.protocol.storage.MovementPredictionTracker;
@@ -82,6 +84,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void emptyPendingChunkSectionReadsAsAirInsteadOfDisconnecting() {
+        assertFalse(ChunkTracker.hasBlockPalette(new BedrockChunkSectionImpl()));
+        assertFalse(ChunkTracker.hasBlockPalette(null));
+    }
 
     @Test
     public void isolatedServerRouteKeepsItsRouteIdentityOffTheBedrockWire() {
