@@ -58,6 +58,7 @@ import net.raphimc.viabedrock.protocol.storage.BreakingTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryRequestTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryTracker;
 import net.raphimc.viabedrock.protocol.storage.MovementPredictionTracker;
+import net.raphimc.viabedrock.protocol.storage.PlayerChatDuplicateTracker;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
@@ -151,6 +152,19 @@ public final class Bedrock12640WireTypesTest {
         assertTrue(limiter.shouldLog(12L));
         assertTrue(limiter.isFull());
         assertFalse(limiter.shouldLog(13L));
+    }
+
+    @Test
+    public void immediateIdenticalPlayerChatCopiesAreSuppressedNarrowly() {
+        final PlayerChatDuplicateTracker tracker = new PlayerChatDuplicateTracker(100L);
+
+        assertFalse(tracker.shouldSuppress("Alex", "hello", false, 1_000L));
+        assertTrue(tracker.shouldSuppress("Alex", "hello", false, 1_050L));
+        assertFalse(tracker.shouldSuppress("Alex", "hello", false, 1_101L));
+        assertFalse(tracker.shouldSuppress("Steve", "hello", false, 1_110L));
+        assertFalse(tracker.shouldSuppress("Steve", "different", false, 1_120L));
+        assertFalse(tracker.shouldSuppress("Steve", "hello", false, 1_130L));
+        assertFalse(tracker.shouldSuppress("Steve", "hello", true, 1_140L));
     }
 
     @Test
