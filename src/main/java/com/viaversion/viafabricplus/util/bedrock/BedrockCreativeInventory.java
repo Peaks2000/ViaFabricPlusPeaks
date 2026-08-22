@@ -12,7 +12,6 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
 public final class BedrockCreativeInventory {
 
@@ -21,7 +20,7 @@ public final class BedrockCreativeInventory {
 
     public static boolean shouldRestoreRejectedCursor(final ProtocolVersion targetVersion, final int containerId,
                                                        final boolean carriedItemEmpty, final boolean creativeScreenOpen) {
-        return BedrockProtocolVersion.bedrockLatest.equals(targetVersion)
+        return StockViaBedrockRuntime.isBedrock(targetVersion)
                 && containerId == 0
                 && !carriedItemEmpty
                 && creativeScreenOpen;
@@ -33,7 +32,7 @@ public final class BedrockCreativeInventory {
                                                                       final boolean pendingItemEmpty,
                                                                       final boolean currentCursorMatchesPending,
                                                                       final boolean creativeScreenOpen) {
-        return BedrockProtocolVersion.bedrockLatest.equals(targetVersion)
+        return StockViaBedrockRuntime.isBedrock(targetVersion)
                 && containerId == 0
                 && packetCarriedItemEmpty
                 && !pendingItemEmpty
