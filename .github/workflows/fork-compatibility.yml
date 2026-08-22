@@ -87,7 +87,7 @@ jobs:
           jar_path="${artifacts[0]}"
           unzip -t "$jar_path"
           zipinfo -1 "$jar_path" | grep -Eq '^META-INF/jars/ViaBedrock-.*\.jar$'
-          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/stock/ViaBedrock-stock-1.26.30.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/stock/ViaBedrock-stock-1.26.40.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-linux-x86_64.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-macos-aarch64.jar'

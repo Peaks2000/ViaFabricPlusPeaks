@@ -21,9 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class BedrockCreativeInventoryTest {
 
     @Test
-    public void rejectedCursorIsMirroredOnlyIntoTheMaintainedBedrockCreativeMenu() {
+    public void rejectedCursorIsMirroredIntoEveryBedrockCreativeMenu() {
         assertTrue(BedrockCreativeInventory.shouldRestoreRejectedCursor(
                 BedrockProtocolVersion.bedrockLatest, 0, false, true));
+        assertTrue(BedrockCreativeInventory.shouldRestoreRejectedCursor(
+                StockViaBedrockRuntime.isolatedRouteVersion(), 0, false, true));
 
         assertFalse(BedrockCreativeInventory.shouldRestoreRejectedCursor(
                 ProtocolVersion.v1_21_11, 0, false, true));
@@ -36,9 +38,11 @@ public final class BedrockCreativeInventoryTest {
     }
 
     @Test
-    public void emptyContentGuardRemainsMaintainedBedrockCreativeOnly() {
+    public void emptyContentGuardRemainsBedrockCreativeOnly() {
         assertTrue(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
                 BedrockProtocolVersion.bedrockLatest, 0, true, false, true, true));
+        assertTrue(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
+                StockViaBedrockRuntime.isolatedRouteVersion(), 0, true, false, true, true));
 
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
                 ProtocolVersion.v1_21_11, 0, true, false, true, true));
