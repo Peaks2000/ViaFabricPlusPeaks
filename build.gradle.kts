@@ -61,7 +61,7 @@ dependencies {
     shade("de.florianreuth:classic4j:2.3.0")
     shade("net.raphimc:ViaBedrock") {
         version {
-            branch = "peaks/1.26.40-fixes"
+            branch = "experiment/4.8"
         }
         exclude(group = "com.mojang", module = "brigadier")
         exclude(group = "at.yawk.lz4", module = "lz4-java")

@@ -246,6 +246,7 @@ public final class Bedrock12640WireTypesTest {
 
         tracker.trackBreaking(12, broken, 0L);
         assertEquals(11, tracker.requestAcknowledgement(12));
+        assertTrue(tracker.hasPendingBreaking());
         assertTrue(tracker.isPendingBreaking(broken));
         assertTrue(tracker.shouldSuppressBreakingReassertion(broken, false));
         assertFalse(tracker.shouldSuppressBreakingReassertion(broken, true));
@@ -253,6 +254,7 @@ public final class Bedrock12640WireTypesTest {
         assertEquals(-1, tracker.pollAcknowledgement());
         assertTrue(tracker.isPendingBreaking(broken));
         assertTrue(tracker.confirm(broken, true));
+        assertFalse(tracker.hasPendingBreaking());
         assertFalse(tracker.isPendingBreaking(broken));
         assertFalse(tracker.shouldSuppressBreakingReassertion(broken, false));
         assertEquals(12, tracker.pollAcknowledgement());
@@ -286,11 +288,13 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void repeatedMiningSwingsDoNotBecomeBedrockAttackAnimations() {
         assertEquals(new ClientPlayerPackets.SwingHandling(false, false, false),
-            ClientPlayerPackets.swingHandling(true, true));
+            ClientPlayerPackets.swingHandling(true, false, true));
         assertEquals(new ClientPlayerPackets.SwingHandling(false, true, false),
-            ClientPlayerPackets.swingHandling(true, false));
+            ClientPlayerPackets.swingHandling(true, false, false));
+        assertEquals(new ClientPlayerPackets.SwingHandling(false, false, false),
+            ClientPlayerPackets.swingHandling(false, true, true));
         assertEquals(new ClientPlayerPackets.SwingHandling(true, false, true),
-            ClientPlayerPackets.swingHandling(false, true));
+            ClientPlayerPackets.swingHandling(false, false, true));
     }
 
     @Test
