@@ -15,6 +15,7 @@ import com.viaversion.nbt.tag.CompoundTag;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.BlockPosition;
 import com.viaversion.viaversion.api.minecraft.VillagerData;
+import com.viaversion.viaversion.api.minecraft.entitydata.EntityData;
 import com.viaversion.viaversion.api.minecraft.item.StructuredItem;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
 import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPackets26_1;
@@ -36,6 +37,8 @@ import net.raphimc.viabedrock.api.util.PacketFactory;
 import net.raphimc.viabedrock.protocol.BedrockProtocol;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.ActorDataIDs;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.LevelEvent;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputPacketPayload_InputData;
@@ -53,6 +56,7 @@ import net.raphimc.viabedrock.protocol.model.Position3f;
 import net.raphimc.viabedrock.protocol.model.SkinData;
 import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
 import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
+import net.raphimc.viabedrock.protocol.packet.EntityPackets;
 import net.raphimc.viabedrock.protocol.packet.InventoryPackets;
 import net.raphimc.viabedrock.experimental.rewriter.EntityMetadataRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
@@ -67,6 +71,7 @@ import net.raphimc.viabedrock.protocol.storage.MovementPredictionTracker;
 import net.raphimc.viabedrock.protocol.storage.PlayerChatDuplicateTracker;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
+import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataTypesBedrock;
 import net.raphimc.viabedrock.protocol.types.inventory.InventoryStackRequestType;
 import net.raphimc.viabedrock.protocol.types.item.BedrockItemType;
 import net.raphimc.viabedrock.protocol.util.BoundedDiagnosticLimiter;
@@ -84,6 +89,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class Bedrock12640WireTypesTest {
+
+    @Test
+    public void fallingBlockSpawnUsesItsBedrockVariantState() {
+        final EntityData variant = new EntityData(
+            ActorDataIDs.VARIANT.getValue(), EntityDataTypesBedrock.INT, 123_456
+        );
+
+        assertEquals(123_456, EntityPackets.bedrockFallingBlockState(
+            "minecraft:falling_block", new EntityData[]{variant}
+        ));
+        assertEquals(-1, EntityPackets.bedrockFallingBlockState(
+            "minecraft:zombie", new EntityData[]{variant}
+        ));
+    }
+
+    @Test
+    public void visibleExtraLayerFluidReplacesAirButWaterlogsSolids() {
+        assertEquals(42, ChunkTracker.visibleLayerBlockState(0, 42, 0));
+        assertEquals(7, ChunkTracker.visibleLayerBlockState(7, 42, 0));
+        assertEquals(0, ChunkTracker.visibleLayerBlockState(0, 0, 0));
+    }
+
+    @Test
+    public void allPlayersSleepingAdvancesClientHostedWorldsToDawn() {
+        assertTrue(WorldEffectPackets.advancesJavaTimeToDawn(LevelEvent.AllPlayersSleeping));
+        assertFalse(WorldEffectPackets.advancesJavaTimeToDawn(LevelEvent.SleepingPlayers));
+    }
 
     @Test
     public void emptyPendingChunkSectionReadsAsAirInsteadOfDisconnecting() {

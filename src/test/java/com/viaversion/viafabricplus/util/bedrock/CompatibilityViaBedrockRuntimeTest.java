@@ -23,6 +23,7 @@ public final class CompatibilityViaBedrockRuntimeTest {
         assertEquals(1001, CompatibilityViaBedrockRuntime.routeProtocolVersion());
         assertEquals(2168, CompatibilityViaBedrockRuntime.wireProtocolVersion());
         assertNotEquals(CompatibilityViaBedrockRuntime.routeProtocolVersion(), CompatibilityViaBedrockRuntime.wireProtocolVersion());
+        assertEquals("Bedrock 1.26.40 (isolated servers)", CompatibilityViaBedrockRuntime.isolatedRouteVersion().getName());
     }
 
 }
