@@ -6,15 +6,15 @@ on:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
-      - experiment/4.7
-      - modrinth/26.2-4.7
+      - experiment/4.8
+      - modrinth/26.2-4.8
   push:
     branches:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
-      - experiment/4.7
-      - modrinth/26.2-4.7
+      - experiment/4.8
+      - modrinth/26.2-4.8
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ permissions:
 
 env:
   VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
-  VIABEDROCK_REF: 72b3a22eb0b15c36dd4fc466b1fb67cc4844109f
+  VIABEDROCK_REF: bc6e9369e1e1e84012a7a5de23bd03bcc0dec758
 
 jobs:
   preserve-fork:
