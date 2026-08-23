@@ -23,6 +23,7 @@ public final class StockViaBedrockRuntimeTest {
         assertEquals(1001, StockViaBedrockRuntime.routeProtocolVersion());
         assertEquals(2168, StockViaBedrockRuntime.wireProtocolVersion());
         assertNotEquals(StockViaBedrockRuntime.routeProtocolVersion(), StockViaBedrockRuntime.wireProtocolVersion());
+        assertEquals("Bedrock 1.26.40 (isolated servers)", StockViaBedrockRuntime.isolatedRouteVersion().getName());
     }
 
 }
