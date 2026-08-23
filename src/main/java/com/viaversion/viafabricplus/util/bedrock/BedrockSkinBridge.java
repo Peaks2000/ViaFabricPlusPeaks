@@ -207,11 +207,15 @@ public final class BedrockSkinBridge {
             return null;
         }
 
-        // Persona/creator geometry may deliberately leave parts of the ordinary skin base layer
-        // transparent because Bedrock renders those pixels through custom bones. Java discards
-        // base-layer alpha, which used to turn those transparent black pixels into solid black
-        // arms and legs. Flatten the matching legal overlay into each missing base part first and
-        // use a representative opaque colour only where the creator texture has no legal pixels.
+        // Some high-resolution Bedrock payloads still reuse the right-limb UVs and leave both
+        // modern left-limb regions empty. Recover only those wholly absent limbs before making the
+        // Java base layer opaque; real asymmetric left-side pixels must remain authoritative.
+        mirrorMissingLeftLimb(normalized, 0, 16, 0, 32, 16, 48, 0, 48);    // leg
+        mirrorMissingLeftLimb(normalized, 40, 16, 40, 32, 32, 48, 48, 48); // arm
+
+        // Classic/custom geometry may deliberately leave parts of the ordinary skin base layer
+        // transparent. Flatten the matching legal overlay into each missing base part first and
+        // use a representative opaque colour only where the texture has no legal pixels.
         final int globalFallback = representativeOpaqueColor(normalized, 0, 0,
                 normalized.getWidth(), normalized.getHeight(), 0, 0, 0, 0, DEFAULT_MISSING_BASE_COLOR);
         repairBaseLayerPart(normalized, 0, 0, 32, 16, 32, 0, globalFallback);       // head
@@ -527,6 +531,43 @@ public final class BedrockSkinBridge {
                 image.setRGB(destinationX + x, destinationY + y, image.getRGB(readX, sourceY + y));
             }
         }
+    }
+
+    private static void mirrorMissingLeftLimb(final BufferedImage image,
+                                              final int sourceBaseX, final int sourceBaseY,
+                                              final int sourceOverlayX, final int sourceOverlayY,
+                                              final int destinationBaseX, final int destinationBaseY,
+                                              final int destinationOverlayX, final int destinationOverlayY) {
+        if (hasVisiblePixel(image, destinationBaseX, destinationBaseY, 16, 16)
+                || hasVisiblePixel(image, destinationOverlayX, destinationOverlayY, 16, 16)) {
+            return;
+        }
+        mirrorLimbFaces(image, sourceBaseX, sourceBaseY, destinationBaseX, destinationBaseY);
+        mirrorLimbFaces(image, sourceOverlayX, sourceOverlayY, destinationOverlayX, destinationOverlayY);
+    }
+
+    private static void mirrorLimbFaces(final BufferedImage image,
+                                        final int sourceX, final int sourceY,
+                                        final int destinationX, final int destinationY) {
+        copyRect(image, sourceX + 4, sourceY, destinationX + 4, destinationY, 4, 4, true);
+        copyRect(image, sourceX + 8, sourceY, destinationX + 8, destinationY, 4, 4, true);
+        copyRect(image, sourceX, sourceY + 4, destinationX + 8, destinationY + 4, 4, 12, true);
+        copyRect(image, sourceX + 4, sourceY + 4, destinationX + 4, destinationY + 4, 4, 12, true);
+        copyRect(image, sourceX + 8, sourceY + 4, destinationX, destinationY + 4, 4, 12, true);
+        copyRect(image, sourceX + 12, sourceY + 4, destinationX + 12, destinationY + 4, 4, 12, true);
+    }
+
+    private static boolean hasVisiblePixel(final BufferedImage image,
+                                           final int minX, final int minY,
+                                           final int width, final int height) {
+        for (int y = minY; y < minY + height; y++) {
+            for (int x = minX; x < minX + width; x++) {
+                if ((image.getRGB(x, y) >>> 24) != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void repairBaseLayerPart(final BufferedImage image,

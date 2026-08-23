@@ -50,6 +50,37 @@ public final class BedrockSkinBridgeTest {
     }
 
     @Test
+    public void absentModernLeftLimbsMirrorRightBaseAndOverlayFaces() {
+        final BufferedImage skin = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        skin.setRGB(0, 20, 0xFF102030);  // right-leg base side
+        skin.setRGB(4, 36, 0xFF405060);  // right-leg overlay side
+        skin.setRGB(40, 20, 0xFF708090); // right-arm base side
+        skin.setRGB(44, 36, 0xFFA0B0C0); // right-arm overlay side
+
+        final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(skin);
+
+        assertNotNull(normalized);
+        assertEquals(0xFF102030, normalized.getRGB(27, 52));
+        assertEquals(0xFF405060, normalized.getRGB(7, 52));
+        assertEquals(0xFF405060, normalized.getRGB(23, 52));
+        assertEquals(0xFF708090, normalized.getRGB(43, 52));
+        assertEquals(0xFFA0B0C0, normalized.getRGB(55, 52));
+        assertEquals(0xFFA0B0C0, normalized.getRGB(39, 52));
+    }
+
+    @Test
+    public void existingAsymmetricLeftLimbPixelsAreNeverMirroredOver() {
+        final BufferedImage skin = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        skin.setRGB(40, 20, 0xFF112233);
+        skin.setRGB(32, 52, 0xFFABCDEF);
+
+        final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(skin);
+
+        assertNotNull(normalized);
+        assertEquals(0xFFABCDEF, normalized.getRGB(32, 52));
+    }
+
+    @Test
     public void personaAtlasUsesBundledFallbackWithoutChangingClassicNormalization() {
         final BufferedImage atlas = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
         final SkinData creator = skinData(atlas, true, List.of());
