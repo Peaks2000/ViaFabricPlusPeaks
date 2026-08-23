@@ -45,8 +45,9 @@ import net.raphimc.viabedrock.protocol.types.primitive.ImageType;
 /**
  * Bridges Bedrock skin packets into Minecraft's local texture manager and converts the signed
  * Java player's already-loaded skin into Bedrock client-data claims. No skin upload service is
- * involved. Unsupported Bedrock geometry and persona pieces are deliberately reduced to the
- * ordinary Java wide/slim model.
+ * involved. Classic Bedrock pixels are reduced to the ordinary Java wide/slim model. Persona
+ * atlases are not classic skin textures, so they use Minecraft's deterministic bundled player
+ * skin instead of painting the creator UV map onto the Java model.
  */
 public final class BedrockSkinBridge {
 
@@ -151,7 +152,7 @@ public final class BedrockSkinBridge {
     }
 
     public static void installBedrockSkin(final UserConnection connection, final UUID playerUuid, final SkinData skin) {
-        if (connection != activeConnection || skin.skinData() == null) {
+        if (connection != activeConnection || playerUuid == null || skin.skinData() == null) {
             return;
         }
 
@@ -162,14 +163,24 @@ public final class BedrockSkinBridge {
             return;
         }
 
+        final Minecraft minecraft = Minecraft.getInstance();
+        final BufferedImage normalizedCape = normalizeCape(skin.capeData());
+        if (requiresPersonaFallback(skin)) {
+            minecraft.execute(() -> registerPersonaFallback(
+                    minecraft, connection, playerUuid, normalizedCape));
+            return;
+        }
+
         final BufferedImage normalizedSkin = normalizeSkin(skin.skinData());
         if (normalizedSkin == null) {
             return;
         }
-        final BufferedImage normalizedCape = normalizeCape(skin.capeData());
         final PlayerModelType model = isSlim(skin) ? PlayerModelType.SLIM : PlayerModelType.WIDE;
-        final Minecraft minecraft = Minecraft.getInstance();
         minecraft.execute(() -> registerBedrockSkin(minecraft, connection, playerUuid, normalizedSkin, normalizedCape, model));
+    }
+
+    static boolean requiresPersonaFallback(final SkinData skin) {
+        return skin.persona() || skin.personaPieces() != null && !skin.personaPieces().isEmpty();
     }
 
     public static PlayerSkin localBedrockSkin(final UUID playerUuid, final PlayerSkin fallback) {
@@ -410,6 +421,24 @@ public final class BedrockSkinBridge {
 
         BEDROCK_SKINS.put(playerUuid, new RegisteredSkin(
                 connection, new PlayerSkin(body, cape, null, model, true), skinPath, capePath));
+    }
+
+    private static void registerPersonaFallback(final Minecraft minecraft, final UserConnection connection,
+                                                final UUID playerUuid, final BufferedImage capeImage) {
+        if (connection != activeConnection) {
+            return;
+        }
+
+        final ClientSkin fallback = captureBuiltInClientSkin(minecraft, new GameProfile(playerUuid, ""));
+        if (fallback == null) {
+            return;
+        }
+        final BufferedImage normalizedSkin = normalizeSkin(fallback.skin());
+        if (normalizedSkin == null) {
+            return;
+        }
+        registerBedrockSkin(minecraft, connection, playerUuid, normalizedSkin, capeImage,
+                fallback.slim() ? PlayerModelType.SLIM : PlayerModelType.WIDE);
     }
 
     private static DynamicTexture dynamicTexture(final UUID playerUuid, final String kind, final BufferedImage image) {

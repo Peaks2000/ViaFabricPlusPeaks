@@ -15,8 +15,10 @@ import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.raphimc.viabedrock.protocol.model.SkinData;
 import net.raphimc.viabedrock.protocol.storage.AuthData;
 import org.junit.jupiter.api.Test;
 
@@ -29,13 +31,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class BedrockSkinBridgeTest {
 
     @Test
-    public void creatorTextureIsReducedToAnOpaqueStandardJavaModel() {
-        final BufferedImage creatorSkin = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
-        creatorSkin.setRGB(20, 20, 0xFF112233);
-        creatorSkin.setRGB(80, 16, 0x00445566);
-        creatorSkin.setRGB(80, 64, 0xFFCA8642); // right-arm overlay
+    public void highResolutionClassicTextureIsReducedToAnOpaqueStandardJavaModel() {
+        final BufferedImage classicSkin = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+        classicSkin.setRGB(20, 20, 0xFF112233);
+        classicSkin.setRGB(80, 16, 0x00445566);
+        classicSkin.setRGB(80, 64, 0xFFCA8642); // right-arm overlay
 
-        final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(creatorSkin);
+        final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(classicSkin);
 
         assertNotNull(normalized);
         assertEquals(64, normalized.getWidth());
@@ -45,6 +47,20 @@ public final class BedrockSkinBridgeTest {
         assertEquals(0xFFCA8642, normalized.getRGB(40, 16));
         assertEquals(0xFF000000, normalized.getRGB(20, 52) & 0xFF000000);
         assertTrue((normalized.getRGB(20, 52) & 0x00FFFFFF) != 0);
+    }
+
+    @Test
+    public void personaAtlasUsesBundledFallbackWithoutChangingClassicNormalization() {
+        final BufferedImage atlas = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+        final SkinData creator = skinData(atlas, true, List.of());
+        final SkinData creatorWithPieces = skinData(atlas, false, List.of(
+                new SkinData.PersonaPieceData("piece", "Body", UUID.randomUUID().toString(), false, "product")));
+        final SkinData classic = skinData(atlas, false, List.of());
+
+        assertTrue(BedrockSkinBridge.requiresPersonaFallback(creator));
+        assertTrue(BedrockSkinBridge.requiresPersonaFallback(creatorWithPieces));
+        assertFalse(BedrockSkinBridge.requiresPersonaFallback(classic));
+        assertNotNull(BedrockSkinBridge.normalizeSkin(classic.skinData()));
     }
 
     @Test
@@ -108,6 +124,12 @@ public final class BedrockSkinBridgeTest {
         assertTrue(BedrockSkinBridge.shouldPreferPreparedClientSkin(profileId, profileId));
         assertFalse(BedrockSkinBridge.shouldPreferPreparedClientSkin(
                 profileId, UUID.fromString("fedcba98-7654-3210-fedc-ba9876543210")));
+    }
+
+    private static SkinData skinData(final BufferedImage skin, final boolean persona,
+                                     final List<SkinData.PersonaPieceData> pieces) {
+        return new SkinData("skin", "", "", skin, List.of(), null, "", "", "",
+                false, persona, false, false, "", "", "Wide", "", pieces, List.of(), false);
     }
 
 }
