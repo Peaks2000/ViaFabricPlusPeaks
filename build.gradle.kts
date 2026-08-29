@@ -103,6 +103,7 @@ fun configureBedrockDependencies() {
         jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion")
         jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion:linux-x86_64")
         jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion:macos-aarch64")
+        jij("dev.kastle.webrtc:webrtc-java-m152test:$webrtcVersion:windows-x86_64")
     }
 }
 
