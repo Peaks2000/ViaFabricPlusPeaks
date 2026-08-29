@@ -15,6 +15,8 @@ platforms. Native classifiers included by this fork are:
   `b38f10af8ea3a093e3df104b3167466bee3440b22cb36bf163a25d293b7c6966` after Loom metadata was added.
 - macOS arm64: original CI artifact SHA-256
   `e28b2f2f2e5ecef60dcfe576f67240c1da6b0ab6b4a121894799c52ab41afc97`.
+- Windows x86-64: original CI artifact SHA-256
+  `0138082c11b0218a7ea4c7a301b86054407b4494df854d8ad1f87db97feeeddf`.
 
 The wrapper is Apache-2.0 and its native library bundles WebRTC under BSD-3-Clause. The exact
 upstream `LICENSE`, `NOTICE`, and JNI helper licence are preserved under
