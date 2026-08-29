@@ -89,6 +89,7 @@ jobs:
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-linux-x86_64.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-macos-aarch64.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-windows-x86_64.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/licenses/viafabricplus/LICENSE'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/licenses/webrtc-java-m152/LICENSE'
           unzip -p "$jar_path" assets/viafabricplus/lang/en_us.json | grep -q 'bedrock_worlds.viafabricplus'
