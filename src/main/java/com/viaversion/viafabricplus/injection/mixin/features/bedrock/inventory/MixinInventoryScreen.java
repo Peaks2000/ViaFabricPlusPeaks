@@ -22,7 +22,6 @@
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.inventory;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper;
 import com.viaversion.viaversion.api.type.Types;
@@ -45,11 +44,6 @@ public abstract class MixinInventoryScreen {
     private void sendBedrockPacket(CallbackInfo ci) {
         final UserConnection connection = ProtocolTranslator.getPlayNetworkUserConnection();
         if (connection == null) {
-            return;
-        }
-
-        if (StockViaBedrockRuntime.isStock(ProtocolTranslator.getTargetVersion(connection.getChannel()))) {
-            StockViaBedrockRuntime.sendOpenInventory(connection);
             return;
         }
 

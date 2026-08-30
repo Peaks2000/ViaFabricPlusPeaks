@@ -124,7 +124,7 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
-    public void isolatedServerRouteKeepsItsRouteIdentityOffTheBedrockWire() {
+    public void maintainedRouteKeepsItsRouteIdentityOffTheBedrockWire() {
         assertEquals(2168, new BedrockProtocol(2168).wireProtocolVersion(1001));
         assertEquals(2169, new BedrockProtocol().wireProtocolVersion(2169));
     }

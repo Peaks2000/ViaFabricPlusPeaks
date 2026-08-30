@@ -74,12 +74,13 @@ public final class BedrockProtocolCompatibility {
                 "Selected maintained Bedrock route for LAN/friends menu: {} (wire protocol {})",
                 requestedVersion.getName(), maintainedWireProtocol
             );
-            return requestedVersion;
+        } else {
+            NEXT_CONNECTION_PROTOCOL.set(UNKNOWN_PROTOCOL);
+            ViaFabricPlusImpl.INSTANCE.getLogger().info(
+                "Selected maintained Bedrock route for normal server menu: {}", requestedVersion.getName()
+            );
         }
-        NEXT_CONNECTION_PROTOCOL.set(UNKNOWN_PROTOCOL);
-        final ProtocolVersion stockVersion = StockViaBedrockRuntime.stockVersion();
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected stock Bedrock route for normal server menu: {}", stockVersion.getName());
-        return stockVersion;
+        return requestedVersion;
     }
 
     public static int consumeConnectionProtocol(final int fallbackProtocolVersion) {

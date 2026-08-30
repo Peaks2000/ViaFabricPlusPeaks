@@ -25,11 +25,11 @@ import com.google.gson.JsonObject;
 import com.viaversion.viafabricplus.api.settings.AbstractSetting;
 import com.viaversion.viafabricplus.api.settings.SettingGroup;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.util.bedrock.StockViaBedrockRuntime;
 import com.viaversion.viafabricplus.save.AbstractSave;
 import com.viaversion.viafabricplus.settings.SettingsManager;
 import com.viaversion.viafabricplus.settings.impl.GeneralSettings;
 import com.viaversion.viafabricplus.util.ChatUtil;
+import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 
 public final class SettingsSave extends AbstractSave {
@@ -102,7 +102,7 @@ public final class SettingsSave extends AbstractSave {
         }
 
         if (name.contains("Bedrock")) {
-            return StockViaBedrockRuntime.stockVersion();
+            return BedrockProtocolVersion.bedrockLatest;
         } else {
             return ProtocolVersion.getClosest(name);
         }
