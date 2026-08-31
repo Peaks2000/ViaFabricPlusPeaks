@@ -152,8 +152,16 @@ public final class BlockConnectionsEmulation1_12_2 {
     }
 
     private static boolean isApplicable() {
+        // Bedrock sends both halves of a double chest as separate block states.
+        // Always run the connection pass for Bedrock so the client can rebuild
+        // the native double-chest state; the setting remains opt-in for legacy
+        // Java protocol emulation.
+        if (ProtocolTranslator.isBedrock()) {
+            return true;
+        }
+
         if (GeneralSettings.INSTANCE.experimentalBlockConnections.getValue()) {
-            return ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2) || ProtocolTranslator.isBedrock();
+            return ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(ProtocolVersion.v1_12_2);
         } else {
             return false;
         }
