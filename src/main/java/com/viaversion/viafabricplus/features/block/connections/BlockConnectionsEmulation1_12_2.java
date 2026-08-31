@@ -28,6 +28,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
@@ -115,7 +116,11 @@ public final class BlockConnectionsEmulation1_12_2 {
 
                         final BlockState newState = connectionHandler.connect(blockState, levelReader, blockPos);
                         if (newState != blockState && insideX && z >= 0 && z < 16) {
-                            chunkAccess.setBlockState(blockPos, newState, UPDATE_FLAGS);
+                            if (levelReader instanceof Level level) {
+                                level.setBlock(blockPos, newState, UPDATE_FLAGS);
+                            } else {
+                                chunkAccess.setBlockState(blockPos, newState, UPDATE_FLAGS);
+                            }
                         }
                     }
                 }
