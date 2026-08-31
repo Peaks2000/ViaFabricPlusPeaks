@@ -74,6 +74,8 @@
   "bedrock_settings.viafabricplus.click_to_set_bedrock_account": "Click to set account for Bedrock Edition",
   "bedrock_settings.viafabricplus.replace_default_port": "Replace default port in server list",
   "bedrock_settings.viafabricplus.experimental_features": "Enable experimental features (may be unstable)",
+  "bedrock_settings.viafabricplus.render_own_skin": "Render your own skin on Bedrock servers",
+  "bedrock_settings.viafabricplus.render_other_skins": "Render other players' skins on Bedrock servers",
 
   "debug_settings.viafabricplus.queue_config_packets": "Queue config packets",
   "debug_settings.viafabricplus.disable_sequencing": "Disable sequencing",

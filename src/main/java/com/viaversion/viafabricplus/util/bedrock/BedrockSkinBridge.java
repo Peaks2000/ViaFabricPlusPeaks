@@ -15,6 +15,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.settings.impl.BedrockSettings;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -118,6 +119,9 @@ public final class BedrockSkinBridge {
     }
 
     public static void applyClientPlayerSkin(final UserConnection connection, final Map<String, Object> claims) {
+        if (!BedrockSettings.INSTANCE.renderOwnBedrockSkin.getValue()) {
+            return;
+        }
         final ClientSkin clientSkin;
         try {
             clientSkin = preparedClientSkin.get(CLIENT_SKIN_WAIT_SECONDS, TimeUnit.SECONDS);
@@ -153,6 +157,15 @@ public final class BedrockSkinBridge {
 
     public static void installBedrockSkin(final UserConnection connection, final UUID playerUuid, final SkinData skin) {
         if (connection != activeConnection || playerUuid == null || skin.skinData() == null) {
+            return;
+        }
+
+        final boolean isSelf = shouldPreferPreparedClientSkin(
+                connection.getProtocolInfo().getUuid(), playerUuid);
+        if (isSelf && !BedrockSettings.INSTANCE.renderOwnBedrockSkin.getValue()) {
+            return;
+        }
+        if (!isSelf && !BedrockSettings.INSTANCE.renderOtherBedrockSkins.getValue()) {
             return;
         }
 
@@ -381,7 +394,8 @@ public final class BedrockSkinBridge {
 
     private static void installClientSkin(final UserConnection connection, final ClientSkin clientSkin,
                                           final UUID playerUuid) {
-        if (clientSkin == null || !clientSkin.secure() || connection != activeConnection) {
+        if (clientSkin == null || !clientSkin.secure() || connection != activeConnection
+                || !BedrockSettings.INSTANCE.renderOwnBedrockSkin.getValue()) {
             return;
         }
         if (playerUuid == null) {

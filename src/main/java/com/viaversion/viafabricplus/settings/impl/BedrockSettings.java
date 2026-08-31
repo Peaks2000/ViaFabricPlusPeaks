@@ -69,6 +69,8 @@ public final class BedrockSettings extends SettingGroup {
     };
     public final BooleanSetting replaceDefaultPort = new BooleanSetting(this, Component.translatable("bedrock_settings.viafabricplus.replace_default_port"), true);
     public final BooleanSetting experimentalFeatures = new BooleanSetting(this, Component.translatable("bedrock_settings.viafabricplus.experimental_features"), true);
+    public final BooleanSetting renderOwnBedrockSkin = new BooleanSetting(this, Component.translatable("bedrock_settings.viafabricplus.render_own_skin"), true);
+    public final BooleanSetting renderOtherBedrockSkins = new BooleanSetting(this, Component.translatable("bedrock_settings.viafabricplus.render_other_skins"), true);
 
     public BedrockSettings() {
         super(Component.translatable("setting_group_name.viafabricplus.bedrock"));
