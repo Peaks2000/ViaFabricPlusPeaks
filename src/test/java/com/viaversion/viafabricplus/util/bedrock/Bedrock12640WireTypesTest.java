@@ -744,6 +744,12 @@ public final class Bedrock12640WireTypesTest {
         assertEquals(ContainerEnumName.AnvilInputContainer, anvil.getFullContainerName(0).name());
         assertEquals(ContainerEnumName.AnvilMaterialContainer, anvil.getFullContainerName(1).name());
         assertEquals(ContainerEnumName.AnvilResultPreviewContainer, anvil.getFullContainerName(2).name());
+        assertEquals(1, anvil.stackRequestSlot(0));
+        assertEquals(2, anvil.stackRequestSlot(1));
+        assertEquals(50, anvil.stackRequestSlot(2));
+        assertEquals(0, anvil.stackResponseSlot(1));
+        assertEquals(1, anvil.stackResponseSlot(2));
+        assertEquals(2, anvil.stackResponseSlot(50));
         assertTrue(anvil.isValidBlockTag("anvil"));
     }
 
