@@ -12,6 +12,7 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import com.viaversion.nbt.tag.CompoundTag;
+import com.viaversion.nbt.tag.IntTag;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.BlockPosition;
 import com.viaversion.viaversion.api.minecraft.VillagerData;
@@ -24,6 +25,7 @@ import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.chunk.BedrockBlockEntity;
 import net.raphimc.viabedrock.api.chunk.section.BedrockChunkSectionImpl;
 import net.raphimc.viabedrock.api.model.BlockState;
+import net.raphimc.viabedrock.api.model.container.AnvilContainer;
 import net.raphimc.viabedrock.api.model.container.ChestContainer;
 import net.raphimc.viabedrock.api.model.container.Container;
 import net.raphimc.viabedrock.api.model.container.CraftingTableContainer;
@@ -719,6 +721,30 @@ public final class Bedrock12640WireTypesTest {
         assertEquals(true, barrel.isValidBlockTag(CustomBlockTags.BARREL));
         assertEquals(true, shulker.isValidBlockTag(CustomBlockTags.SHULKER_BOX));
         assertEquals(true, enderChest.isValidBlockTag(CustomBlockTags.ENDER_CHEST));
+    }
+
+    @Test
+    public void pairedBedrockChestsOpenAsSixRowContainers() {
+        final CompoundTag pairedChestTag = new CompoundTag();
+        pairedChestTag.put("pairx", new IntTag(12));
+        pairedChestTag.put("pairz", new IntTag(-4));
+        final BedrockBlockEntity pairedChest = new BedrockBlockEntity(new BlockPosition(11, 64, -4), pairedChestTag);
+
+        assertEquals(54, InventoryPackets.blockContainerSize(CustomBlockTags.CHEST, pairedChest));
+        assertEquals(54, InventoryPackets.blockContainerSize(CustomBlockTags.TRAPPED_CHEST, pairedChest));
+        assertEquals(27, InventoryPackets.blockContainerSize(CustomBlockTags.BARREL, pairedChest));
+        assertEquals(27, InventoryPackets.blockContainerSize(CustomBlockTags.CHEST, null));
+    }
+
+    @Test
+    public void anvilUsesItsThreeSpecializedBedrockSlots() {
+        final AnvilContainer anvil = new AnvilContainer(null, (byte) 4, null, null);
+
+        assertEquals(3, anvil.size());
+        assertEquals(ContainerEnumName.AnvilInputContainer, anvil.getFullContainerName(0).name());
+        assertEquals(ContainerEnumName.AnvilMaterialContainer, anvil.getFullContainerName(1).name());
+        assertEquals(ContainerEnumName.AnvilResultPreviewContainer, anvil.getFullContainerName(2).name());
+        assertTrue(anvil.isValidBlockTag("anvil"));
     }
 
     @Test
