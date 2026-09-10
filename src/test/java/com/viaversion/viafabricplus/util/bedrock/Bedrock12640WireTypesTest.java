@@ -56,6 +56,7 @@ import net.raphimc.viabedrock.protocol.model.InventoryStackRequest;
 import net.raphimc.viabedrock.protocol.model.Position2f;
 import net.raphimc.viabedrock.protocol.model.Position3f;
 import net.raphimc.viabedrock.protocol.model.SkinData;
+import net.raphimc.viabedrock.protocol.packet.HudPackets;
 import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
 import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
 import net.raphimc.viabedrock.protocol.packet.EntityPackets;
@@ -117,6 +118,15 @@ public final class Bedrock12640WireTypesTest {
     public void allPlayersSleepingAdvancesClientHostedWorldsToDawn() {
         assertTrue(WorldEffectPackets.advancesJavaTimeToDawn(LevelEvent.AllPlayersSleeping));
         assertFalse(WorldEffectPackets.advancesJavaTimeToDawn(LevelEvent.SleepingPlayers));
+        assertTrue(WorldEffectPackets.allPlayersSleeping(2, 2));
+        assertFalse(WorldEffectPackets.allPlayersSleeping(2, 1));
+    }
+
+    @Test
+    public void scoreboardUsesVisibleNamesAndForkBranding() {
+        assertEquals("ViaFabricPlusPeaks", HudPackets.brandScoreboardText("ViaFabricPlus"));
+        assertEquals("https://github.com/Peaks2000/ViaFabricPlusPeaks",
+            HudPackets.brandScoreboardText("https://github.com/ViaVersion/ViaFabricPlus"));
     }
 
     @Test

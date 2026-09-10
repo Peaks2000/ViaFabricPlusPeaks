@@ -60,13 +60,16 @@ public final class HudPacketsSkinCaptureTest {
         final PacketWrapper wrapper = new PacketWrapperImpl(0, input, null);
         final List<UUID> capturedUuids = new ArrayList<>();
         final List<SkinData> capturedSkins = new ArrayList<>();
+        final List<HudPackets.PlayerListEntry> entries = new ArrayList<>();
 
-        assertEquals(1, HudPackets.captureInitialSkins(wrapper, (uuid, skin) -> {
+        assertEquals(1, HudPackets.translatePlayerList(wrapper, (uuid, skin) -> {
             capturedUuids.add(uuid);
             capturedSkins.add(skin);
-        }));
+        }, entries::add));
         assertEquals(List.of(addedUuid), capturedUuids);
         assertEquals(0xFF2468AC, capturedSkins.getFirst().skinData().getRGB(3, 7));
+        assertEquals(new HudPackets.PlayerListEntry(true, addedUuid, 42L, "player"), entries.get(0));
+        assertEquals(new HudPackets.PlayerListEntry(false, removedUuid, 0L, ""), entries.get(1));
         assertFalse(input.isReadable());
     }
 
