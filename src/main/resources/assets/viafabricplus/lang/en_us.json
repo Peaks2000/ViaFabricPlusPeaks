@@ -100,8 +100,6 @@
   "classic4j_library.viafabricplus.error.password": "Invalid password.",
   "classic4j_library.viafabricplus.error.verification": "User hasn't verified their email address yet.",
   "classic4j_library.viafabricplus.error.logincode": "Multi-factor authentication requested. Please check your email.",
-  "base.viafabricplus.join_blocked_server_anyway": "Join anyway",
-  "base.viafabricplus.possible_blacklisted_server": "(This might be a blacklisted server)",
   "setting_group_name.viafabricplus.classicube": "ClassiCube",
   "setting_group_name.viafabricplus.bedrock": "Bedrock",
   "authentication_settings.viafabricplus.automatically_select_cpe_in_classicube_server_list": "Automatically select CPE when using the ClassiCube server list",

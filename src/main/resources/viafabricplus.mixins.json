@@ -485,10 +485,6 @@
     "features.classic.cpe_extension.MixinLivingEntity",
     "features.classic.torch_wall_attachment.MixinClientPacketListener",
     "features.classic.torch_wall_attachment.MixinLevel",
-    "features.networking.blocked_server.MixinConnectScreen",
-    "features.networking.blocked_server.MixinConnectScreen_1",
-    "features.networking.blocked_server.MixinDisconnectedScreen",
-    "features.networking.blocked_server.MixinServerNameResolver",
     "features.skin_loading.MixinPlayerInfo",
     "features.skin_loading.MixinLivingEntityRenderer"
   ],
