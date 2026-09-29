@@ -90,7 +90,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             public void handleMfa(CCAccount account) {
                 reauthenticating = false;
                 SERVER_LIST = null;
-                ClassiCubeMFAScreen.INSTANCE.open(prevScreen);
+                ViaFabricPlusImpl.impl().screens().classiCubeMFAScreen().open(prevScreen);
             }
 
             @Override
@@ -103,7 +103,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
             @Override
             public void handleException(Throwable throwable) {
                 reauthenticating = false;
-                ViaFabricPlusImpl.INSTANCE.getLogger().error("Error while re-authenticating to ClassiCube!", throwable);
+                ViaFabricPlusImpl.impl().logger().error("Error while re-authenticating to ClassiCube!", throwable);
                 showErrorScreen(INSTANCE.getTitle(), throwable, prevScreen);
             }
         });
@@ -126,7 +126,7 @@ public final class ClassiCubeServerListScreen extends VFPScreen {
                 open(prevScreen);
                 setupUrlSubtitle(CLASSICUBE_SERVER_LIST_URL);
             }, throwable -> {
-                ViaFabricPlusImpl.INSTANCE.getLogger().error("Error while loading ClassiCube servers!", throwable);
+                ViaFabricPlusImpl.impl().logger().error("Error while loading ClassiCube servers!", throwable);
                 showErrorScreen(INSTANCE.getTitle(), throwable, prevScreen);
             });
             setupSubtitle(Component.translatable("betacraft.viafabricplus.loading"));

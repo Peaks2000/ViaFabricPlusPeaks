@@ -55,7 +55,7 @@ public abstract class MixinNetherNetDiscovery {
     private void repairTruncatedConnectResponse(ByteBuf buffer, long senderNetworkId, CallbackInfo ci) {
         final int omittedBytes = NetherNetDiscoveryPacketFixer.repairTruncatedConnectResponseLength(buffer);
         if (omittedBytes > 0) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Repaired a malformed NetherNet LAN response with {} omitted byte(s)", omittedBytes);
+            ViaFabricPlusImpl.impl().logger().warn("Repaired a malformed NetherNet LAN response with {} omitted byte(s)", omittedBytes);
         }
     }
 

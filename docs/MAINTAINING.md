@@ -7,21 +7,22 @@ If you're unsure about anything, feel free to ask in the [ViaVersion Discord](ht
 
 ## 1. Update Dependencies
 
-Update all upstream versions in `gradle.properties`. The main ones are:
+Update all upstream versions in `gradle/libs.versions.toml`. The main ones are:
 
-- `minecraft_version`
-- `fabric_loader_version`
-- `fabric_api_version`
-- `supported_minecraft_versions` (if needed)
+- `minecraft`
+- `fabric-loader`
+- `fabric-api`
 
-Also update versions in the `dependencies` block of `build.gradle.kts`.
+Also update `supported_minecraft_versions` in `gradle.properties` (if needed), and the Via\* versions in
+`gradle/libs.versions.toml`.
 
 ---
 
 ## 2. Update Core References
 
-- Update the `NATIVE_VERSION` field in `ProtocolTranslator`
+- Update the `NATIVE_VERSION` field in `ProtocolTranslationImpl`
 - Update protocol constants in `ViaFabricPlusProtocol`
+- Add the new version to `assets/viafabricplus/data/version-metadata.json`, its icon has to be a vanilla texture no other version uses yet
 
 ---
 
@@ -137,7 +138,7 @@ Check the ViaVersion/upstream protocol implementation.
 # Build Files
 
 - Common build logic comes from the [BaseProject Gradle convention plugin](https://github.com/florianreuth/BaseProject).
-- The root project includes all submodules (including optional ones like `viafabricplus-visuals`).
+- The root project includes all submodules (including ones like `viafabricplus-api`).
 - Be careful not to introduce unintended dependencies on optional submodules.
 
 ---
@@ -145,7 +146,7 @@ Check the ViaVersion/upstream protocol implementation.
 # Release Process
 
 1. Set `project_version` in `gradle.properties` to the new release version.
-2. Pin version IDs of `configureVVDependencies` in `build.gradle.kts`.
+2. Pin the Via\* versions in `viafabricplus-api/build.gradle.kts` to a release.
 3. Commit with the message:
 
    ```
@@ -161,7 +162,7 @@ Check the ViaVersion/upstream protocol implementation.
 After releasing:
 
 - Switch back to `-SNAPSHOT` version
-- Unpin `configureVVDependencies`
+- Unpin the Via* versions again
 
 Make a version bump commit:
 

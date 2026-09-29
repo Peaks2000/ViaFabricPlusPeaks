@@ -56,7 +56,7 @@ public final class ClassicShaderCompatibility {
             return true;
         } catch (ReflectiveOperationException | LinkageError e) {
             irisUnavailable = true;
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not preserve the Iris pipeline during a synthetic Classic world switch", e);
+            ViaFabricPlusImpl.impl().logger().warn("Could not preserve the Iris pipeline during a synthetic Classic world switch", e);
             return false;
         }
     }

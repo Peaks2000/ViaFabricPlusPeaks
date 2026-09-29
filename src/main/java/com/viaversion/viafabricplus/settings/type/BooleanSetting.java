@@ -21,25 +21,37 @@
 
 package com.viaversion.viafabricplus.settings.type;
 
-import com.google.gson.JsonObject;
-import com.viaversion.viafabricplus.settings.AbstractSetting;
 import com.viaversion.viafabricplus.settings.SettingGroup;
+import com.viaversion.viafabricplus.settings.base.BooleanSettingImpl;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 
-public class BooleanSetting extends AbstractSetting<Boolean> {
+public class BooleanSetting extends BooleanSettingImpl {
+    private boolean locked;
+    private Boolean initialValue;
 
-    public BooleanSetting(SettingGroup parent, MutableComponent name, Boolean defaultValue) {
-        super(parent, name, defaultValue);
+    public BooleanSetting(final SettingGroup group, final MutableComponent name, final boolean defaultValue) {
+        super(((TranslatableContents) name.getContents()).getKey().split("viafabricplus\\.", 2)[1], name, defaultValue);
+        group.register(this.key(), this);
+    }
+
+    public boolean getValue() {
+        if (!this.locked) return this.isActive();
+        if (this.initialValue == null) this.initialValue = this.defaultValue();
+        return this.initialValue;
+    }
+
+    public void setValue(final boolean value) {
+        this.setActive(value);
     }
 
     @Override
-    public void write(JsonObject object) {
-        object.addProperty(getTranslationKey(), getCurrentValue());
+    public void setActive(final boolean value) {
+        if (this.locked && this.initialValue == null) this.initialValue = value;
+        super.setActive(value);
     }
 
-    @Override
-    public void read(JsonObject object) {
-        setValue(object.get(getTranslationKey()).getAsBoolean());
+    public void lockValue() {
+        this.locked = true;
     }
-
 }

@@ -83,7 +83,7 @@ public final class BlockedServerOverrideTest {
 
     @Test
     public void connectionResolutionScopeExcludesOtherThreads() throws InterruptedException {
-        final ServerAddress address = ServerAddress.parseString("blocked.example");
+        final ServerAddress address = new ServerAddress("blocked.example", 25565);
         final AtomicBoolean visibleToServerPinger = new AtomicBoolean(true);
 
         BlockedServerOverride.beginConnectionResolution(address);

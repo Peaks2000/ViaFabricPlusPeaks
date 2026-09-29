@@ -25,9 +25,6 @@ import com.google.gson.JsonObject;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.save.AbstractSave;
 import de.florianreuth.classic4j.model.classicube.account.CCAccount;
-import de.florianreuth.classic4j.util.CookieStore;
-import java.util.HashMap;
-import java.util.Map;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.util.MinecraftAuth4To5Migrator;
@@ -36,7 +33,6 @@ import net.raphimc.viabedrock.protocol.data.ProtocolConstants;
 public final class AccountsSave extends AbstractSave {
 
     private BedrockAuthManager bedrockAccount;
-    private CCAccount classicubeAccount;
 
     public AccountsSave() {
         super("accounts");
@@ -47,12 +43,7 @@ public final class AccountsSave extends AbstractSave {
         if (bedrockAccount != null) {
             object.add("bedrockV3", BedrockAuthManager.toJson(bedrockAccount));
         }
-        if (classicubeAccount != null) {
-            object.add("classicube", classicubeAccount.asJson());
-            final JsonObject cookies = new JsonObject();
-            classicubeAccount.cookieStore.getMap().forEach(cookies::addProperty);
-            object.add("classicube_cookies", cookies);
-        }
+
     }
 
     @Override
@@ -63,15 +54,7 @@ public final class AccountsSave extends AbstractSave {
             bedrockAccount.getMinecraftMultiplayerToken().refreshIfExpired();
         });
         handleAccount("bedrockV3", object, account -> bedrockAccount = BedrockAuthManager.fromJson(MinecraftAuth.createHttpClient(), ProtocolConstants.BEDROCK_VERSION_NAME, account));
-        handleAccount("classicube", object, account -> classicubeAccount = CCAccount.fromJson(account));
-        handleAccount("classicube_cookies", object, cookies -> {
-            if (classicubeAccount == null) {
-                return;
-            }
-            final Map<String, String> cookieValues = new HashMap<>();
-            cookies.entrySet().forEach(entry -> cookieValues.put(entry.getKey(), entry.getValue().getAsString()));
-            classicubeAccount.cookieStore.merge(new CookieStore(cookieValues));
-        });
+
     }
 
     private void handleAccount(final String name, final JsonObject object, final AccountConsumer output) {
@@ -79,7 +62,7 @@ public final class AccountsSave extends AbstractSave {
             try {
                 output.accept(object.get(name).getAsJsonObject());
             } catch (Exception e) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().error("Failed to read {} account!", name, e);
+                ViaFabricPlusImpl.impl().logger().error("Failed to read {} account!", name, e);
             }
         }
     }
@@ -93,11 +76,11 @@ public final class AccountsSave extends AbstractSave {
     }
 
     public CCAccount getClassicubeAccount() {
-        return classicubeAccount;
+        return com.viaversion.viafabricplus.features.global.ClassiCubeAccount.get();
     }
 
     public void setClassicubeAccount(CCAccount classicubeAccount) {
-        this.classicubeAccount = classicubeAccount;
+        com.viaversion.viafabricplus.features.global.ClassiCubeAccount.set(classicubeAccount);
     }
 
     @FunctionalInterface

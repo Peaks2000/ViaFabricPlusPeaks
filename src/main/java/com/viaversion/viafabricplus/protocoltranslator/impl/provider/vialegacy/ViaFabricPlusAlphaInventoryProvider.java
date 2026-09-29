@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy;
 
-import com.viaversion.viafabricplus.protocoltranslator.translator.ItemTranslator;
+import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.item.Item;
 import java.util.List;
@@ -51,7 +51,7 @@ public final class ViaFabricPlusAlphaInventoryProvider extends AlphaInventoryPro
 
     private Item convertItem(final ItemStack stack) {
         if (!stack.isEmpty()) {
-            final Item item = ItemTranslator.mcToVia(stack, LegacyProtocolVersion.b1_8tob1_8_1);
+            final Item item = ViaFabricPlus.api().conversions().translateItem(stack, LegacyProtocolVersion.b1_8tob1_8_1);
             if (item != null) {
                 return item.copy();
             }
@@ -107,7 +107,7 @@ public final class ViaFabricPlusAlphaInventoryProvider extends AlphaInventoryPro
     @Override
     public void addToInventory(UserConnection connection, Item item) {
         final Player player = Minecraft.getInstance().player;
-        player.getInventory().add(ItemTranslator.viaToMc(item, LegacyProtocolVersion.b1_8tob1_8_1));
+        player.getInventory().add(ViaFabricPlus.api().conversions().translateItem(item, LegacyProtocolVersion.b1_8tob1_8_1));
     }
 
 }

@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.allow_new_line;
 
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.FormattedText;

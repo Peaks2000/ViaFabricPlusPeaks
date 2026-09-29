@@ -56,27 +56,32 @@ public final class BedrockWorldDiscoveryTest {
     public void selectsWireProtocolFromAdvertisement() {
         assertEquals(-1, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(4));
         assertEquals(-1, BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(5));
-        assertEquals(2169, BedrockProtocolCompatibility.protocolForGameVersion("1.26.50"));
-        assertEquals(2168, BedrockProtocolCompatibility.protocolForGameVersion("26.40"));
-        assertEquals(2168, BedrockProtocolCompatibility.initialProtocol(-1));
-        assertEquals(2169, BedrockProtocolCompatibility.adjacentProtocol(2168, true));
-        assertEquals(2168, BedrockProtocolCompatibility.adjacentProtocol(2169, false));
-        assertEquals(-1, BedrockProtocolCompatibility.adjacentProtocol(2168, false));
+        assertEquals(2193, BedrockProtocolCompatibility.protocolForGameVersion("1.26.52"));
+        assertEquals(2193, BedrockProtocolCompatibility.protocolForGameVersion("26.51.2"));
+        assertEquals(-1, BedrockProtocolCompatibility.protocolForGameVersion("26.40"));
+        assertEquals(-1, BedrockProtocolCompatibility.protocolForGameVersion("26.50"));
+        assertEquals(-1, BedrockProtocolCompatibility.protocolForGameVersion("26.520"));
+        assertEquals(-1, BedrockProtocolCompatibility.protocolForGameVersion("26.60.28"));
+        assertEquals(2193, BedrockProtocolCompatibility.initialProtocol(-1));
+        assertEquals(-1, BedrockProtocolCompatibility.adjacentProtocol(2193, true));
+        assertEquals(-1, BedrockProtocolCompatibility.adjacentProtocol(2193, false));
+        assertFalse(BedrockProtocolCompatibility.isSupported(2168));
+        assertFalse(BedrockProtocolCompatibility.isSupported(2169));
     }
 
     @Test
     public void maintainedRouteCanBeSelectedForEveryReconnect() {
         assertEquals(
-            BedrockProtocolVersion.bedrockLatest,
-            BedrockProtocolCompatibility.routeForConnection(BedrockProtocolVersion.bedrockLatest, 2168)
+            BedrockProtocolVersion.BEDROCK_LATEST,
+            BedrockProtocolCompatibility.routeForConnection(BedrockProtocolVersion.BEDROCK_LATEST, 2193)
         );
-        assertEquals(2168, BedrockProtocolCompatibility.consumeConnectionProtocol(2167));
+        assertEquals(2193, BedrockProtocolCompatibility.consumeConnectionProtocol(2167));
 
         assertEquals(
-            BedrockProtocolVersion.bedrockLatest,
-            BedrockProtocolCompatibility.routeForConnection(BedrockProtocolVersion.bedrockLatest, 2168)
+            BedrockProtocolVersion.BEDROCK_LATEST,
+            BedrockProtocolCompatibility.routeForConnection(BedrockProtocolVersion.BEDROCK_LATEST, 2193)
         );
-        assertEquals(2168, BedrockProtocolCompatibility.consumeConnectionProtocol(2167));
+        assertEquals(2193, BedrockProtocolCompatibility.consumeConnectionProtocol(2167));
     }
 
     @Test

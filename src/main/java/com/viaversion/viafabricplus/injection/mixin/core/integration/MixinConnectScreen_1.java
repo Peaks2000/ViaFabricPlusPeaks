@@ -21,12 +21,17 @@
 
 package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.viaversion.viafabricplus.features.rendering.ShaderDisabler;
 import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
+import com.viaversion.viafabricplus.ViaFabricPlus;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import com.viaversion.viafabricplus.api.protocoltranslator.ProtocolTranslation;
+import com.viaversion.viafabricplus.features.global.ClassiCubeAccount;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
-import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslationImpl;
 import com.viaversion.viafabricplus.protocoltranslator.impl.provider.vialegacy.ViaFabricPlusClassicMPPassProvider;
 import com.viaversion.viafabricplus.protocoltranslator.util.ProtocolVersionDetector;
 import com.viaversion.viafabricplus.save.SaveManager;
@@ -82,12 +87,12 @@ public abstract class MixinConnectScreen_1 {
         final InetSocketAddress address = (InetSocketAddress) original.call(instance);
         final IServerData mixinServerInfo = (IServerData) this.val$server;
 
-        ProtocolVersion targetVersion = ProtocolTranslator.getTargetVersion();
+        ProtocolVersion targetVersion = ViaFabricPlus.api().targetVersion();
         if (mixinServerInfo.viaFabricPlus$forcedVersion() != null && !mixinServerInfo.viaFabricPlus$passedDirectConnectScreen()) {
             targetVersion = mixinServerInfo.viaFabricPlus$forcedVersion();
             mixinServerInfo.viaFabricPlus$passDirectConnectScreen(false); // reset state
         }
-        if (targetVersion == ProtocolTranslator.AUTO_DETECT_PROTOCOL) {
+        if (targetVersion == ProtocolTranslation.AUTO_DETECT_VERSION) {
             // If the server got already pinged, try to use that version if it's valid. Otherwise, perform auto-detect
             final boolean serverPinged = this.val$server.state() == ServerData.State.SUCCESSFUL || this.val$server.state() == ServerData.State.INCOMPATIBLE;
             if (serverPinged) {
@@ -96,15 +101,15 @@ public abstract class MixinConnectScreen_1 {
             if (!serverPinged || !targetVersion.isKnown()) {
                 this.this$0.updateStatus(Component.translatable("base.viafabricplus.detecting_server_version"));
                 try {
-                    targetVersion = ProtocolVersionDetector.get(this.val$hostAndPort, address, ProtocolTranslator.NATIVE_VERSION);
+                    targetVersion = ProtocolVersionDetector.get(this.val$hostAndPort, address, ProtocolTranslationImpl.NATIVE_VERSION);
                 } catch (final ConnectException ignored) {
                     // Don't let this one through as not relevant
                 }
             }
         }
         targetVersion = BedrockProtocolCompatibility.routeForConnection(targetVersion, mixinServerInfo.viaFabricPlus$bedrockWireProtocol());
-        ProtocolTranslator.setTargetVersion(targetVersion, true);
-        if (targetVersion.equals(BedrockProtocolVersion.bedrockLatest)) {
+        ViaFabricPlus.api().protocolTranslation().setTargetVersion(targetVersion, true);
+        if (targetVersion.equals(BedrockProtocolVersion.BEDROCK_LATEST)) {
             BedrockSkinBridge.prepareClientSkin();
         }
         this.viaFabricPlus$useClassiCubeAccount = ClassiCubeSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;
@@ -120,7 +125,7 @@ public abstract class MixinConnectScreen_1 {
     private ChannelFuture resetProtocolVersionAfterDisconnect(InetSocketAddress address, EventLoopGroupHolder eventLoopGroupHolder, Connection connection, Operation<ChannelFuture> original) {
         final ChannelFuture future = original.call(address, eventLoopGroupHolder, connection);
         final Channel channel = future.channel();
-        ProtocolTranslator.injectPreviousVersionReset(channel);
+        ViaFabricPlusImpl.impl().protocolTranslation().injectionPreviousVersionHandler(channel);
 
         final ConnectionType connectionType = this.viaFabricPlus$connectionType;
         if (connectionType != ConnectionType.NONE) {
@@ -132,11 +137,8 @@ public abstract class MixinConnectScreen_1 {
 
     @Redirect(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/User;getName()Ljava/lang/String;"))
     private String useClassiCubeUsername(User instance) {
-        if (this.viaFabricPlus$useClassiCubeAccount) {
-            final CCAccount account = SaveManager.INSTANCE.getAccountsSave().getClassicubeAccount();
-            if (account != null) {
-                return account.username();
-            }
+        if (this.viaFabricPlus$useClassiCubeAccount && ClassiCubeAccount.get() != null) {
+            return ClassiCubeAccount.get().username();
         }
         return instance.getName();
     }

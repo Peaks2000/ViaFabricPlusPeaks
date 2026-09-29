@@ -1,19 +1,28 @@
 pluginManagement {
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-        maven("https://maven.florianreuth.de/snapshots")
-        maven("https://maven.fabricmc.net/")
-    }
+    includeBuild("build-logic")
 
-    plugins {
-        id("net.fabricmc.fabric-loom") version "1.17-SNAPSHOT"
-        id("de.florianreuth.baseproject") version "3.0.0-SNAPSHOT"
+    repositories {
+        gradlePluginPortal()
+        maven("https://maven.fabricmc.net/")
     }
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    id("base.settings")
+    id("base.fabric_settings")
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven(rootDir.resolve("vendor/maven"))
+        maven("https://maven.lenni0451.net/everything")
+        maven("https://jitpack.io") {
+            content { includeGroup("com.github.oryxel1") }
+        }
+        maven("https://repo.viaversion.com")
+        maven("https://maven.terraformersmc.com/releases")
+        //mavenLocal() // Uncomment during Minecraft updates for preview VV/VB builds
+    }
 }
 
 rootProject.name = "viafabricplus"

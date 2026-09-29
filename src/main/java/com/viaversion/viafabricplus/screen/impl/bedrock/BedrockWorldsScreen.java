@@ -124,7 +124,7 @@ public final class BedrockWorldsScreen extends VFPScreen {
 
     private List<BedrockWorld> discoveryError(final String message, final Throwable throwable) {
         this.loadFailed = true;
-        ViaFabricPlusImpl.INSTANCE.getLogger().log(Level.ERROR, message, throwable);
+        ViaFabricPlusImpl.impl().logger().log(Level.ERROR, message, throwable);
         return List.of();
     }
 
@@ -176,11 +176,11 @@ public final class BedrockWorldsScreen extends VFPScreen {
                 }
             }, Util.nonCriticalIoPool()).whenComplete((clientHostedNonce, throwable) -> Minecraft.getInstance().execute(() -> {
                 if (throwable != null) {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().error("Failed to join Xbox multiplayer session", throwable);
+                    ViaFabricPlusImpl.impl().logger().error("Failed to join Xbox multiplayer session", throwable);
                     this.setupSubtitle(Component.literal("Could not join the Xbox multiplayer session"));
                     this.joinButton.active = true;
                 } else {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().info("Joined Xbox multiplayer session and received its client-hosted nonce; starting game connection");
+                    ViaFabricPlusImpl.impl().logger().info("Joined Xbox multiplayer session and received its client-hosted nonce; starting game connection");
                     this.connect(world.withConnection(world.connection().withClientHostedNonce(clientHostedNonce)));
                 }
             }));
@@ -201,10 +201,10 @@ public final class BedrockWorldsScreen extends VFPScreen {
     }
 
     private void connect(final BedrockWorld world, final int protocolVersion) {
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), protocolVersion);
+        ViaFabricPlusImpl.impl().logger().info("Connecting to Bedrock world '{}' with wire protocol {}", world.name(), protocolVersion);
         final BedrockWorld.Connection connection = world.connection();
         switch (connection.type()) {
-            case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.bedrockLatest, protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
+            case RAKNET -> ConnectionUtil.connect(world.name(), connection.address(), BedrockProtocolVersion.BEDROCK_LATEST, protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
             case NETHERNET -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetAddress(connection.address()), protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
             case NETHERNET_JSON_RPC -> ConnectionUtil.connectNetherNet(world.name(), new NetherNetJsonRpcAddress(connection.address(), connection.signalingId()), protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
             case NETHERNET_DISCOVERY -> ConnectionUtil.connectNetherNet(world.name(), connection.discoveryAddress(), protocolVersion, world.useBedrockAccount(), connection.clientHostedNonce());
@@ -237,7 +237,7 @@ public final class BedrockWorldsScreen extends VFPScreen {
             this.connectingProtocol = nextProtocol;
         }
 
-        ViaFabricPlusImpl.INSTANCE.getLogger().info(
+        ViaFabricPlusImpl.impl().logger().info(
             "Bedrock host rejected protocol {} as {}; retrying '{}' with protocol {}",
             previousProtocol, serverIsNewer ? "client-old" : "server-old", world.name(), nextProtocol
         );

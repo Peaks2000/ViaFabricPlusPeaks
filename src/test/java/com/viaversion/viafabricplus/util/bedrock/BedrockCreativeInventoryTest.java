@@ -23,39 +23,39 @@ public final class BedrockCreativeInventoryTest {
     @Test
     public void rejectedCursorIsMirroredIntoEveryBedrockCreativeMenu() {
         assertTrue(BedrockCreativeInventory.shouldRestoreRejectedCursor(
-                BedrockProtocolVersion.bedrockLatest, 0, false, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, false, true));
         assertTrue(BedrockCreativeInventory.shouldRestoreRejectedCursor(
                 CompatibilityViaBedrockRuntime.isolatedRouteVersion(), 0, false, true));
 
         assertFalse(BedrockCreativeInventory.shouldRestoreRejectedCursor(
                 ProtocolVersion.v1_21_11, 0, false, true));
         assertFalse(BedrockCreativeInventory.shouldRestoreRejectedCursor(
-                BedrockProtocolVersion.bedrockLatest, 1, false, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 1, false, true));
         assertFalse(BedrockCreativeInventory.shouldRestoreRejectedCursor(
-                BedrockProtocolVersion.bedrockLatest, 0, true, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, true, true));
         assertFalse(BedrockCreativeInventory.shouldRestoreRejectedCursor(
-                BedrockProtocolVersion.bedrockLatest, 0, false, false));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, false, false));
     }
 
     @Test
     public void emptyContentGuardRemainsBedrockCreativeOnly() {
         assertTrue(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
-                BedrockProtocolVersion.bedrockLatest, 0, true, false, true, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, true, false, true, true));
         assertTrue(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
                 CompatibilityViaBedrockRuntime.isolatedRouteVersion(), 0, true, false, true, true));
 
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
                 ProtocolVersion.v1_21_11, 0, true, false, true, true));
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
-                BedrockProtocolVersion.bedrockLatest, 1, true, false, true, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 1, true, false, true, true));
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
-                BedrockProtocolVersion.bedrockLatest, 0, false, false, true, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, false, false, true, true));
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
-                BedrockProtocolVersion.bedrockLatest, 0, true, true, true, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, true, true, true, true));
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
-                BedrockProtocolVersion.bedrockLatest, 0, true, false, false, true));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, true, false, false, true));
         assertFalse(BedrockCreativeInventory.shouldProtectRejectedCursorFromEmptyContent(
-                BedrockProtocolVersion.bedrockLatest, 0, true, false, true, false));
+                BedrockProtocolVersion.BEDROCK_LATEST, 0, true, false, true, false));
     }
 
 }

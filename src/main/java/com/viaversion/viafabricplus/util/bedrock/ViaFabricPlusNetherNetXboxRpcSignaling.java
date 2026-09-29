@@ -45,7 +45,7 @@ public final class ViaFabricPlusNetherNetXboxRpcSignaling extends NetherNetXboxR
 
     @Override
     protected void onConnected(final ChannelHandlerContext context) {
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Xbox Friends signaling connected; requesting TURN credentials");
+        ViaFabricPlusImpl.impl().logger().info("Xbox Friends signaling connected; requesting TURN credentials");
         super.onConnected(context);
     }
 
@@ -53,7 +53,7 @@ public final class ViaFabricPlusNetherNetXboxRpcSignaling extends NetherNetXboxR
     public void sendSignal(final String target, final String signal) {
         final int separator = signal.indexOf(' ');
         final String signalType = separator >= 0 ? signal.substring(0, separator) : signal;
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Sending NetherNet {} through Xbox Friends signaling", signalType);
+        ViaFabricPlusImpl.impl().logger().info("Sending NetherNet {} through Xbox Friends signaling", signalType);
         super.sendSignal(this.signalingId, signal);
     }
 
@@ -63,14 +63,14 @@ public final class ViaFabricPlusNetherNetXboxRpcSignaling extends NetherNetXboxR
             final JsonObject message = JsonParser.parseString(frame.text()).getAsJsonObject();
             if (message.has("error")) {
                 final JsonElement error = message.get("error");
-                ViaFabricPlusImpl.INSTANCE.getLogger().warn("Xbox Friends signaling returned an error: {}", summarizeError(error));
+                ViaFabricPlusImpl.impl().logger().warn("Xbox Friends signaling returned an error: {}", summarizeError(error));
             } else if (message.has("method")) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().info("Xbox Friends signaling received method {}", message.get("method").getAsString());
+                ViaFabricPlusImpl.impl().logger().info("Xbox Friends signaling received method {}", message.get("method").getAsString());
             } else if (message.has("result")) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().info("Xbox Friends signaling request succeeded");
+                ViaFabricPlusImpl.impl().logger().info("Xbox Friends signaling request succeeded");
             }
         } catch (final Throwable throwable) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not inspect an Xbox Friends signaling response", throwable);
+            ViaFabricPlusImpl.impl().logger().warn("Could not inspect an Xbox Friends signaling response", throwable);
         }
         super.channelRead0(context, frame);
     }

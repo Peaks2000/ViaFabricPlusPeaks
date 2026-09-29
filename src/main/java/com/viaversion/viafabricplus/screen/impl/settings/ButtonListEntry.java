@@ -21,39 +21,18 @@
 
 package com.viaversion.viafabricplus.screen.impl.settings;
 
+import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.settings.type.ButtonSetting;
-import com.viaversion.viafabricplus.screen.VFPListEntry;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.NonNull;
 
 public final class ButtonListEntry extends VFPListEntry {
+    private final ButtonSetting setting;
 
-    private final ButtonSetting value;
-
-    public ButtonListEntry(ButtonSetting value) {
-        this.value = value;
+    public ButtonListEntry(final ButtonSetting setting) { this.setting = setting; }
+    @Override public Component getNarration() { return this.setting.displayValue(); }
+    @Override public void mappedMouseClicked() { this.setting.getValue().run(); }
+    @Override public void mappedRender(final GuiGraphicsExtractor context, final int width, final int height) {
+        this.renderScrollableText(context, this.setting.displayValue(), SLOT_MARGIN);
     }
-
-    @Override
-    public @NonNull Component getNarration() {
-        return this.value.displayValue();
-    }
-
-    @Override
-    public void mappedMouseClicked(double mouseX, double mouseY, int button) {
-        this.value.getValue().run();
-    }
-
-    @Override
-    public void mappedRender(GuiGraphicsExtractor context, int x, int y, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-        final Font textRenderer = Minecraft.getInstance().font;
-
-        context.centeredText(textRenderer, this.value.displayValue(), entryWidth / 2, entryHeight / 2 - textRenderer.lineHeight / 2, -1);
-
-        renderTooltip(value.getTooltip(), mouseX, mouseY);
-    }
-
 }

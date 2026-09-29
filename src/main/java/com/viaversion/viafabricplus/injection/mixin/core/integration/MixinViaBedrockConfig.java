@@ -24,16 +24,17 @@ package com.viaversion.viafabricplus.injection.mixin.core.integration;
 import com.viaversion.viafabricplus.settings.impl.BedrockSettings;
 import net.raphimc.viabedrock.ViaBedrockConfig;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(value = ViaBedrockConfig.class, remap = false)
 public abstract class MixinViaBedrockConfig {
 
     /**
-     * @author Florian Reuth (EnZaXD)
-     * @reason Move setting into the settings GUI, changes default to true
+     * Keeps the legacy preference accessor available after ViaBedrock promoted
+     * experimental translations into its native core. It is no longer an
+     * overwrite: the upstream configuration deliberately has no such method.
+     * Native translation registration remains owned by BedrockProtocol.
      */
-    @Overwrite
+    @Deprecated
     public boolean shouldEnableExperimentalFeatures() {
         return BedrockSettings.INSTANCE.experimentalFeatures.getValue();
     }

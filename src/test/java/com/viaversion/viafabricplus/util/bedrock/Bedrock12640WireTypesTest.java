@@ -18,7 +18,7 @@ import com.viaversion.viaversion.api.minecraft.VillagerData;
 import com.viaversion.viaversion.api.minecraft.entitydata.EntityData;
 import com.viaversion.viaversion.api.minecraft.item.StructuredItem;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2ObjectOpenHashMap;
-import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPackets26_1;
+import com.viaversion.viaversion.protocols.v26_2to26_3.packet.ClientboundPackets26_3;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.chunk.BedrockBlockEntity;
@@ -36,12 +36,12 @@ import net.raphimc.viabedrock.api.model.entity.LivingEntity;
 import net.raphimc.viabedrock.api.util.PacketFactory;
 import net.raphimc.viabedrock.protocol.BedrockProtocol;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
-import net.raphimc.viabedrock.protocol.data.enums.bedrock.ContainerType;
-import net.raphimc.viabedrock.protocol.data.enums.bedrock.ActorDataIDs;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerType;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.ActorDataIds;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.LevelEvent;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.ContainerEnumName;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.DataItemType;
-import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputPacketPayload_InputData;
+import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputData;
 import net.raphimc.viabedrock.protocol.data.enums.java.generated.GameMode;
 import net.raphimc.viabedrock.protocol.data.generated.bedrock.CustomBlockTags;
 import net.raphimc.viabedrock.protocol.model.BedrockItem;
@@ -58,7 +58,7 @@ import net.raphimc.viabedrock.protocol.packet.WorldEffectPackets;
 import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
 import net.raphimc.viabedrock.protocol.packet.EntityPackets;
 import net.raphimc.viabedrock.protocol.packet.InventoryPackets;
-import net.raphimc.viabedrock.experimental.rewriter.EntityMetadataRewriter;
+import net.raphimc.viabedrock.protocol.rewriter.EntityMetadataRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BrewingStandBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
@@ -93,7 +93,7 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void fallingBlockSpawnUsesItsBedrockVariantState() {
         final EntityData variant = new EntityData(
-            ActorDataIDs.VARIANT.getValue(), EntityDataTypesBedrock.INT, 123_456
+            ActorDataIds.VARIANT.getValue(), EntityDataTypesBedrock.INT, 123_456
         );
 
         assertEquals(123_456, EntityPackets.bedrockFallingBlockState(
@@ -160,7 +160,7 @@ public final class Bedrock12640WireTypesTest {
             BedrockTypes.STRING.write(buffer, "cape-id");
             BedrockTypes.STRING.write(buffer, "full-skin-id");
             buffer.writeByte(0); // slim arm size
-            buffer.writeIntLE(0xFF123456);
+            buffer.writeIntLE(0x78123456);
 
             BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 1); // persona pieces
             BedrockTypes.STRING.write(buffer, "piece-id");
@@ -171,7 +171,7 @@ public final class Bedrock12640WireTypesTest {
 
             BedrockTypes.UNSIGNED_VAR_INT.write(buffer, 1); // persona tints
             BedrockTypes.STRING.write(buffer, "persona_hair");
-            buffer.writeIntLE(0xFF010203);
+            buffer.writeIntLE(0x12010203);
             buffer.writeIntLE(0xFF040506);
             buffer.writeIntLE(0xFF070809);
             buffer.writeIntLE(0xFF0A0B0C);
@@ -191,11 +191,22 @@ public final class Bedrock12640WireTypesTest {
             assertEquals(1, skin.animations().size());
             assertEquals(2, skin.animations().getFirst().type());
             assertEquals("Slim", skin.armSize());
+            assertEquals("#78123456", skin.skinColor());
+            assertEquals("#12010203", skin.tintColors().getFirst().colors().getFirst());
             assertEquals("Hair", skin.personaPieces().getFirst().type());
             assertEquals("persona_hair", skin.tintColors().getFirst().type());
             assertTrue(skin.persona());
             assertTrue(skin.overridingPlayerAppearance());
             assertEquals("new-skin-name", BedrockTypes.STRING.read(buffer));
+            assertEquals(0, buffer.readableBytes());
+            buffer.clear();
+            BedrockTypes.SKIN.write(buffer, skin);
+            BedrockTypes.STRING.write(buffer, "after-reencoded-skin");
+            final SkinData rewritten = BedrockTypes.SKIN.read(buffer);
+            assertEquals(skin.skinColor(), rewritten.skinColor());
+            assertEquals(skin.personaPieces(), rewritten.personaPieces());
+            assertEquals(skin.tintColors(), rewritten.tintColors());
+            assertEquals("after-reencoded-skin", BedrockTypes.STRING.read(buffer));
             assertEquals(0, buffer.readableBytes());
         } finally {
             buffer.release();
@@ -325,6 +336,8 @@ public final class Bedrock12640WireTypesTest {
             ClientPlayerPackets.swingHandling(true, false, false));
         assertEquals(new ClientPlayerPackets.SwingHandling(false, false, false),
             ClientPlayerPackets.swingHandling(false, true, true));
+        assertEquals(new ClientPlayerPackets.SwingHandling(false, false, false),
+            ClientPlayerPackets.swingHandling(false, true, false));
         assertEquals(new ClientPlayerPackets.SwingHandling(true, false, true),
             ClientPlayerPackets.swingHandling(false, false, true));
     }
@@ -399,7 +412,7 @@ public final class Bedrock12640WireTypesTest {
 
     @Test
     public void creativeFailureUsesAnAtomicFullContentCursorRollback() {
-        assertEquals(ClientboundPackets26_1.CONTAINER_SET_CONTENT, PacketFactory.javaCreativeCursorRollbackPacketType());
+        assertEquals(ClientboundPackets26_3.CONTAINER_SET_CONTENT, PacketFactory.javaCreativeCursorRollbackPacketType());
     }
 
     @Test
@@ -606,15 +619,15 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void flyingVerticalKeysCarryExplicitAscendAndDescendFlags() {
         final var ascending = ClientPlayerPackets.verticalMovementInput(true, true, false, false, 0F);
-        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.Ascend));
-        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.WantUp));
+        assertTrue(ascending.contains(PlayerAuthInputData.Ascend));
+        assertTrue(ascending.contains(PlayerAuthInputData.WantUp));
 
         final var descending = ClientPlayerPackets.verticalMovementInput(true, false, true, false, 0F);
-        assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.Descend));
-        assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.WantDown));
+        assertTrue(descending.contains(PlayerAuthInputData.Descend));
+        assertTrue(descending.contains(PlayerAuthInputData.WantDown));
 
         assertFalse(ClientPlayerPackets.verticalMovementInput(false, false, true, false, 0F)
-            .contains(PlayerAuthInputPacketPayload_InputData.Descend));
+            .contains(PlayerAuthInputData.Descend));
     }
 
     @Test
@@ -648,13 +661,13 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void ladderMotionCarriesDirectionWithoutSynthesizingRawKeyEdges() {
         final var ascending = ClientPlayerPackets.verticalMovementInput(false, false, false, true, 0.2F);
-        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.Jumping));
-        assertTrue(ascending.contains(PlayerAuthInputPacketPayload_InputData.WantUp));
-        assertFalse(ascending.contains(PlayerAuthInputPacketPayload_InputData.JumpCurrentRaw));
+        assertTrue(ascending.contains(PlayerAuthInputData.Jumping));
+        assertTrue(ascending.contains(PlayerAuthInputData.WantUp));
+        assertFalse(ascending.contains(PlayerAuthInputData.JumpCurrentRaw));
 
         final var descending = ClientPlayerPackets.verticalMovementInput(false, false, false, true, -0.2F);
-        assertTrue(descending.contains(PlayerAuthInputPacketPayload_InputData.WantDown));
-        assertFalse(descending.contains(PlayerAuthInputPacketPayload_InputData.Sneaking));
+        assertTrue(descending.contains(PlayerAuthInputData.WantDown));
+        assertFalse(descending.contains(PlayerAuthInputData.Sneaking));
     }
 
     @Test

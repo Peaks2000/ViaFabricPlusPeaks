@@ -22,21 +22,20 @@
 package com.viaversion.viafabricplus.features;
 
 import com.viaversion.viaaprilfools.api.AprilFoolsProtocolVersion;
+import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.features.block.connections.BlockConnectionsEmulation1_12_2;
-import com.viaversion.viafabricplus.features.block.shape.CollisionShapes;
+import com.viaversion.viafabricplus.features.global.CollisionShapes;
+import com.viaversion.viafabricplus.features.global.ClassiCubeAccount;
 import com.viaversion.viafabricplus.features.classic.cpe_extension.CPEAdditions;
-import com.viaversion.viafabricplus.features.classic.creative_menu.GridItemSelectionScreen;
-import com.viaversion.viafabricplus.features.entity.attribute.EnchantmentAttributesEmulation1_20_6;
-import com.viaversion.viafabricplus.features.entity.dimensions.EntityDimensionDiff;
-import com.viaversion.viafabricplus.features.font.FontCacheReload;
-import com.viaversion.viafabricplus.features.font.RenderableGlyphDiff;
-import com.viaversion.viafabricplus.features.force_unicode_font.UnicodeFontFix1_12_2;
-import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
-import com.viaversion.viafabricplus.features.networking.armor_hud.ArmorHudEmulation1_8;
-import com.viaversion.viafabricplus.features.networking.resource_pack_header.ResourcePackHeaderDiff;
-import com.viaversion.viafabricplus.features.recipe.Recipes1_11_2;
-import com.viaversion.viafabricplus.features.world.footstep_particle.FootStepParticle1_12_2;
+import com.viaversion.viafabricplus.features.v1_20_5.EnchantmentAttributesEmulation1_20_6;
+import com.viaversion.viafabricplus.features.global.EntityDimensionDiff;
+import com.viaversion.viafabricplus.features.global.FontCacheReload;
+import com.viaversion.viafabricplus.features.v1_12_2.RenderableGlyphDiff;
+import com.viaversion.viafabricplus.features.v1_8.ArmorHudEmulation1_8;
+import com.viaversion.viafabricplus.features.global.ResourcePackHeaderDiff;
+import com.viaversion.viafabricplus.features.v1_11_1.Recipes1_11_2;
+import com.viaversion.viafabricplus.features.v1_12_2.FootStepParticle1_12_2;
+import com.viaversion.viafabricplus.util.network.SyncTasks;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.attribute.EnvironmentAttributes;
@@ -44,19 +43,19 @@ import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 
 public final class FeaturesLoading {
 
-    // Initialize various data classes required for feature mixins
-    public static void init() {
-        ResourcePackHeaderDiff.init();
-        RenderableGlyphDiff.init();
-        FootStepParticle1_12_2.init();
+    public static void onPreLoading() {
+        SyncTasks.init();
         CPEAdditions.init();
-        UnicodeFontFix1_12_2.init();
 
-        ViaFabricPlusImpl.CHANGE_PROTOCOL_VERSION.register((oldVersion, newVersion) -> Minecraft.getInstance().execute(() -> {
+        ViaFabricPlus.api().protocolTranslation().addChangeProtocolVersionListener((oldVersion, newVersion) -> Minecraft.getInstance().execute(() -> {
             CollisionShapes.reloadBlockShapes();
 
             if (oldVersion.equals(AprilFoolsProtocolVersion.s3d_shareware) || newVersion.equals(AprilFoolsProtocolVersion.s3d_shareware)) {
                 Minecraft.getInstance().getSoundManager().reload();
+            }
+
+            if (newVersion.olderThanOrEqualTo(LegacyProtocolVersion.c0_28toc0_30)) {
+                ViaFabricPlusImpl.impl().screens().gridItemSelectionScreen().itemGrid = null;
             }
 
             FontCacheReload.reload();
@@ -64,21 +63,24 @@ public final class FeaturesLoading {
             if (newVersion.olderThanOrEqualTo(ProtocolVersion.v1_11_1)) {
                 Recipes1_11_2.reset();
             }
-            if (newVersion.olderThanOrEqualTo(LegacyProtocolVersion.c0_28toc0_30)) {
-                GridItemSelectionScreen.INSTANCE.itemGrid = null;
-            }
 
             EnvironmentAttributes.RESPAWN_ANCHOR_WORKS.isSyncable = newVersion.olderThanOrEqualTo(ProtocolVersion.v1_21_9);
         }));
     }
 
-    public static void postInit() {
-        VersionedRegistries.init();
+    public static void onPostRegistryLoading() {
+        ResourcePackHeaderDiff.init();
+        RenderableGlyphDiff.init();
+        ClassiCubeAccount.init();
+        FootStepParticle1_12_2.init();
+    }
+
+    public static void onPostGameLoading() {
         EntityDimensionDiff.init();
         EnchantmentAttributesEmulation1_20_6.init();
-        BlockConnectionsEmulation1_12_2.init();
         Recipes1_11_2.init();
         ArmorHudEmulation1_8.init();
+        CPEAdditions.postInit();
     }
 
 }

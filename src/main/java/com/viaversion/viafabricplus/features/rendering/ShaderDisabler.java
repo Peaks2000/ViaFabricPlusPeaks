@@ -88,11 +88,11 @@ public final class ShaderDisabler {
             if ((boolean) areShadersEnabled.invoke(config)) {
                 setShadersEnabledAndApply.invoke(config, false);
                 activeChannel = channel;
-                ViaFabricPlusImpl.INSTANCE.getLogger().info("Disabled Iris shaders while connected to a {} server", type.name().toLowerCase());
+                ViaFabricPlusImpl.impl().logger().info("Disabled Iris shaders while connected to a {} server", type.name().toLowerCase());
             }
         } catch (ReflectiveOperationException | LinkageError e) {
             irisApiUnavailable = true;
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Failed to disable Iris shaders", e);
+            ViaFabricPlusImpl.impl().logger().warn("Failed to disable Iris shaders", e);
         }
     }
 
@@ -107,10 +107,10 @@ public final class ShaderDisabler {
         activeChannel = null;
         try {
             setShadersEnabledAndApply.invoke(getConfig.invoke(irisApi), true);
-            ViaFabricPlusImpl.INSTANCE.getLogger().info("Re-enabled Iris shaders");
+            ViaFabricPlusImpl.impl().logger().info("Re-enabled Iris shaders");
         } catch (ReflectiveOperationException | LinkageError e) {
             irisApiUnavailable = true;
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Failed to re-enable Iris shaders", e);
+            ViaFabricPlusImpl.impl().logger().warn("Failed to re-enable Iris shaders", e);
         }
     }
 
@@ -127,7 +127,7 @@ public final class ShaderDisabler {
             }
         } catch (ReflectiveOperationException | LinkageError e) {
             irisApiUnavailable = true;
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Iris shader API is not available, shader disabling is disabled", e);
+            ViaFabricPlusImpl.impl().logger().warn("Iris shader API is not available, shader disabling is disabled", e);
         }
     }
 

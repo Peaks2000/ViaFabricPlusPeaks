@@ -5,6 +5,7 @@ gradle.projectsEvaluated {
     allprojects {
         tasks.withType(Test).configureEach {
             enabled = true
+            testLogging.events("passed", "failed", "skipped")
             workingDir(testRunDirectory)
         }
     }

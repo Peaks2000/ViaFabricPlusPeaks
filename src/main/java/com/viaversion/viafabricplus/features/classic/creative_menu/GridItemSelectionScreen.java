@@ -41,8 +41,6 @@ import net.raphimc.vialegacy.api.LegacyProtocolVersion;
 @SuppressWarnings("DataFlowIssue")
 public final class GridItemSelectionScreen extends Screen {
 
-    public static final GridItemSelectionScreen INSTANCE = new GridItemSelectionScreen();
-
     private static final int MAX_ROW_DIVIDER = 9;
     private static final int ITEM_XY_BOX_DIMENSION_CLASSIC = 25;
     private static final int SIDE_OFFSET = 15;
@@ -75,7 +73,7 @@ public final class GridItemSelectionScreen extends Screen {
             if (item == Items.AIR || !item.requiredFeatures().contains(FeatureFlags.VANILLA)) {
                 continue;
             }
-            if (ViaFabricPlus.getImpl().itemExistsInConnection(item)) {
+            if (ViaFabricPlus.api().limitations().itemExistsInConnection(item)) {
                 allowedItems.add(item);
             }
         }
@@ -161,7 +159,9 @@ public final class GridItemSelectionScreen extends Screen {
         for (Item[] items : itemGrid) {
             int x = SIDE_OFFSET;
             for (Item item : items) {
-                if (item == null) continue;
+                if (item == null) {
+                    continue;
+                }
 
                 if (mouseX > renderX + x && mouseY > renderY + y && mouseX < renderX + x + ITEM_XY_BOX_DIMENSION_CLASSIC && mouseY < renderY + y + ITEM_XY_BOX_DIMENSION_CLASSIC) {
                     context.fill(renderX + x, renderY + y, renderX + x + ITEM_XY_BOX_DIMENSION_CLASSIC, renderY + y + ITEM_XY_BOX_DIMENSION_CLASSIC, Integer.MAX_VALUE);
@@ -219,7 +219,7 @@ public final class GridItemSelectionScreen extends Screen {
     }
 
     private static boolean isWoolServer() {
-        return ViaFabricPlus.getImpl().getTargetVersion().equals(LegacyProtocolVersion.c0_30cpe);
+        return ViaFabricPlus.api().targetVersion().equals(LegacyProtocolVersion.c0_30cpe);
     }
 
     private int getWoolPanelWidth() {

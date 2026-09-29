@@ -23,7 +23,7 @@ package com.viaversion.viafabricplus.injection.mixin.features.bedrock.movement;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.viaversion.viafabricplus.injection.mixin.features.movement.liquid.MixinLivingEntity;
+import com.viaversion.viafabricplus.injection.mixin.features.v1_13_2.movement.MixinLivingEntity;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;

@@ -44,10 +44,10 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
         if (signal.startsWith(CANDIDATE_ADD)) {
             final String[] parts = signal.split(" ", 3);
             if (parts.length < 3 || !isSupportedCandidate(parts[2])) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().warn("Ignored an unsupported NetherNet LAN ICE candidate");
+                ViaFabricPlusImpl.impl().logger().warn("Ignored an unsupported NetherNet LAN ICE candidate");
                 return null;
             }
-            ViaFabricPlusImpl.INSTANCE.getLogger().info("Accepted a private IPv4 NetherNet LAN ICE candidate");
+            ViaFabricPlusImpl.impl().logger().info("Accepted a private IPv4 NetherNet LAN ICE candidate");
             return signal;
         }
         if (!signal.startsWith(CONNECT_RESPONSE)) {
@@ -73,13 +73,13 @@ public final class ViaFabricPlusNetherNetDiscoverySignaling extends NetherNetDis
             lineStart = nextLine;
         }
         if (removedCandidates > 0) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Removed {} unsupported ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
+            ViaFabricPlusImpl.impl().logger().warn("Removed {} unsupported ICE candidate(s) from the NetherNet LAN SDP answer", removedCandidates);
         }
         if (retainedCandidates > 0) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().info("Accepted {} private IPv4 ICE candidate(s) from the NetherNet LAN SDP answer", retainedCandidates);
+            ViaFabricPlusImpl.impl().logger().info("Accepted {} private IPv4 ICE candidate(s) from the NetherNet LAN SDP answer", retainedCandidates);
         }
         if (retainedCandidates == 0) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("The NetherNet LAN SDP answer contained no usable private IPv4 ICE candidate");
+            ViaFabricPlusImpl.impl().logger().warn("The NetherNet LAN SDP answer contained no usable private IPv4 ICE candidate");
         }
         return validSignal.toString();
     }

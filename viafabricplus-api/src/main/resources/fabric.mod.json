@@ -34,10 +34,10 @@
     "issues": "https://github.com/ViaVersion/ViaFabricPlus/issues",
     "email": "florian@florianreuth.de"
   },
-  "license": "MIT",
+  "license": "GPL-v3",
   "environment": "client",
   "depends": {
-    "viafabricplus": ">=5.0.0"
+    "viafabricplus": ">=5.0.1"
   },
   "custom": {
     "modmenu": {

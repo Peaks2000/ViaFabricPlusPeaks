@@ -97,7 +97,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
 
     private Void error(final String message, final Throwable throwable) {
         setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.error"));
-        ViaFabricPlusImpl.INSTANCE.getLogger().log(Level.ERROR, message, throwable);
+        ViaFabricPlusImpl.impl().logger().log(Level.ERROR, message, throwable);
         return null;
     }
 
@@ -127,7 +127,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
             try {
                 final RealmsJoinInformation server = service.joinWorld(entry.realmsServer);
                 if (server.getNetworkProtocol().equalsIgnoreCase(RealmsJoinInformation.PROTOCOL_DEFAULT)) {
-                    ConnectionUtil.connect(server.getAddress(), BedrockProtocolVersion.bedrockLatest);
+                    ConnectionUtil.connect(server.getAddress(), BedrockProtocolVersion.BEDROCK_LATEST);
                 } else if (server.getNetworkProtocol().equalsIgnoreCase(RealmsJoinInformation.PROTOCOL_NETHERNET)) {
                     ConnectionUtil.connectNetherNet(new NetherNetAddress(server.getAddress()));
                 } else if (server.getNetworkProtocol().equalsIgnoreCase(RealmsJoinInformation.PROTOCOL_NETHERNET_JSONRPC)) {

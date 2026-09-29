@@ -11,22 +11,21 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
-import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.concurrent.atomic.AtomicInteger;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
-/**
- * Selects the Bedrock wire version independently of ViaVersion's internal
- * protocol route. ViaBedrock's current update contains the 2169 packet layout,
- * but still exposes its route under the older 2168 special protocol id.
- */
+/** Selects the verified wire codec independently of ViaVersion's route identity. */
 public final class BedrockProtocolCompatibility {
 
+    private static final Logger LOGGER = LogManager.getLogger("ViaFabricPlus/Bedrock");
+
     public static final int UNKNOWN_PROTOCOL = -1;
-    public static final int VIA_BEDROCK_ROUTE_PROTOCOL = 2168;
-    public static final int CURRENT_PROTOCOL = 2169;
-    public static final String CURRENT_GAME_VERSION = "1.26.50";
+    public static final int VIA_BEDROCK_ROUTE_PROTOCOL = 2193;
+    public static final int CURRENT_PROTOCOL = 2193;
+    public static final String CURRENT_GAME_VERSION = "1.26.52";
 
     private static final AtomicInteger NEXT_CONNECTION_PROTOCOL = new AtomicInteger(UNKNOWN_PROTOCOL);
 
@@ -45,13 +44,9 @@ public final class BedrockProtocolCompatibility {
             return UNKNOWN_PROTOCOL;
         }
         final String normalized = version.startsWith("1.") ? version.substring(2) : version;
-        if (normalized.startsWith("26.50")) {
-            return CURRENT_PROTOCOL;
-        }
-        if (normalized.startsWith("26.40")) {
-            return VIA_BEDROCK_ROUTE_PROTOCOL;
-        }
-        return UNKNOWN_PROTOCOL;
+        // 26.51 and the 26.52 hotfix use the same 2193 schema. Match complete
+        // dotted version components, never 26.520 or unknown preview releases.
+        return normalized.matches("26\\.(51|52)(\\.[0-9]+)*") ? CURRENT_PROTOCOL : UNKNOWN_PROTOCOL;
     }
 
     public static void prepareConnection(final int protocolVersion) {
@@ -65,12 +60,12 @@ public final class BedrockProtocolCompatibility {
      * a fresh connection after the one-shot handshake state has already been consumed.
      */
     public static ProtocolVersion routeForConnection(final ProtocolVersion requestedVersion, final int maintainedWireProtocol) {
-        if (!BedrockProtocolVersion.bedrockLatest.equals(requestedVersion)) {
+        if (!BedrockProtocolVersion.BEDROCK_LATEST.equals(requestedVersion)) {
             return requestedVersion;
         }
         if (isSupported(maintainedWireProtocol)) {
             prepareConnection(maintainedWireProtocol);
-            ViaFabricPlusImpl.INSTANCE.getLogger().info(
+            LOGGER.info(
                 "Selected maintained Bedrock route for LAN/friends menu: {} (wire protocol {})",
                 requestedVersion.getName(), maintainedWireProtocol
             );
@@ -78,7 +73,7 @@ public final class BedrockProtocolCompatibility {
         }
         NEXT_CONNECTION_PROTOCOL.set(UNKNOWN_PROTOCOL);
         final ProtocolVersion compatibilityVersion = CompatibilityViaBedrockRuntime.compatibilityVersion();
-        ViaFabricPlusImpl.INSTANCE.getLogger().info("Selected compatibility Bedrock route for normal server menu: {}", compatibilityVersion.getName());
+        LOGGER.info("Selected compatibility Bedrock route for normal server menu: {}", compatibilityVersion.getName());
         return compatibilityVersion;
     }
 
@@ -96,17 +91,12 @@ public final class BedrockProtocolCompatibility {
     }
 
     public static int adjacentProtocol(final int protocolVersion, final boolean serverIsNewer) {
-        if (serverIsNewer && protocolVersion == VIA_BEDROCK_ROUTE_PROTOCOL) {
-            return CURRENT_PROTOCOL;
-        }
-        if (!serverIsNewer && protocolVersion == CURRENT_PROTOCOL) {
-            return VIA_BEDROCK_ROUTE_PROTOCOL;
-        }
+        // No second compatible codec is verified for this baseline.
         return UNKNOWN_PROTOCOL;
     }
 
     public static boolean isSupported(final int protocolVersion) {
-        return protocolVersion == VIA_BEDROCK_ROUTE_PROTOCOL || protocolVersion == CURRENT_PROTOCOL;
+        return protocolVersion == CURRENT_PROTOCOL;
     }
 
 }

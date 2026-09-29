@@ -1,8 +1,7 @@
 <component name="CopyrightManager">
-  <settings>
+  <settings default="GPL_3_0">
     <module2copyright>
-      <element module="ViaFabricPlus" copyright="GPL-3.0" />
-      <element module="ViaFabricPlus-API" copyright="MIT" />
+      <element module="Project Files" copyright="GPL-3.0" />
     </module2copyright>
     <LanguageOptions name="__TEMPLATE__" />
   </settings>

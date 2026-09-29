@@ -44,17 +44,17 @@ import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
 /**
  * Loads the ordinary-server ViaBedrock implementation in a child-first class loader. It shares
- * the maintained 1.26.40 gameplay fixes but keeps packet tables, mappings, providers, static
+ * the maintained 1.26.52 gameplay fixes but keeps packet tables, mappings, providers, static
  * state, and authentication independent from the LAN/friends runtime.
  */
 public final class CompatibilityViaBedrockRuntime {
 
-    private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.40.jar";
+    private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.52.jar";
     private static final String VIA_BEDROCK_PACKAGE = "net.raphimc.viabedrock.";
     private static final String VIA_BEDROCK_ASSETS = "assets/viabedrock";
     private static final int ROUTE_PROTOCOL_VERSION = 1001;
-    private static final String ROUTE_PROTOCOL_NAME = "Bedrock 1.26.40 (isolated servers)";
-    private static final int WIRE_PROTOCOL_VERSION = 2168;
+    private static final String ROUTE_PROTOCOL_NAME = "Bedrock 1.26.52 (isolated servers)";
+    private static final int WIRE_PROTOCOL_VERSION = 2193;
 
     private static ProtocolVersion compatibilityVersion;
     private static ChildFirstClassLoader classLoader;
@@ -69,7 +69,7 @@ public final class CompatibilityViaBedrockRuntime {
 
         try {
             final Path runtimeFolder = dataFolder.resolve("compatibility-viabedrock");
-            final Path runtimeJar = runtimeFolder.resolve("ViaBedrock-compatibility-1.26.40.jar");
+            final Path runtimeJar = runtimeFolder.resolve("ViaBedrock-compatibility-1.26.52.jar");
             Files.createDirectories(runtimeFolder);
             try (InputStream input = CompatibilityViaBedrockRuntime.class.getResourceAsStream(EMBEDDED_JAR)) {
                 if (input == null) {
@@ -91,7 +91,7 @@ public final class CompatibilityViaBedrockRuntime {
             } finally {
                 thread.setContextClassLoader(previousContextLoader);
             }
-            ViaFabricPlusImpl.INSTANCE.getLogger().info("Registered isolated compatibility ViaBedrock route {}", compatibilityVersion.getName());
+            ViaFabricPlusImpl.impl().logger().info("Registered isolated compatibility ViaBedrock route {}", compatibilityVersion.getName());
         } catch (ReflectiveOperationException | IOException e) {
             throw new IllegalStateException("Failed to initialize the isolated compatibility ViaBedrock runtime", e);
         }
@@ -110,7 +110,7 @@ public final class CompatibilityViaBedrockRuntime {
     }
 
     public static boolean isBedrock(final ProtocolVersion version) {
-        return BedrockProtocolVersion.bedrockLatest.equals(version) || isCompatibility(version);
+        return BedrockProtocolVersion.BEDROCK_LATEST.equals(version) || isCompatibility(version);
     }
 
     static int routeProtocolVersion() {
@@ -194,7 +194,7 @@ public final class CompatibilityViaBedrockRuntime {
             interact.write(optionalPosition, null);
             interact.sendToServer(protocolClass);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not send compatibility ViaBedrock inventory interaction", e);
+            ViaFabricPlusImpl.impl().logger().warn("Could not send compatibility ViaBedrock inventory interaction", e);
         }
     }
 

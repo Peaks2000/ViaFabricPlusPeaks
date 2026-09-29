@@ -21,11 +21,11 @@
 
 package com.viaversion.viafabricplus.screen.impl;
 
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPScreen;
 import com.viaversion.viafabricplus.screen.impl.bedrock.BedrockWorldsScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.BetaCraftScreen;
-import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeLoginScreen;
 import com.viaversion.viafabricplus.screen.impl.classic4j.ClassiCubeServerListScreen;
 import com.viaversion.viafabricplus.screen.impl.realms.BedrockRealmsScreen;
 import net.minecraft.client.gui.components.Button;
@@ -50,7 +50,7 @@ public final class ServerListScreen extends VFPScreen {
 
         final Button.Builder classiCubeBuilder = Button.builder(ClassiCubeServerListScreen.INSTANCE.getTitle(), _ -> {
             if (!loggedIn) {
-                ClassiCubeLoginScreen.INSTANCE.open(this);
+                ViaFabricPlusImpl.impl().screens().classiCubeLoginScreen().open(this);
                 return;
             }
             ClassiCubeServerListScreen.INSTANCE.open(this);

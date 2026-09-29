@@ -21,7 +21,9 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.classic.walking_animation;
 
-import com.viaversion.viafabricplus.settings.impl.VisualSettings;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
@@ -47,8 +49,8 @@ public abstract class MixinHumanoidModel<T extends HumanoidRenderState> {
 
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/geom/ModelPart;zRot:F", ordinal = 1, shift = At.Shift.AFTER, opcode = Opcodes.PUTFIELD))
     private void addOldWalkAnimation(T state, CallbackInfo ci) {
-        if (VisualSettings.INSTANCE.oldWalkingAnimation.isEnabled()) {
-            final float animationSpeed = VisualSettings.INSTANCE.slowDownClassicAnimation.getValue() ? 0.7F : 1.0F;
+        if (ViaFabricPlusImpl.impl().visuals().oldWalkingAnimation().isActive()) {
+            final float animationSpeed = ClassiCubeSettings.INSTANCE.slowDownClassicAnimation.getValue() && ProtocolTranslator.getTargetVersion().olderThanOrEqualTo(net.raphimc.vialegacy.api.LegacyProtocolVersion.c0_30cpe) ? 0.7F : 1.0F;
             final float limbSwingAnimationProgress = state.walkAnimationPos * animationSpeed;
             final float limbSwingAmplitude = state.walkAnimationSpeed;
 

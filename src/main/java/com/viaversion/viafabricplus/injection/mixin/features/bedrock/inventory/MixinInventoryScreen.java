@@ -54,7 +54,7 @@ public abstract class MixinInventoryScreen {
         }
 
         final EntityTracker entityTracker = connection.get(EntityTracker.class);
-        if (!BedrockProtocolVersion.bedrockLatest.equals(ProtocolTranslator.getTargetVersion(connection.getChannel())) || entityTracker == null || entityTracker.getClientPlayer() == null) {
+        if (!BedrockProtocolVersion.BEDROCK_LATEST.equals(ProtocolTranslator.getTargetVersion(connection.getChannel())) || entityTracker == null || entityTracker.getClientPlayer() == null) {
             return;
         }
 

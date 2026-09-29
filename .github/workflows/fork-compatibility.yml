@@ -20,7 +20,7 @@ permissions:
 
 env:
   VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
-  VIABEDROCK_REF: 5da9778237016836f2a344596d6af4a34e3c09d1
+  VIABEDROCK_REF: 1bc54c2b8b5ad416014b321092fa640941e1a62c
 
 jobs:
   preserve-fork:
@@ -85,7 +85,7 @@ jobs:
           jar_path="${artifacts[0]}"
           unzip -t "$jar_path"
           zipinfo -1 "$jar_path" | grep -Eq '^META-INF/jars/ViaBedrock-.*\.jar$'
-          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/compatibility/ViaBedrock-compatibility-1.26.40.jar'
+          zipinfo -1 "$jar_path" | grep -qx 'viafabricplus/compatibility/ViaBedrock-compatibility-1.26.52.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-linux-x86_64.jar'
           zipinfo -1 "$jar_path" | grep -qx 'META-INF/jars/webrtc-java-m152test-1.0.4-m152-macos-aarch64.jar'

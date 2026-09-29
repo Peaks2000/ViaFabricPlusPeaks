@@ -70,9 +70,17 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 - Found a Bedrock fork bug? Please report it on the [fork issue tracker](https://github.com/Peaks2000/ViaFabricPlusBedrock/issues)
 - Got questions? Join the [ViaVersion Discord](https://discord.gg/viaversion)
 
+### Supported Client versions
+
+| **Version**                    | **Feature Updates** | **Bug Fixes** |
+|--------------------------------|---------------------|---------------|
+| Minecraft 26.3                 | Yes                 | Yes           |
+| Minecraft 26.2                 | No                  | Yes           |
+| Minecraft 26.1.x *(and older)* | No                  | No            |
+
 ### Supported Server versions
 
-- Release (1.0.0–latest supported release*)
+- Release (1.0.0–26.3*)
 - Beta (b1.0 – b1.8.1)
 - Alpha (a1.0.15 – a1.2.6)
 - Classic (c0.0.15 – c0.30 including [CPE](https://wiki.vg/Classic_Protocol_Extension))
@@ -81,6 +89,12 @@ entity interactions, graphics, and more. In short, it recreates the classic Mine
 - Bedrock Edition 1.26.40/1.26.50 (experimental; [some features are missing](https://github.com/RaphiMC/ViaBedrock#features))
 
 *[Support for new Mojang releases is usually added within a few days](https://github.com/ViaVersion/ViaVersion#snapshot-support)
+
+## Bedrock Edition
+
+Support for Minecraft: Bedrock Edition servers and Realms is available through the separate
+[ViaFabricPlus Bedrock](https://github.com/florianreuth/viafabricplus-bedrock) addon, which is based on
+[ViaBedrock](https://github.com/RaphiMC/ViaBedrock).
 
 ## For Developers & Contributors
 

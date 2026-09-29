@@ -21,91 +21,15 @@
 
 package com.viaversion.viafabricplus.save.impl;
 
-import com.google.gson.JsonObject;
-import com.viaversion.viafabricplus.settings.AbstractSetting;
-import com.viaversion.viafabricplus.settings.SettingGroup;
-import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.save.AbstractSave;
-import com.viaversion.viafabricplus.settings.SettingsManager;
-import com.viaversion.viafabricplus.settings.impl.GeneralSettings;
-import com.viaversion.viafabricplus.util.ChatUtil;
 import com.viaversion.viafabricplus.util.bedrock.CompatibilityViaBedrockRuntime;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 
-public final class SettingsSave extends AbstractSave {
-
-    private String selectedProtocolVersion;
-
-    public SettingsSave() {
-        super("settings");
-    }
-
-    @Override
-    public void write(JsonObject object) {
-        writeSettings(object);
-
-        object.addProperty("selected-protocol-version", ProtocolTranslator.getTargetVersion().getName());
-    }
-
-    public void writeSettings(final JsonObject object) {
-        for (SettingGroup group : SettingsManager.INSTANCE.getGroups()) {
-            final JsonObject groupObject = new JsonObject();
-            for (AbstractSetting<?> setting : group.getSettings()) {
-                setting.write(groupObject);
-            }
-
-            object.add(AbstractSetting.mapTranslationKey(ChatUtil.uncoverTranslationKey(group.getName())), groupObject);
-        }
-    }
-
-    @Override
-    public void read(JsonObject object) {
-        for (SettingGroup group : SettingsManager.INSTANCE.getGroups()) {
-            final String translationKey = ChatUtil.uncoverTranslationKey(group.getName());
-
-            final JsonObject groupObject = object.getAsJsonObject(AbstractSetting.mapTranslationKey(translationKey));
-            if (groupObject == null) {
-                continue;
-            }
-
-            for (AbstractSetting<?> setting : group.getSettings()) {
-                if (groupObject.has(setting.getTranslationKey())) {
-                    setting.read(groupObject);
-                }
-            }
-        }
-
-        if (object.has("selected-protocol-version")) {
-            selectedProtocolVersion = object.get("selected-protocol-version").getAsString();
-        }
-    }
-
-    @Override
-    public void postInit() {
-        if (selectedProtocolVersion == null) {
-            return;
-        }
-
-        // Set target version AFTER protocol loading, so we can reach all versions
-        if (GeneralSettings.INSTANCE.saveSelectedProtocolVersion.getValue()) {
-            final ProtocolVersion protocolVersion = protocolVersionByName(selectedProtocolVersion);
-            if (protocolVersion != null) {
-                ProtocolTranslator.setTargetVersion(protocolVersion);
-            }
-        } else {
-            ProtocolTranslator.setTargetVersion(ProtocolTranslator.NATIVE_VERSION);
-        }
-    }
+public final class SettingsSave {
+    private SettingsSave() { }
 
     public static ProtocolVersion protocolVersionByName(final String name) {
-        if (name == null) {
-            return null;
-        }
-
-        if (name.contains("Bedrock")) {
-            return CompatibilityViaBedrockRuntime.compatibilityVersion();
-        }
+        if (name == null) return null;
+        if (name.contains("Bedrock")) return CompatibilityViaBedrockRuntime.compatibilityVersion();
         return ProtocolVersion.getClosest(name);
     }
-
 }

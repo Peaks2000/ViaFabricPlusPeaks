@@ -21,9 +21,9 @@ public final class CompatibilityViaBedrockRuntimeTest {
     @Test
     public void ordinaryServersUseCurrentWireSemanticsThroughAnIsolatedRoute() {
         assertEquals(1001, CompatibilityViaBedrockRuntime.routeProtocolVersion());
-        assertEquals(2168, CompatibilityViaBedrockRuntime.wireProtocolVersion());
+        assertEquals(2193, CompatibilityViaBedrockRuntime.wireProtocolVersion());
         assertNotEquals(CompatibilityViaBedrockRuntime.routeProtocolVersion(), CompatibilityViaBedrockRuntime.wireProtocolVersion());
-        assertEquals("Bedrock 1.26.40 (isolated servers)", CompatibilityViaBedrockRuntime.isolatedRouteVersion().getName());
+        assertEquals("Bedrock 1.26.52 (isolated servers)", CompatibilityViaBedrockRuntime.isolatedRouteVersion().getName());
     }
 
 }

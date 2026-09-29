@@ -23,7 +23,6 @@ package com.viaversion.viafabricplus.save;
 
 import com.viaversion.viafabricplus.save.impl.AccountsSave;
 import com.viaversion.viafabricplus.save.impl.ClassiCubeServerSave;
-import com.viaversion.viafabricplus.save.impl.SettingsSave;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,12 +33,11 @@ public final class SaveManager {
 
     private final List<AbstractSave> saves = new ArrayList<>();
 
-    private SettingsSave settingsSave;
     private AccountsSave accountsSave;
     private ClassiCubeServerSave classiCubeServerSave;
 
     public void init() {
-        add(settingsSave = new SettingsSave(), accountsSave = new AccountsSave(), classiCubeServerSave = new ClassiCubeServerSave());
+        add(accountsSave = new AccountsSave(), classiCubeServerSave = new ClassiCubeServerSave());
         for (AbstractSave save : saves) {
             save.init();
         }
@@ -59,10 +57,6 @@ public final class SaveManager {
 
     public void add(final AbstractSave... saves) {
         this.saves.addAll(Arrays.asList(saves));
-    }
-
-    public SettingsSave getSettingsSave() {
-        return settingsSave;
     }
 
     public AccountsSave getAccountsSave() {

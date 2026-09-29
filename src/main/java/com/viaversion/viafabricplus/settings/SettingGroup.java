@@ -21,52 +21,20 @@
 
 package com.viaversion.viafabricplus.settings;
 
-import com.viaversion.viafabricplus.util.ChatUtil;
-import java.util.ArrayList;
-import java.util.List;
+import com.viaversion.viafabricplus.settings.base.SettingGroupImpl;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 
-/**
- * This class represents a group of settings. It is used to group settings in the settings screen.
- *
- * @see AbstractSetting
- */
-public class SettingGroup {
+public class SettingGroup extends SettingGroupImpl {
+    private final Component title;
 
-    private final List<AbstractSetting<?>> settings = new ArrayList<>();
-    private final Component name;
-
-    public SettingGroup(Component name) {
-        this.name = name;
+    public SettingGroup(final Component title) {
+        super(((TranslatableContents) title.getContents()).getKey().split("viafabricplus\\.", 2)[1]);
+        this.title = title;
     }
 
-    /**
-     * This list is used to store the settings of this group. It should not be touched directly by developers.
-     * The list gets filled automatically when creating a new setting (see {@link AbstractSetting}).
-     *
-     * @return The list of settings.
-     */
-    public List<AbstractSetting<?>> getSettings() {
-        return settings;
+    @Override
+    public Component name() {
+        return this.title;
     }
-
-    /**
-     * Returns a setting by its translation key.
-     *
-     * @param translationKey The translation key of the setting.
-     * @return The setting or null if no setting with the given translation key was found.
-     */
-    public AbstractSetting<?> getSetting(final String translationKey) {
-        for (AbstractSetting<?> setting : settings) {
-            if (ChatUtil.uncoverTranslationKey(setting.getName()).equals(translationKey)) {
-                return setting;
-            }
-        }
-        return null;
-    }
-
-    public Component getName() {
-        return name;
-    }
-
 }

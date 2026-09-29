@@ -1,88 +1,59 @@
-import de.florianreuth.baseproject.core.unlockBuildErrors
-import de.florianreuth.baseproject.integration.*
-import de.florianreuth.baseproject.setupProject
-import de.florianreuth.baseproject.setupViaPublishing
-
 plugins {
-    id("net.fabricmc.fabric-loom")
-    id("de.florianreuth.baseproject")
+    id("base.java")
+    id("base.fabric")
+    id("configuration.transitive_jar_in_jar")
+    id("via.maven_publish")
+    id("base.junit")
+    id("extra.unlock_build_errors")
 }
 
-allprojects {
-
-    setupProject()
-    setupFabric()
-    setupViaPublishing()
-
-    repositories {
-        maven(rootProject.file("vendor/maven"))
-        // Keep them in sync with docs/DEVELOPER_API.md
-        maven("https://repo.viaversion.com")
-        maven("https://maven.lenni0451.net/everything")
-        maven("https://maven.terraformersmc.com/releases")
-        maven("https://jitpack.io") {
-            content {
-                includeGroup("com.github.oryxel1")
-            }
-        }
-
-        //mavenLocal() // Uncomment during Minecraft updates for preview VV/VB builds
-    }
-
+// Comment during Minecraft updates to update data diff files
+tasks.test {
+    enabled = false
 }
-
-configureTest().also {
-    // Uncomment during Minecraft updates to update data diff files
-    tasks.test.get().enabled = false
-}
-unlockBuildErrors()
-
-val shade = configureJarInJar()
 
 dependencies {
-    shade(project(":viafabricplus-api")) {
+    jarInJar(projects.viafabricplusApi) {
         exclude("net.fabricmc", "fabric-loader")
     }
 
-    shade(fabricApi.module("fabric-api-base", fabricApiVersion))
-    shade(fabricApi.module("fabric-resource-loader-v1", fabricApiVersion))
-    shade(fabricApi.module("fabric-resource-loader-v0", fabricApiVersion))
-    shade(fabricApi.module("fabric-networking-api-v1", fabricApiVersion))
-    shade(fabricApi.module("fabric-command-api-v2", fabricApiVersion))
-    shade(fabricApi.module("fabric-lifecycle-events-v1", fabricApiVersion))
-    shade(fabricApi.module("fabric-particles-v1", fabricApiVersion))
-    shade(fabricApi.module("fabric-registry-sync-v0", fabricApiVersion))
+    jarInJar(platform(libs.fabric.api.bom))
+    jarInJar(libs.fabric.api.base)
+    jarInJar(libs.fabric.resource.loader.v1)
+    jarInJar(libs.fabric.resource.loader.v0)
+    jarInJar(libs.fabric.networking.api.v1)
+    jarInJar(libs.fabric.command.api.v2)
+    jarInJar(libs.fabric.lifecycle.events.v1)
+    jarInJar(libs.fabric.particles.v1)
+    jarInJar(libs.fabric.registry.sync.v0)
 
-    shade("com.viaversion:viaversion-common:5.11.1-SNAPSHOT")
-    shade("com.viaversion:viabackwards-common:5.11.1-SNAPSHOT")
-    shade("com.viaversion:viaaprilfools-common:4.2.2")
-    shade("net.raphimc:ViaLegacy:3.0.16")
-    shade("net.lenni0451:Reflect:1.6.4")
-    shade("de.florianreuth:classic4j:2.3.0")
-    shade("net.raphimc:ViaBedrock") {
+    jarInJar(libs.reflect)
+    jarInJar(libs.classic4j)
+
+    jarInJar("net.raphimc:ViaBedrock") {
         version {
-            branch = "experiment/4.8"
+            branch = "experiment/26.3"
         }
         exclude(group = "com.mojang", module = "brigadier")
         exclude(group = "at.yawk.lz4", module = "lz4-java")
         exclude(group = "io.netty")
     }
-    shade("net.raphimc:MinecraftAuth:5.0.1") {
+    jarInJar("net.raphimc:MinecraftAuth:5.0.1") {
         exclude(group = "com.google.code.gson", module = "gson")
     }
-    shade("dev.kastle.netty:netty-transport-raknet:1.7.3") {
+    jarInJar("dev.kastle.netty:netty-transport-raknet:1.7.3") {
         exclude(group = "io.netty")
     }
-    shade("dev.kastle.netty:netty-transport-nethernet:1.7.3") {
+    jarInJar("dev.kastle.netty:netty-transport-nethernet:1.7.3") {
         exclude(group = "io.netty")
         exclude(group = "org.bitbucket.b_c", module = "jose4j")
         exclude(group = "dev.kastle.webrtc", module = "webrtc-java")
     }
-    shade("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152")
-    shade("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:linux-x86_64")
-    shade("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:macos-aarch64")
+    jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152")
+    jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:linux-x86_64")
+    jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:macos-aarch64")
 
-    compileOnly("com.terraformersmc:modmenu:20.0.0-beta.2")
+    compileOnly(libs.modmenu)
 }
 
 tasks.named<Jar>("jar") {
@@ -97,4 +68,25 @@ tasks.named<Jar>("jar") {
     }
 }
 
-includeTransitiveJijDependencies()
+// Build both route artifacts from the same resolved dependency. A checked-in old
+// runtime must never be shipped beside a newer maintained translator.
+val maintainedRuntime = configurations.named("runtimeClasspath").get().incoming.artifactView {
+    componentFilter { id ->
+        when (id) {
+            is ModuleComponentIdentifier -> id.group == "net.raphimc" && id.module == "ViaBedrock"
+            is ProjectComponentIdentifier -> id.projectName == "ViaBedrock"
+            else -> false
+        }
+    }
+}.files
+val isolatedRuntime = tasks.register<Copy>("prepareIsolatedBedrockRuntime") {
+    from(maintainedRuntime)
+    into(layout.buildDirectory.dir("generated/isolated-bedrock/viafabricplus/compatibility"))
+    rename { "ViaBedrock-compatibility-1.26.52.jar" }
+    doFirst { require(maintainedRuntime.files.size == 1) { "Expected exactly one maintained ViaBedrock artifact" } }
+}
+tasks.processResources {
+    exclude("viafabricplus/compatibility/ViaBedrock-compatibility-1.26.40.jar")
+    dependsOn(isolatedRuntime)
+    from(layout.buildDirectory.dir("generated/isolated-bedrock"))
+}

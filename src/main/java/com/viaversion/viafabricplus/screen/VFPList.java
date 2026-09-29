@@ -21,51 +21,15 @@
 
 package com.viaversion.viafabricplus.screen;
 
-import com.viaversion.viafabricplus.screen.impl.PerServerVersionScreen;
-import com.viaversion.viafabricplus.screen.impl.ProtocolSelectionScreen;
-import com.viaversion.viafabricplus.settings.impl.GeneralSettings;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.ObjectSelectionList;
-import org.jspecify.annotations.NonNull;
 
-/**
- * Wrapper class for {@link ObjectSelectionList} including the following features:
- * <ul>
- *     <li>Changing the constructor arguments to be more readable and customizable</li>
- *     <li>Adds {@link #initScrollY(double)} to save the scroll state after closing the screen, requires static tracking by the implementation</li>
- *     <li>Removes the selection box</li>
- * </ul>
- *
- * @see ProtocolSelectionScreen
- * @see PerServerVersionScreen
- */
-public class VFPList extends ObjectSelectionList<VFPListEntry> {
-
-    public VFPList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight) {
-        super(minecraftClient, width, height - top - bottom, top, entryHeight);
+public class VFPList extends com.viaversion.viafabricplus.screen.base.list.VFPList {
+    public VFPList(final Minecraft client, final int width, final int height, final int top,
+                   final int bottom, final int entryHeight) {
+        super(client, width, height, top, bottom, entryHeight);
     }
 
     public void initScrollY(final double scrollY) {
-        // Needs calling last in init to have data loaded before setting scroll amount
-        if (GeneralSettings.INSTANCE.saveScrollPositionInSlotScreens.getValue()) {
-            this.setScrollAmount(scrollY);
-        }
+        this.setScrollAmount(scrollY);
     }
-
-    @Override
-    public void setScrollAmount(double scrollY) {
-        super.setScrollAmount(scrollY);
-        updateSlotAmount(scrollAmount()); // Ensure value is clamped
-    }
-
-    @Override
-    protected void extractSelection(final @NonNull GuiGraphicsExtractor graphics, final @NonNull VFPListEntry entry, final int outlineColor) {
-        // Remove selection box
-    }
-
-    protected void updateSlotAmount(final double amount) {
-        // To be overridden
-    }
-
 }

@@ -5,23 +5,18 @@
  *                         - RK_01/RaphiMC
  * Copyright (C) 2023-2026 ViaVersion and contributors
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.viaversion.viafabricplus.api;
@@ -30,7 +25,9 @@ import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.item.Item;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import io.netty.channel.Channel;
 import java.nio.file.Path;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.core.Holder;
 import net.minecraft.network.Connection;
@@ -38,178 +35,135 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.block.entity.BannerPattern;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * General API point for mods. Get the instance via {@link ViaFabricPlus#getImpl()}.
- */
+@Deprecated(forRemoval = true)
 public interface ViaFabricPlusBase {
 
-    /**
-     * @return an <b>internally based API version</b> incremented with meaningful or breaking changes.
-     */
+    @Deprecated(forRemoval = true)
     default int apiVersion() {
-        return 7;
+        return ViaFabricPlus.api().apiVersion();
     }
 
-    /**
-     * @return The version of the mod as displayed in mod lists (e.g., 4.0.0)
-     */
-    String getVersion();
+    @Deprecated(forRemoval = true)
+    default String getVersion() {
+        return ViaFabricPlus.api().version();
+    }
 
-    /**
-     * @return The implementation version formatted as "git-ViaFabricPlus-{@link #getVersion()}-hash of the commit the jar was built on"
-     */
-    String getImplVersion();
+    @Deprecated(forRemoval = true)
+    default String getImplVersion() {
+        return ViaFabricPlus.api().implVersion();
+    }
 
-    /**
-     * @return The path where ViaFabricPlus stores its configuration files.
-     */
-    Path getPath();
+    @Deprecated(forRemoval = true)
+    default Path getPath() {
+        return ViaFabricPlus.api().path();
+    }
 
-    /**
-     * @return The active version ViaFabricPlus is translating to.
-     */
-    ProtocolVersion getTargetVersion();
+    @Deprecated(forRemoval = true)
+    default ProtocolVersion getTargetVersion() {
+        return ViaFabricPlus.api().targetVersion();
+    }
 
-    /**
-     * Sets active version ViaFabricPlus will translate future (!) connections to.
-     *
-     * @param targetVersion the target version
-     * @throws IllegalStateException if there is an active connection to a server
-     */
-    void setTargetVersion(final ProtocolVersion targetVersion) throws IllegalStateException;
+    @Deprecated(forRemoval = true)
+    default void setTargetVersion(final ProtocolVersion newVersion) {
+        ViaFabricPlus.api().setTargetVersion(newVersion);
+    }
 
-    /**
-     * Sets active version ViaFabricPlus will translate future (!) connections to.
-     *
-     * @param targetVersion      the target version
-     * @param revertOnDisconnect if true, the previous version will be set when the player disconnects from the server
-     * @throws IllegalStateException if there is an active connection to a server
-     */
-    void setTargetVersion(final ProtocolVersion targetVersion, final boolean revertOnDisconnect) throws IllegalStateException;
+    @Deprecated(forRemoval = true)
+    default ProtocolVersion getTargetVersion(final Channel channel) {
+        return ViaFabricPlus.api().protocolTranslation().targetVersion(channel);
+    }
 
-    /**
-     * @return the current UserConnection of the connection to the server, if the player isn't connected to a server, it will return null
-     */
-    @Nullable UserConnection getUserConnection();
+    @Deprecated(forRemoval = true)
+    default ProtocolVersion getTargetVersion(final Connection connection) {
+        return ViaFabricPlus.api().protocolTranslation().targetVersion(connection);
+    }
 
-    /**
-     * Get the UserConnection for the given connection {@link Connection}.
-     *
-     * @param connection the connection
-     * @return the UserConnection
-     */
-    @Nullable UserConnection getUserConnection(final Connection connection);
+    @Deprecated(forRemoval = true)
+    default void setTargetVersion(final ProtocolVersion newVersion, final boolean revertOnDisconnect) {
+        ViaFabricPlus.api().protocolTranslation().setTargetVersion(newVersion, revertOnDisconnect);
+    }
 
-    /**
-     * Gets the per-server protocol version for the given server.
-     *
-     * @param serverInfo the server info
-     * @return the server version
-     */
-    @Nullable ProtocolVersion getServerVersion(final ServerData serverInfo);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    default UserConnection getPlayNetworkUserConnection() {
+        return ViaFabricPlus.api().userConnection();
+    }
 
-    /**
-     * Register a callback for when the user changes the target version in the screen, or if the user joins a server with a different version.
-     *
-     * @param callback the callback
-     */
-    void registerOnChangeProtocolVersionCallback(final ChangeProtocolVersionCallback callback);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    default UserConnection getUserConnection(final Connection connection) {
+        return ViaFabricPlus.api().protocolTranslation().userConnection(connection);
+    }
 
-    /**
-     * Calculates the maximum chat length for given {@link ProtocolVersion} instance.
-     *
-     * @return The maximum chat length
-     */
-    int getMaxChatLength(final ProtocolVersion version);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    default ProtocolVersion getServerVersion(final ServerData serverInfo) {
+        return ViaFabricPlus.api().protocolTranslation().serverVersion(serverInfo);
+    }
 
-    /**
-     * Gets a boolean setting from the settings screen by its translation key.
-     *
-     * @param translationKey The translation key of the setting.
-     * @return The boolean value of the setting.
-     */
-    boolean getBooleanSetting(final String translationKey);
+    @Deprecated(forRemoval = true)
+    default int getMaxChatLength(final ProtocolVersion version) {
+        return ViaFabricPlus.api().limitations().maxChatLength(version);
+    }
 
-    /**
-     * Gets the mode setting from the settings screen by its translation key.
-     *
-     * @param translationKey The translation key of the setting.
-     * @return The translation key of the selected mode.
-     */
-    String getModeSetting(final String translationKey);
+    @Deprecated(forRemoval = true)
+    default void openProtocolSelectionScreen(final Screen parent) {
+        ViaFabricPlus.api().screens().openViaFabricPlusScreen(parent);
+    }
 
-    /**
-     * Gets the auto version setting from the settings screen by its translation key.
-     *
-     * @param translationKey The translation key of the setting.
-     * @return The translation key, which can be "base.viafabricplus.auto", "base.viafabricplus.off" or "base.viafabricplus.on".
-     */
-    String getAutoVersionSetting(final String translationKey);
+    @Deprecated(forRemoval = true)
+    default void openSettingsScreen(final Screen parent) {
+        ViaFabricPlus.api().screens().openSettingsScreen(parent);
+    }
 
-    /**
-     * Converts a Minecraft item stack {@link ItemStack} to a ViaVersion item {@link Item}
-     *
-     * @param stack         The Minecraft item stack to convert {@link ItemStack}
-     * @param targetVersion The target version to convert to (e.g., v1.13) {@link ProtocolVersion}
-     * @return The ViaVersion item for the target version {@link Item}
-     */
-    @Nullable Item translateItem(final ItemStack stack, final ProtocolVersion targetVersion);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    default Item translateItem(final ItemStack stack, final ProtocolVersion targetVersion) {
+        return ViaFabricPlus.api().conversions().translateItem(stack, targetVersion);
+    }
 
-    /**
-     * Converts a ViaVersion item {@link Item} to a Minecraft item stack {@link ItemStack}
-     *
-     * @param item          The ViaVersion item to convert {@link Item}
-     * @param sourceVersion The source version of the item (e.g., b1.8) {@link ProtocolVersion}
-     * @return The Minecraft item stack for the source version {@link ItemStack}
-     */
-    @Nullable ItemStack translateItem(final Item item, final ProtocolVersion sourceVersion);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    default ItemStack translateItem(final Item item, final ProtocolVersion sourceVersion) {
+        return ViaFabricPlus.api().conversions().translateItem(item, sourceVersion);
+    }
 
-    /**
-     * @param item    The item to check
-     * @param version The version to check for
-     * @return true if the item exists in the given version, false otherwise; this will also check for CPE items (CustomBlocks V1 extension)
-     */
-    boolean itemExists(final net.minecraft.world.item.Item item, final ProtocolVersion version);
+    @Deprecated(forRemoval = true)
+    default boolean itemExists(final net.minecraft.world.item.Item item, final ProtocolVersion version) {
+        return ViaFabricPlus.api().limitations().itemExists(item, version);
+    }
 
-    /**
-     * @param enchantment The enchantment to check
-     * @param version     The version to check for
-     * @return true if the enchantment exists in the given version, false otherwise
-     */
-    boolean enchantmentExists(final ResourceKey<Enchantment> enchantment, final ProtocolVersion version);
+    @Deprecated(forRemoval = true)
+    default boolean enchantmentExists(final ResourceKey<Enchantment> enchantment, final ProtocolVersion version) {
+        return ViaFabricPlus.api().limitations().enchantmentExists(enchantment, version);
+    }
 
-    /**
-     * @param effect  The status effect to check
-     * @param version The version to check for
-     * @return true if the status effect exists in the given version, false otherwise
-     */
-    boolean effectExists(final Holder<MobEffect> effect, final ProtocolVersion version);
+    @Deprecated(forRemoval = true)
+    default boolean effectExists(final Holder<MobEffect> effect, final ProtocolVersion version) {
+        return ViaFabricPlus.api().limitations().effectExists(effect, version);
+    }
 
-    /**
-     * Similar to {@link #itemExists(net.minecraft.world.item.Item, ProtocolVersion)}, but takes in the current connection details (e.g., classic protocol extensions being loaded)
-     *
-     * @param item The item to check
-     * @return true if the item exists in the current connection, false otherwise
-     */
-    boolean itemExistsInConnection(final net.minecraft.world.item.Item item);
+    @Deprecated(forRemoval = true)
+    default boolean bannerPatternExists(final ResourceKey<BannerPattern> pattern, final ProtocolVersion version) {
+        return ViaFabricPlus.api().limitations().bannerPatternExists(pattern, version);
+    }
 
-    /**
-     * Same as {@link #itemExists(net.minecraft.world.item.Item, ProtocolVersion)}, but for item stacks. This also compares against certain data components like enchantments or banner patterns.
-     *
-     * @param stack The item stack to check
-     * @return true if the item stack exists in the given version, false otherwise
-     */
-    boolean itemExistsInConnection(final ItemStack stack);
+    @Deprecated(forRemoval = true)
+    default boolean itemExistsInConnection(final net.minecraft.world.item.Item item) {
+        return ViaFabricPlus.api().limitations().itemExistsInConnection(item);
+    }
 
-    /**
-     * Similar to {@link ItemStack#getCount()}, but also handles negative item counts in pre 1.11 versions
-     *
-     * @param stack The item stack to get the count of
-     * @return the count of the item stack can be negative in pre 1.11 versions
-     */
-    int getStackCount(final ItemStack stack);
+    @Deprecated(forRemoval = true)
+    default boolean itemExistsInConnection(final ItemStack stack) {
+        return ViaFabricPlus.api().limitations().itemExistsInConnection(stack);
+    }
 
+    @Deprecated(forRemoval = true)
+    default int getStackCount(final ItemStack stack) {
+        return ViaFabricPlus.api().limitations().getStackCount(stack);
+    }
 
 }

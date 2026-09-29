@@ -73,7 +73,7 @@ import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.bedrock.model.MinecraftMultiplayerToken;
 import net.raphimc.viabedrock.netty.PacketCodec;
 import net.raphimc.viabedrock.netty.raknet.MessageCodec;
-import net.raphimc.viabedrock.protocol.RakNetStatusProtocol;
+import com.viaversion.viafabricplus.protocoltranslator.netty.BedrockRakNetStatusProtocol;
 import org.cloudburstmc.netty.channel.raknet.RakChannelFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -157,10 +157,10 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
                     : instance.connect(netherNetAddress.getNetherNetAddress());
                 return future.addListeners(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE, (ChannelFutureListener) f -> {
                     if (f.isSuccess()) {
-                        ViaFabricPlusImpl.INSTANCE.getLogger().info("NetherNet transport connected; starting Bedrock login");
+                        ViaFabricPlusImpl.impl().logger().info("NetherNet transport connected; starting Bedrock login");
                         f.channel().pipeline().remove(MessageCodec.NAME);
                     } else {
-                        ViaFabricPlusImpl.INSTANCE.getLogger().warn(
+                        ViaFabricPlusImpl.impl().logger().warn(
                             "NetherNet transport failed before Bedrock login: {}",
                             f.cause() != null ? f.cause().getMessage() : "connection cancelled"
                         );
@@ -179,7 +179,7 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
                         f.channel().pipeline().remove(HandlerNames.SPLITTER);
 
                         UserConnection user = ((IConnection) clientConnection).viaFabricPlus$getUserConnection();
-                        user.getProtocolInfo().getPipeline().add(RakNetStatusProtocol.INSTANCE);
+                        user.getProtocolInfo().getPipeline().add(BedrockRakNetStatusProtocol.INSTANCE);
                     }
                 });
             }

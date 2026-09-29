@@ -22,8 +22,9 @@
 package com.viaversion.viafabricplus.protocoltranslator.protocol;
 
 import com.google.common.collect.Lists;
-import com.viaversion.viafabricplus.features.entity.metadata.WolfHealthTracker1_14_4;
-import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.ViaFabricPlus;
+import com.viaversion.viafabricplus.features.v1_21_5.WolfHealthTracker1_14_4;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslationImpl;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.item.Item;
 import com.viaversion.viaversion.api.protocol.AbstractProtocol;
@@ -36,12 +37,13 @@ import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.api.type.Type;
 import com.viaversion.viaversion.api.type.Types;
 import com.viaversion.viaversion.api.type.types.version.VersionedTypes;
-import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPacket26_1;
-import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ClientboundPackets26_1;
-import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ServerboundPacket26_1;
-import com.viaversion.viaversion.protocols.v1_21_11to26_1.packet.ServerboundPackets26_1;
+import com.viaversion.viaversion.protocols.v26_2to26_3.packet.ClientboundPackets26_3;
+import com.viaversion.viaversion.protocols.v26_2to26_3.packet.ServerboundPackets26_3;
 import com.viaversion.viaversion.protocols.v1_21_7to1_21_9.packet.ClientboundConfigurationPackets1_21_9;
 import com.viaversion.viaversion.protocols.v1_21_7to1_21_9.packet.ServerboundConfigurationPackets1_21_9;
+import com.viaversion.viaversion.protocols.v26_2to26_3.packet.ClientboundConfigurationPackets26_3;
+import com.viaversion.viaversion.protocols.v26_2to26_3.packet.ClientboundPacket26_3;
+import com.viaversion.viaversion.protocols.v26_2to26_3.packet.ServerboundPacket26_3;
 import com.viaversion.viaversion.util.Key;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -56,7 +58,7 @@ import net.raphimc.vialegacy.protocol.release.r1_7_6_10tor1_8.types.Types1_7_6;
 
 import static com.viaversion.viaversion.util.ProtocolUtil.packetTypeMap;
 
-public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPacket26_1, ClientboundPacket26_1, ServerboundPacket26_1, ServerboundPacket26_1> {
+public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPacket26_3, ClientboundPacket26_3, ServerboundPacket26_3, ServerboundPacket26_3> {
 
     public static final ViaFabricPlusProtocol INSTANCE = new ViaFabricPlusProtocol();
 
@@ -80,14 +82,15 @@ public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPac
         ITEM_TYPES.put(ProtocolVersion.v1_21_11, new ItemTypes(VersionedTypes.V1_21_11.item, VersionedTypes.V1_21_11.lengthPrefixedItem));
         ITEM_TYPES.put(ProtocolVersion.v26_1, new ItemTypes(VersionedTypes.V26_1.item, VersionedTypes.V26_1.lengthPrefixedItem));
         ITEM_TYPES.put(ProtocolVersion.v26_2, new ItemTypes(VersionedTypes.V26_2.item, VersionedTypes.V26_2.lengthPrefixedItem));
+        ITEM_TYPES.put(ProtocolVersion.v26_3, new ItemTypes(VersionedTypes.V26_3.item, VersionedTypes.V26_3.lengthPrefixedItem));
 
-        if (!ITEM_TYPES.containsKey(ProtocolTranslator.NATIVE_VERSION)) {
+        if (!ITEM_TYPES.containsKey(ProtocolTranslationImpl.NATIVE_VERSION)) {
             throw new IllegalStateException("Missing item type for native version");
         }
     }
 
     public ViaFabricPlusProtocol() {
-        super(ClientboundPacket26_1.class, ClientboundPacket26_1.class, ServerboundPacket26_1.class, ServerboundPacket26_1.class);
+        super(ClientboundPacket26_3.class, ClientboundPacket26_3.class, ServerboundPacket26_3.class, ServerboundPacket26_3.class);
     }
 
     @Override
@@ -116,7 +119,8 @@ public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPac
     public void init(UserConnection connection) {
         super.init(connection);
 
-        final ProtocolVersion serverVersion = ProtocolTranslator.getTargetVersion(connection.getChannel()); // UserConnection#getProtocolInfo is not initialized yet
+        // UserConnection#getProtocolInfo is not initialized yet
+        final ProtocolVersion serverVersion = ViaFabricPlus.api().protocolTranslation().targetVersion(connection.getChannel());
         if (serverVersion.olderThanOrEqualTo(ProtocolVersion.v1_14_4)) {
             connection.put(new WolfHealthTracker1_14_4());
         }
@@ -150,12 +154,12 @@ public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPac
     }
 
     @Override
-    protected PacketTypesProvider<ClientboundPacket26_1, ClientboundPacket26_1, ServerboundPacket26_1, ServerboundPacket26_1> createPacketTypesProvider() {
+    protected PacketTypesProvider<ClientboundPacket26_3, ClientboundPacket26_3, ServerboundPacket26_3, ServerboundPacket26_3> createPacketTypesProvider() {
         return new SimplePacketTypesProvider<>(
-            packetTypeMap(unmappedClientboundPacketType, ClientboundPackets26_1.class, ClientboundConfigurationPackets1_21_9.class),
-            packetTypeMap(mappedClientboundPacketType, ClientboundPackets26_1.class, ClientboundConfigurationPackets1_21_9.class),
-            packetTypeMap(mappedServerboundPacketType, ServerboundPackets26_1.class, ServerboundConfigurationPackets1_21_9.class),
-            packetTypeMap(unmappedServerboundPacketType, ServerboundPackets26_1.class, ServerboundConfigurationPackets1_21_9.class)
+            packetTypeMap(unmappedClientboundPacketType, ClientboundPackets26_3.class, ClientboundConfigurationPackets26_3.class),
+            packetTypeMap(mappedClientboundPacketType, ClientboundPackets26_3.class, ClientboundConfigurationPackets26_3.class),
+            packetTypeMap(mappedServerboundPacketType, ServerboundPackets26_3.class, ServerboundConfigurationPackets1_21_9.class),
+            packetTypeMap(unmappedServerboundPacketType, ServerboundPackets26_3.class, ServerboundConfigurationPackets1_21_9.class)
         );
     }
 

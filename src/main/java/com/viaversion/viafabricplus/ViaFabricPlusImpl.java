@@ -21,213 +21,143 @@
 
 package com.viaversion.viafabricplus;
 
-import com.viaversion.viafabricplus.api.ViaFabricPlusBase;
-import com.viaversion.viafabricplus.api.ChangeProtocolVersionCallback;
+import com.viaversion.viafabricplus.api.ViaFabricPlusAPI;
+import com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusEntrypoint;
+import com.viaversion.viafabricplus.api.settings.impl.AdvancedSettings;
+import com.viaversion.viafabricplus.api.settings.impl.GeneralSettings;
+import com.viaversion.viafabricplus.api.settings.impl.VisualSettings;
 import com.viaversion.viafabricplus.features.FeaturesLoading;
-import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
-import com.viaversion.viafabricplus.features.item.negative_item_count.NegativeItemUtil;
-import com.viaversion.viafabricplus.features.limitation.max_chat_length.MaxChatLength;
-import com.viaversion.viafabricplus.injection.access.core.IConnection;
-import com.viaversion.viafabricplus.injection.access.core.IServerData;
-import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viafabricplus.protocoltranslator.translator.ItemTranslator;
-import com.viaversion.viafabricplus.save.SaveManager;
-import com.viaversion.viafabricplus.settings.SettingsManager;
+import com.viaversion.viafabricplus.protocoltranslator.ConversionsImpl;
+import com.viaversion.viafabricplus.protocoltranslator.LimitationsImpl;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslationImpl;
+import com.viaversion.viafabricplus.screen.ScreensImpl;
+import com.viaversion.viafabricplus.settings.SettingsImpl;
 import com.viaversion.viafabricplus.util.ClassLoaderPriorityUtil;
-import com.viaversion.viafabricplus.util.network.SyncTasks;
-import com.viaversion.viaversion.api.connection.UserConnection;
-import com.viaversion.viaversion.api.minecraft.item.Item;
-import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
-import io.netty.channel.Channel;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.core.Holder;
-import net.minecraft.network.Connection;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
 
-public final class ViaFabricPlusImpl implements ViaFabricPlusBase {
+public final class ViaFabricPlusImpl implements ViaFabricPlusAPI, ViaFabricPlusEntrypoint {
 
-    public static final Event<ChangeProtocolVersionCallback> CHANGE_PROTOCOL_VERSION = EventFactory.createArrayBacked(ChangeProtocolVersionCallback.class, listeners -> (oldVersion, newVersion) -> {
-        for (final ChangeProtocolVersionCallback listener : listeners) {
-            listener.onChangeProtocolVersion(oldVersion, newVersion);
-        }
-    });
-
-    public static final ViaFabricPlusImpl INSTANCE = new ViaFabricPlusImpl();
+    private static ViaFabricPlusImpl INSTANCE;
 
     private final Logger logger = LogManager.getLogger("ViaFabricPlus");
     private final Path path = FabricLoader.getInstance().getConfigDir().resolve("viafabricplus");
 
-    private String version;
-    private String implVersion;
+    private final SettingsImpl settings = new SettingsImpl();
+    private final ProtocolTranslationImpl protocolTranslation = new ProtocolTranslationImpl();
+    private final ConversionsImpl conversions = new ConversionsImpl();
+    private final LimitationsImpl limitations = new LimitationsImpl();
+    private ScreensImpl screens;
+
+    private final String version;
+    private final String implVersion;
     private CompletableFuture<Void> loadingFuture;
 
-    public void init() {
-        ViaFabricPlus.init(INSTANCE);
-
+    public ViaFabricPlusImpl() {
+        INSTANCE = this;
         final ModMetadata metadata = FabricLoader.getInstance().getModContainer("viafabricplus").get().getMetadata();
-        version = metadata.getVersion().getFriendlyString();
-        implVersion = metadata.getCustomValue("vfp:implVersion").getAsString();
-
-        try {
-            Files.createDirectories(path);
-        } catch (final IOException e) {
-            logger.error("Failed to create ViaFabricPlus directory", e);
-        }
-
-        ClassLoaderPriorityUtil.loadOverridingJars(path, logger);
-        SettingsManager.INSTANCE.init();
-        SaveManager.INSTANCE.init();
-        SyncTasks.init();
-        FeaturesLoading.init();
-
-        this.loadingFuture = ProtocolTranslator.init(path);
+        this.version = metadata.getVersion().getFriendlyString();
+        this.implVersion = metadata.getCustomValue("vfp:implVersion").getAsString();
     }
-
-    // Make sure this is called *after* ViaVersion has been initialized
-    public void postInit() {
-        this.loadingFuture.join();
-        FeaturesLoading.postInit();
-        SaveManager.INSTANCE.postInit();
-    }
-
-    // --------------------------------------------------------------------------------------------
-    // Proxy the most important/used internals to a general API point for mods
 
     @Override
-    public String getVersion() {
+    public void onPreLoading() {
+        ViaFabricPlus.init(this);
+        try {
+            Files.createDirectories(this.path);
+        } catch (final IOException e) {
+            this.logger.error("Failed to create ViaFabricPlus directory", e);
+        }
+
+        ClassLoaderPriorityUtil.loadOverridingJars(this.path, logger);
+        com.viaversion.viafabricplus.save.SaveManager.INSTANCE.init();
+        this.settings.init();
+        FeaturesLoading.onPreLoading();
+
+        this.loadingFuture = this.protocolTranslation.init(this.path);
+    }
+
+    @Override
+    public void onPostRegistryLoading() {
+        FeaturesLoading.onPostRegistryLoading();
+    }
+
+    @Override
+    public void onPostGameLoading() {
+        this.limitations.init();
+        this.screens = new ScreensImpl();
+
+        FeaturesLoading.onPostGameLoading();
+        this.loadingFuture.join();
+        this.settings.postInit();
+        com.viaversion.viafabricplus.save.SaveManager.INSTANCE.postInit();
+    }
+
+    @Override
+    public String version() {
         return this.version;
     }
 
     @Override
-    public String getImplVersion() {
+    public String implVersion() {
         return this.implVersion;
     }
 
     @Override
-    public Path getPath() {
+    public Path path() {
         return this.path;
     }
 
     @Override
-    public @Nullable ProtocolVersion getTargetVersion() {
-        return ProtocolTranslator.getTargetVersion();
-    }
-
-    @Override
-    public void setTargetVersion(ProtocolVersion targetVersion) throws IllegalStateException {
-        if (Minecraft.getInstance().getConnection() != null) {
-            throw new IllegalStateException("Cannot set target version while connected!");
-        }
-
-        ProtocolTranslator.setTargetVersion(targetVersion);
-    }
-
-    @Override
-    public void setTargetVersion(ProtocolVersion targetVersion, boolean revertOnDisconnect) throws IllegalStateException {
-        if (Minecraft.getInstance().getConnection() != null) {
-            throw new IllegalStateException("Cannot set target version while connected!");
-        }
-
-        ProtocolTranslator.setTargetVersion(targetVersion, revertOnDisconnect);
-    }
-
-    @Override
-    public @Nullable UserConnection getUserConnection() {
-        return ProtocolTranslator.getPlayNetworkUserConnection();
-    }
-
-    @Override
-    public @Nullable UserConnection getUserConnection(Connection connection) {
-        return ((IConnection) connection).viaFabricPlus$getUserConnection();
-    }
-
-    @Override
-    public @Nullable ProtocolVersion getServerVersion(ServerData serverInfo) {
-        return ((IServerData) serverInfo).viaFabricPlus$forcedVersion();
-    }
-
-    @Override
-    public void registerOnChangeProtocolVersionCallback(ChangeProtocolVersionCallback callback) {
-        CHANGE_PROTOCOL_VERSION.register(callback);
-    }
-
-    @Override
-    public int getMaxChatLength(ProtocolVersion version) {
-        return MaxChatLength.getChatLength();
-    }
-
-    @Override
-    public boolean getBooleanSetting(final String translationKey) {
-        return false;
-    }
-
-    @Override
-    public String getModeSetting(final String translationKey) {
-        return "";
-    }
-
-    @Override
-    public String getAutoVersionSetting(final String translationKey) {
-        return "";
-    }
-
-    @Override
-    public @Nullable Item translateItem(ItemStack stack, ProtocolVersion targetVersion) {
-        return ItemTranslator.mcToVia(stack, targetVersion);
-    }
-
-    @Override
-    public @Nullable ItemStack translateItem(Item item, ProtocolVersion sourceVersion) {
-        return ItemTranslator.viaToMc(item, sourceVersion);
-    }
-
-    @Override
-    public boolean itemExists(net.minecraft.world.item.Item item, ProtocolVersion version) {
-        return VersionedRegistries.containsItem(item, version);
-    }
-
-    @Override
-    public boolean enchantmentExists(ResourceKey<Enchantment> enchantment, ProtocolVersion version) {
-        return VersionedRegistries.containsEnchantment(enchantment, version);
-    }
-
-    @Override
-    public boolean effectExists(Holder<MobEffect> effect, ProtocolVersion version) {
-        return VersionedRegistries.containsEffect(effect, version);
-    }
-
-    @Override
-    public boolean itemExistsInConnection(net.minecraft.world.item.Item item) {
-        return VersionedRegistries.keepItem(item);
-    }
-
-    @Override
-    public boolean itemExistsInConnection(ItemStack stack) {
-        return VersionedRegistries.keepItem(stack);
-    }
-
-    @Override
-    public int getStackCount(ItemStack stack) {
-        return NegativeItemUtil.getCount(stack);
-    }
-
-    public Logger getLogger() {
+    public Logger logger() {
         return this.logger;
+    }
+
+    @Override
+    public SettingsImpl settings() {
+        return this.settings;
+    }
+
+    public GeneralSettings options() {
+        return this.settings.general();
+    }
+
+    public VisualSettings visuals() {
+        return this.settings.visual();
+    }
+
+    public AdvancedSettings advanced() {
+        return this.settings.advanced();
+    }
+
+    @Override
+    public ProtocolTranslationImpl protocolTranslation() {
+        return this.protocolTranslation;
+    }
+
+    @Override
+    public ConversionsImpl conversions() {
+        return this.conversions;
+    }
+
+    @Override
+    public LimitationsImpl limitations() {
+        return this.limitations;
+    }
+
+    @Override
+    public ScreensImpl screens() {
+        return this.screens;
+    }
+
+    public static ViaFabricPlusImpl impl() {
+        return INSTANCE;
     }
 
 }

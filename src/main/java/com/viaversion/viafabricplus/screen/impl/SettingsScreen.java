@@ -22,72 +22,97 @@
 package com.viaversion.viafabricplus.screen.impl;
 
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
-import com.viaversion.viafabricplus.settings.AbstractSetting;
-import com.viaversion.viafabricplus.settings.SettingGroup;
-import com.viaversion.viafabricplus.settings.type.BooleanSetting;
-import com.viaversion.viafabricplus.settings.type.ButtonSetting;
-import com.viaversion.viafabricplus.settings.type.ModeSetting;
-import com.viaversion.viafabricplus.settings.type.AutoVersionSetting;
-import com.viaversion.viafabricplus.screen.VFPList;
-import com.viaversion.viafabricplus.screen.VFPScreen;
+import com.viaversion.viafabricplus.api.settings.base.BooleanSetting;
+import com.viaversion.viafabricplus.api.settings.base.EnumSetting;
+import com.viaversion.viafabricplus.api.settings.base.Setting;
+import com.viaversion.viafabricplus.api.settings.base.SettingGroup;
+import com.viaversion.viafabricplus.api.settings.base.VersionedBooleanSetting;
+import com.viaversion.viafabricplus.screen.base.VFPTabbedScreen;
+import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.impl.settings.BooleanListEntry;
-import com.viaversion.viafabricplus.screen.impl.settings.ButtonListEntry;
-import com.viaversion.viafabricplus.screen.impl.settings.ModeListEntry;
-import com.viaversion.viafabricplus.screen.impl.settings.TitleEntry;
+import com.viaversion.viafabricplus.screen.impl.settings.EnumListEntry;
 import com.viaversion.viafabricplus.screen.impl.settings.VersionedBooleanListEntry;
-import com.viaversion.viafabricplus.settings.SettingsManager;
-import net.minecraft.client.Minecraft;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
-public final class SettingsScreen extends VFPScreen {
+public final class SettingsScreen extends VFPTabbedScreen<SettingGroup> {
 
-    public static final SettingsScreen INSTANCE = new SettingsScreen();
+    private static final int ROW_WIDTH = 360;
+    private static final int LIST_BOTTOM_MARGIN = 5; // The screen has no buttons below the list
 
     public SettingsScreen() {
         super(Component.translatable("screen.viafabricplus.settings"), true);
     }
 
     @Override
-    protected void init() {
-        this.setupDefaultSubtitle();
-        this.addRenderableWidget(new SlotList(this.minecraft, width, height, 3 + 3 /* start offset */ + (font.lineHeight + 2) * 3 /* title is 2 */, -5, (font.lineHeight + 2) * 2));
-
-        super.init();
+    public void onClose() {
+        if (this.prevScreen instanceof ViaFabricPlusScreen parent
+            && ViaFabricPlusImpl.impl().settings().general().legacyUserInterface().isActive()) {
+            ViaFabricPlusImpl.impl().screens().openViaFabricPlusScreen(parent.prevScreen);
+        } else {
+            super.onClose();
+        }
     }
 
-    public static class SlotList extends VFPList {
-        private static double scrollAmount;
+    @Override
+    protected List<SettingGroup> tabs() {
+        return ViaFabricPlusImpl.impl().settings().groups();
+    }
 
-        public SlotList(Minecraft minecraftClient, int width, int height, int top, int bottom, int entryHeight) {
-            super(minecraftClient, width, height, top, bottom, entryHeight);
+    @Override
+    protected Component tabTitle(final SettingGroup tab) {
+        return tab.name();
+    }
 
-            for (SettingGroup group : SettingsManager.INSTANCE.getGroups()) {
-                this.addEntry(new TitleEntry(group.getName()));
+    @Override
+    protected int entryHeight() {
+        return (this.font.lineHeight + 2) * 2;
+    }
 
-                for (AbstractSetting<?> setting : group.getSettings()) {
-                    switch (setting) {
-                        case final BooleanSetting booleanSetting -> this.addEntry(new BooleanListEntry(booleanSetting));
-                        case final ButtonSetting buttonSetting -> this.addEntry(new ButtonListEntry(buttonSetting));
-                        case final ModeSetting modeSetting -> this.addEntry(new ModeListEntry(modeSetting));
-                        case final AutoVersionSetting autoVersionSetting ->
-                            this.addEntry(new VersionedBooleanListEntry(autoVersionSetting));
-                        default ->
-                            ViaFabricPlusImpl.INSTANCE.getLogger().warn("Unknown setting type: {}", setting.getClass().getName());
-                    }
-                }
+    @Override
+    protected int rowWidth(final int screenWidth) {
+        return Math.min(ROW_WIDTH, screenWidth - 20);
+    }
+
+    @Override
+    protected int listBottomMargin() {
+        return LIST_BOTTOM_MARGIN;
+    }
+
+    @Override
+    protected List<VFPListEntry> entries(final SettingGroup tab) {
+        return tab.settings().stream()
+            .map(SettingsScreen::entry)
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
+    @Override
+    protected List<VFPListEntry> results(final String query) {
+        return this.tabs().stream()
+            .flatMap(group -> group.settings().stream())
+            .filter(setting -> setting.name().getString().toLowerCase(Locale.ROOT).contains(query))
+            .map(SettingsScreen::entry)
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
+    static @Nullable VFPListEntry entry(final Setting setting) {
+        return switch (setting) {
+            case final com.viaversion.viafabricplus.settings.type.ButtonSetting buttonSetting ->
+                new com.viaversion.viafabricplus.screen.impl.settings.ButtonListEntry(buttonSetting);
+            case final VersionedBooleanSetting versionedBooleanSetting ->
+                new VersionedBooleanListEntry(versionedBooleanSetting);
+            case final BooleanSetting booleanSetting -> new BooleanListEntry(booleanSetting);
+            case final EnumSetting<?> enumSetting -> new EnumListEntry<>(enumSetting);
+            default -> {
+                ViaFabricPlusImpl.impl().logger().warn("Unknown setting type: {}", setting.getClass().getName());
+                yield null;
             }
-            initScrollY(scrollAmount);
-        }
-
-        @Override
-        public int getRowWidth() {
-            return super.getRowWidth() + 140;
-        }
-
-        @Override
-        protected void updateSlotAmount(double amount) {
-            scrollAmount = amount;
-        }
+        };
     }
 
 }

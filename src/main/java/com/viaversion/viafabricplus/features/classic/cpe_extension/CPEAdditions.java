@@ -21,7 +21,7 @@
 
 package com.viaversion.viafabricplus.features.classic.cpe_extension;
 
-import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
@@ -57,6 +57,18 @@ public final class CPEAdditions {
     private static boolean snowing = false;
 
     public static void init() {
+        allowExtension(ClassicProtocolExtension.ENV_WEATHER_TYPE);
+        EXT_WEATHER_TYPE = createNewPacket(ClassicProtocolExtension.ENV_WEATHER_TYPE, 31, (user, buf) -> buf.readByte());
+        allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS);
+        allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT);
+        EXT_BLOCK_DEFINITIONS = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 35, (user, buf) -> buf.skipBytes(79));
+        EXT_UNDEFINE_BLOCK = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 36, (user, buf) -> buf.skipBytes(1));
+        EXT_BLOCK_DEFINITIONS_EXT = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT, 37, (user, buf) -> buf.skipBytes(84));
+
+        resetBlockDefinitions();
+    }
+
+    public static void postInit() {
         EXTENDED_CLASSIC_ITEMS.add(Items.COBBLESTONE_SLAB);
         EXTENDED_CLASSIC_ITEMS.add(Items.DEAD_BUSH);
         EXTENDED_CLASSIC_ITEMS.add(Items.SANDSTONE);
@@ -69,16 +81,6 @@ public final class CPEAdditions {
         EXTENDED_CLASSIC_ITEMS.add(Items.JUKEBOX);
         EXTENDED_CLASSIC_ITEMS.add(Items.STONE_BRICKS);
 
-        allowExtension(ClassicProtocolExtension.ENV_WEATHER_TYPE);
-        EXT_WEATHER_TYPE = createNewPacket(ClassicProtocolExtension.ENV_WEATHER_TYPE, 31, (user, buf) -> buf.readByte());
-
-        allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS);
-        allowExtension(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT);
-        EXT_BLOCK_DEFINITIONS = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 35, (user, buf) -> buf.skipBytes(79));
-        EXT_UNDEFINE_BLOCK = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS, 36, (user, buf) -> buf.skipBytes(1));
-        EXT_BLOCK_DEFINITIONS_EXT = createNewPacket(ClassicProtocolExtension.BLOCK_DEFINITIONS_EXT, 37, (user, buf) -> buf.skipBytes(84));
-
-        resetBlockDefinitions();
     }
 
     public static boolean isClimbableBlock(final int blockId) {
@@ -103,7 +105,7 @@ public final class CPEAdditions {
     }
 
     public static boolean isSnowing() {
-        return ProtocolTranslator.getTargetVersion().equals(LegacyProtocolVersion.c0_30cpe) && snowing;
+        return ViaFabricPlus.api().targetVersion().equals(LegacyProtocolVersion.c0_30cpe) && snowing;
     }
 
     public static void setSnowing(boolean snowing) {

@@ -72,7 +72,7 @@ public abstract class MixinConnectScreen_1 {
                 final AuthData authData = netherNetIdentity.authData();
                 authData.setClientHostedNonce(clientHostedNonce);
                 connection.put(authData);
-                ViaFabricPlusImpl.INSTANCE.getLogger().info(
+                ViaFabricPlusImpl.impl().logger().info(
                     useBedrockAccount
                         ? "Using the transport-bound authenticated Bedrock identity for the NetherNet world"
                         : "Using a transport-bound self-signed Bedrock identity for the LAN world"
@@ -93,10 +93,10 @@ public abstract class MixinConnectScreen_1 {
                     connection.put(authData);
                 }
             } else if (!useBedrockAccount) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().info("Using a local self-signed Bedrock identity for the LAN world");
+                ViaFabricPlusImpl.impl().logger().info("Using a local self-signed Bedrock identity for the LAN world");
             } else {
                 if (bedrockSession == null) {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().warn("Could not get Bedrock account. Joining online mode servers will not work!");
+                    ViaFabricPlusImpl.impl().logger().warn("Could not get Bedrock account. Joining online mode servers will not work!");
                 }
             }
         }

@@ -34,10 +34,16 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(JoinMultiplayerScreen.class)
 public abstract class MixinJoinMultiplayerScreen extends Screen {
+
+    @Shadow
+    private ServerData editingServer;
 
     public MixinJoinMultiplayerScreen(final Component component) {
         super(component);
@@ -60,6 +66,11 @@ public abstract class MixinJoinMultiplayerScreen extends Screen {
     private void storeDirectConnectionPhase(JoinMultiplayerScreen instance, ServerData data, Operation<Void> original) {
         ((IServerData) data).viaFabricPlus$passDirectConnectScreen(true);
         original.call(instance, data);
+    }
+
+    @Inject(method = "editServerCallback", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ServerList;save()V"))
+    private void storeForcedVersion(boolean result, CallbackInfo ci, @Local ServerData current) {
+        ((IServerData) current).viaFabricPlus$forceVersion(((IServerData) this.editingServer).viaFabricPlus$forcedVersion());
     }
 
 }

@@ -22,27 +22,24 @@
 package com.viaversion.viafabricplus.settings.type;
 
 import com.google.gson.JsonObject;
-import com.viaversion.viafabricplus.settings.AbstractSetting;
+import com.viaversion.viafabricplus.api.settings.base.Setting;
 import com.viaversion.viafabricplus.settings.SettingGroup;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
-public class ButtonSetting extends AbstractSetting<Runnable> {
+public class ButtonSetting implements Setting {
+    private final MutableComponent name;
+    private final Runnable action;
 
-    public ButtonSetting(SettingGroup parent, MutableComponent name, Runnable onClick) {
-        super(parent, name, onClick);
+    public ButtonSetting(final SettingGroup group, final MutableComponent name, final Runnable action) {
+        this.name = name;
+        this.action = action;
+        group.register(name.getString(), this);
     }
 
-
-    public MutableComponent displayValue() {
-        return getName();
-    }
-
-    @Override
-    public void write(JsonObject object) {
-    }
-
-    @Override
-    public void read(JsonObject object) {
-    }
-
+    @Override public Component name() { return this.name; }
+    public MutableComponent displayValue() { return this.name; }
+    public Runnable getValue() { return this.action; }
+    @Override public void read(final JsonObject object) { }
+    @Override public void write(final JsonObject object) { }
 }

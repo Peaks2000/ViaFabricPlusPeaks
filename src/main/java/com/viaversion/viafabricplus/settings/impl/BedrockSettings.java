@@ -91,7 +91,7 @@ public final class BedrockSettings extends SettingGroup {
                             this.thread.interrupt();
                         }
                     }, TITLE, Component.translatable("click_to_set_bedrock_account.viafabricplus.notice"), Component.translatable("base.viafabricplus.copy_link"), Component.translatable("base.viafabricplus.cancel")));
-                    Util.getPlatform().openUri(msaDeviceCode.getDirectVerificationUri());
+                    com.mojang.blaze3d.Blaze3D.openUri(java.net.URI.create(msaDeviceCode.getDirectVerificationUri()));
                 });
             bedrockAccount.getChangeListeners().add(new ChangeListener() {
                 @Override
@@ -149,7 +149,7 @@ public final class BedrockSettings extends SettingGroup {
         // If the default port for this entry should be replaced, check if the address already contains a port
         // We can't just replace vanilla's default port because a bedrock server might be running on the same port
         if (BedrockSettings.INSTANCE.replaceDefaultPort.getValue() && ProtocolTranslator.isBedrock(version) && !address.contains(":")) {
-            return address + ":" + ProtocolConstants.BEDROCK_RAKNET_DEFAULT_PORT;
+            return address + ":" + ProtocolConstants.BEDROCK_DEFAULT_PORT;
         } else {
             return address;
         }

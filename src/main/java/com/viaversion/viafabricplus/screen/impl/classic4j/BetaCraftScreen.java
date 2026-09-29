@@ -73,7 +73,7 @@ public final class BetaCraftScreen extends VFPScreen {
     }
 
     private void createView() {
-        this.setupSubtitle(Component.nullToEmpty(BETA_CRAFT_SERVER_LIST_URL), ConfirmLinkScreen.confirmLink(this, BETA_CRAFT_SERVER_LIST_URL));
+        this.setupSubtitle(Component.nullToEmpty(BETA_CRAFT_SERVER_LIST_URL), ConfirmLinkScreen.confirmLink(this, java.net.URI.create(BETA_CRAFT_SERVER_LIST_URL)));
 
         final int entryHeight = (font.lineHeight + 2) * 3; // title is 2
         final int searchBarY = 2 * SLOT_MARGIN + entryHeight;

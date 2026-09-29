@@ -21,7 +21,8 @@
 
 package com.viaversion.viafabricplus.updater;
 
-import com.viaversion.viafabricplus.features.item.filter_creative_tabs.VersionedRegistries;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
+import com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusEntrypoint;
 import com.viaversion.viafabricplus.protocoltranslator.impl.ViaFabricPlusMappingDataLoader;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersionRange;
 import com.viaversion.viaversion.libs.gson.Gson;
@@ -29,6 +30,7 @@ import com.viaversion.viaversion.libs.gson.GsonBuilder;
 import com.viaversion.viaversion.libs.gson.JsonObject;
 import java.io.FileWriter;
 import java.io.IOException;
+import net.fabricmc.loader.api.FabricLoader;
 import net.lenni0451.reflect.stream.RStream;
 import net.minecraft.SharedConstants;
 import net.minecraft.WorldVersion;
@@ -40,21 +42,22 @@ import net.minecraft.server.packs.metadata.pack.PackFormat;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.block.entity.BannerPatterns;
 import org.junit.jupiter.api.Test;
 
-import static com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator.NATIVE_VERSION;
+import static com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslationImpl.NATIVE_VERSION;
 
 public final class UpdateTaskTest {
 
-    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-    private static final String CURRENT_VERSION_RANGE = ProtocolVersionRange.andNewer(NATIVE_VERSION).toString();
+    private final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+    private final String CURRENT_VERSION_RANGE = ProtocolVersionRange.andNewer(NATIVE_VERSION).toString();
 
     @Test
     public void update() {
-        SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
+        this.bootstrapClient();
         if (SharedConstants.getProtocolVersion() != NATIVE_VERSION.getOriginalVersion()) {
             throw new UnsupportedOperationException("Please update ProtocolTranslator.NATIVE_VERSION to the current protocol version.");
         }
@@ -63,21 +66,26 @@ public final class UpdateTaskTest {
         updateResourcePacks();
     }
 
-    private static void updateVersionedRegistries() {
-        VersionedRegistries.init(); // Make sure they are loaded before editing
+    private void bootstrapClient() {
+        FabricLoader.getInstance().invokeEntrypoints("viafabricplus", ViaFabricPlusEntrypoint.class, ViaFabricPlusEntrypoint::onPreLoading);
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+        ViaFabricPlusImpl.impl().limitations().init();
+    }
 
+    private void updateVersionedRegistries() {
         final JsonObject data = ViaFabricPlusMappingDataLoader.INSTANCE.loadData("versioned-registries.json");
         addMissingItems(data.getAsJsonObject("items"));
         addMissingEnchantments(data.getAsJsonObject("enchantments"));
         addMissingPatterns(data.getAsJsonObject("banner_patterns"));
         addMissingEffects(data.getAsJsonObject("effects"));
 
-        UpdateTaskTest.write("versioned-registries.json", data);
+        write("versioned-registries.json", data);
     }
 
-    private static void addMissingItems(final JsonObject items) {
+    private void addMissingItems(final JsonObject items) {
         for (final Item item : BuiltInRegistries.ITEM) {
-            if (VersionedRegistries.ITEM_DIFF.containsKey(item) || item == Items.AIR) {
+            if (ViaFabricPlusImpl.impl().limitations().getItemDiff().containsKey(item) || item == Items.AIR) {
                 continue;
             }
 
@@ -85,10 +93,10 @@ public final class UpdateTaskTest {
         }
     }
 
-    private static void addMissingEnchantments(final JsonObject enchantments) {
+    private void addMissingEnchantments(final JsonObject enchantments) {
         RStream.of(Enchantments.class).fields().forEach(fieldWrapper -> {
-            final ResourceKey registryKey = fieldWrapper.get();
-            if (VersionedRegistries.ENCHANTMENT_DIFF.containsKey(registryKey)) {
+            final ResourceKey<Enchantment> registryKey = fieldWrapper.get();
+            if (ViaFabricPlusImpl.impl().limitations().getEnchantmentDiff().containsKey(registryKey)) {
                 return;
             }
 
@@ -96,10 +104,10 @@ public final class UpdateTaskTest {
         });
     }
 
-    private static void addMissingPatterns(final JsonObject patterns) {
+    private void addMissingPatterns(final JsonObject patterns) {
         RStream.of(BannerPatterns.class).fields().forEach(fieldWrapper -> {
-            final ResourceKey registryKey = fieldWrapper.get();
-            if (VersionedRegistries.PATTERN_DIFF.containsKey(registryKey)) {
+            final ResourceKey<BannerPattern> registryKey = fieldWrapper.get();
+            if (ViaFabricPlusImpl.impl().limitations().getPatternDiff().containsKey(registryKey)) {
                 return;
             }
 
@@ -107,9 +115,9 @@ public final class UpdateTaskTest {
         });
     }
 
-    private static void addMissingEffects(final JsonObject effects) {
+    private void addMissingEffects(final JsonObject effects) {
         for (final MobEffect effect : BuiltInRegistries.MOB_EFFECT) {
-            if (VersionedRegistries.EFFECT_DIFF.containsKey(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect))) {
+            if (ViaFabricPlusImpl.impl().limitations().getEffectDiff().containsKey(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect))) {
                 continue;
             }
 
@@ -117,7 +125,7 @@ public final class UpdateTaskTest {
         }
     }
 
-    private static void updateResourcePacks() {
+    private void updateResourcePacks() {
         final JsonObject data = ViaFabricPlusMappingDataLoader.INSTANCE.loadData("resource-pack-headers.json");
 
         final WorldVersion version = SharedConstants.getCurrentVersion();
@@ -138,7 +146,7 @@ public final class UpdateTaskTest {
         write("resource-pack-headers.json", data);
     }
 
-    private static void write(final String name, final JsonObject data) {
+    private void write(final String name, final JsonObject data) {
         try (final FileWriter writer = new FileWriter("../src/main/resources/assets/viafabricplus/data/" + name)) {
             GSON.toJson(data, writer);
         } catch (IOException e) {

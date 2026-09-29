@@ -43,7 +43,7 @@ import java.util.Objects;
 import java.util.UUID;
 import net.raphimc.minecraftauth.bedrock.model.MinecraftMultiplayerToken;
 import net.raphimc.viabedrock.api.util.CryptUtil;
-import net.raphimc.viabedrock.api.util.FNV1;
+import net.raphimc.viabedrock.api.util.Fnv1;
 import net.raphimc.viabedrock.protocol.storage.AuthData;
 
 /**
@@ -93,7 +93,7 @@ public final class BedrockNetherNetIdentity {
         final Instant now = Instant.now();
         final KeyPair sessionKeyPair = CryptUtil.generateEcdsa384KeyPair();
         final String encodedPublicKey = Base64.getEncoder().encodeToString(sessionKeyPair.getPublic().getEncoded());
-        final long rawXuid = FNV1.fnv1_64(username.getBytes(StandardCharsets.UTF_8));
+        final long rawXuid = Fnv1.fnv1_64(username.getBytes(StandardCharsets.UTF_8));
         final String xuid = Long.toUnsignedString(rawXuid);
         final UUID identity = UUID.nameUUIDFromBytes(("pocket-auth-1-xuid:" + xuid).getBytes(StandardCharsets.UTF_8));
         final String multiplayerToken = Jwts.builder()
@@ -116,7 +116,7 @@ public final class BedrockNetherNetIdentity {
 
         final AuthData authData = new AuthData(multiplayerToken, sessionKeyPair);
         authData.setSelfSignedId(identity);
-        authData.setClientRandomId(FNV1.fnv1_64(identity.toString().getBytes(StandardCharsets.UTF_8)));
+        authData.setClientRandomId(Fnv1.fnv1_64(identity.toString().getBytes(StandardCharsets.UTF_8)));
         return new BedrockNetherNetIdentity(authData, "self");
     }
 

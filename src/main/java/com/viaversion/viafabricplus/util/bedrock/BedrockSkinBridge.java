@@ -31,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -45,9 +47,8 @@ import net.raphimc.viabedrock.protocol.types.primitive.ImageType;
 /**
  * Bridges Bedrock skin packets into Minecraft's local texture manager and converts the signed
  * Java player's already-loaded skin into Bedrock client-data claims. No skin upload service is
- * involved. Classic Bedrock pixels are reduced to the ordinary Java wide/slim model. Persona
- * atlases are not classic skin textures, so they use Minecraft's deterministic bundled player
- * skin instead of painting the creator UV map onto the Java model.
+ * involved. Classic skins use the Java wide/slim model. Complete creator cube geometries use
+ * their own atlas and skeleton; incomplete creator payloads use a deterministic bundled skin.
  */
 public final class BedrockSkinBridge {
 
@@ -63,6 +64,7 @@ public final class BedrockSkinBridge {
     private static final String SLIM_RESOURCE_PATCH = "{\"geometry\":{\"default\":\"geometry.humanoid.customSlim\"}}";
 
     private static final Map<UUID, RegisteredSkin> BEDROCK_SKINS = new ConcurrentHashMap<>();
+    private static final Map<Identifier, Model<AvatarRenderState>> CREATOR_MODELS = new ConcurrentHashMap<>();
     private static final AtomicLong TEXTURE_SEQUENCE = new AtomicLong();
 
     private static volatile UserConnection activeConnection;
@@ -90,7 +92,7 @@ public final class BedrockSkinBridge {
                     .execute(() -> acceptPreparedClientSkin(prepared, fallback, false));
             minecraft.getSkinManager().get(profile).whenComplete((skin, error) -> minecraft.execute(() -> {
                 if (error != null) {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().debug("Could not prepare the local Java skin for Bedrock", error);
+                    ViaFabricPlusImpl.impl().logger().debug("Could not prepare the local Java skin for Bedrock", error);
                     acceptPreparedClientSkin(prepared, fallback, false);
                     return;
                 }
@@ -125,13 +127,13 @@ public final class BedrockSkinBridge {
             Thread.currentThread().interrupt();
             return;
         } catch (Exception e) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().debug("Could not read the prepared Java skin for Bedrock", e);
+            ViaFabricPlusImpl.impl().logger().debug("Could not read the prepared Java skin for Bedrock", e);
             return;
         }
 
         if (clientSkin == null || !java.util.Objects.equals(
                 clientSkin.profileId(), Minecraft.getInstance().getGameProfile().id())) {
-            ViaFabricPlusImpl.INSTANCE.getLogger().warn(
+            ViaFabricPlusImpl.impl().logger().warn(
                     "Local Java skin was unavailable for the Bedrock login; retaining ViaBedrock's fallback skin");
             return;
         }
@@ -142,10 +144,10 @@ public final class BedrockSkinBridge {
             // initial player list.
             installClientSkin(connection, clientSkin, connection.getProtocolInfo().getUuid());
             if (clientSkin.signedMojangTexture()) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().info(
+                ViaFabricPlusImpl.impl().logger().info(
                         "Applied the signed local Java skin to the Bedrock login");
             } else {
-                ViaFabricPlusImpl.INSTANCE.getLogger().warn(
+                ViaFabricPlusImpl.impl().logger().warn(
                         "Applied Minecraft's bundled local fallback skin to the Bedrock login; the signed Java skin was unavailable");
             }
         }
@@ -165,13 +167,25 @@ public final class BedrockSkinBridge {
 
         final Minecraft minecraft = Minecraft.getInstance();
         final BufferedImage normalizedCape = normalizeCape(skin.capeData());
-        if (requiresPersonaFallback(skin)) {
-            minecraft.execute(() -> registerPersonaFallback(
-                    minecraft, connection, playerUuid, normalizedCape));
+        if (skin.persona() || skin.personaPieces() != null && !skin.personaPieces().isEmpty()) {
+            final BedrockPersonaGeometry.Geometry geometry = BedrockPersonaGeometry.parse(skin);
+            minecraft.execute(() -> {
+                if (geometry == null) {
+                    registerPersonaFallback(minecraft, connection, playerUuid, normalizedCape);
+                    return;
+                }
+                try {
+                    final Model<AvatarRenderState> creator = geometry.bake(isSlim(skin));
+                    registerBedrockSkin(minecraft, connection, playerUuid, skin.skinData(), normalizedCape,
+                        isSlim(skin) ? PlayerModelType.SLIM : PlayerModelType.WIDE, creator);
+                } catch (final RuntimeException e) {
+                    registerPersonaFallback(minecraft, connection, playerUuid, normalizedCape);
+                }
+            });
             return;
         }
 
-        final BufferedImage normalizedSkin = normalizeSkin(skin.skinData());
+        final BufferedImage normalizedSkin = prepareClassicRenderTexture(skin.skinData());
         if (normalizedSkin == null) {
             return;
         }
@@ -180,7 +194,14 @@ public final class BedrockSkinBridge {
     }
 
     static boolean requiresPersonaFallback(final SkinData skin) {
-        return skin.persona() || skin.personaPieces() != null && !skin.personaPieces().isEmpty();
+        return (skin.persona() || skin.personaPieces() != null && !skin.personaPieces().isEmpty())
+            && BedrockPersonaGeometry.parse(skin) == null;
+    }
+
+    public static Model<AvatarRenderState> creatorModel(final PlayerSkin skin) {
+        final UserConnection connection = activeConnection;
+        if (connection == null || ProtocolTranslator.getPlayNetworkUserConnection() != connection || skin == null) return null;
+        return CREATOR_MODELS.get(skin.body().texturePath());
     }
 
     public static PlayerSkin localBedrockSkin(final UUID playerUuid, final PlayerSkin fallback) {
@@ -193,25 +214,38 @@ public final class BedrockSkinBridge {
     }
 
     static BufferedImage normalizeSkin(final BufferedImage source) {
+        return prepareClassicSkin(source, false);
+    }
+
+    static BufferedImage prepareClassicRenderTexture(final BufferedImage source) {
+        return prepareClassicSkin(source, true);
+    }
+
+    private static BufferedImage prepareClassicSkin(final BufferedImage source, final boolean preserveResolution) {
         if (source == null || source.getWidth() <= 0 || source.getHeight() <= 0
                 || source.getWidth() > MAX_SOURCE_DIMENSION || source.getHeight() > MAX_SOURCE_DIMENSION) {
             return null;
         }
 
+        final int targetSize = preserveResolution && source.getWidth() % JAVA_SKIN_SIZE == 0 ? source.getWidth() : JAVA_SKIN_SIZE;
         final BufferedImage normalized;
         if (source.getWidth() == source.getHeight() && source.getWidth() >= JAVA_SKIN_SIZE) {
-            normalized = scaleNearest(source, JAVA_SKIN_SIZE, JAVA_SKIN_SIZE);
+            normalized = scaleNearest(source, targetSize, targetSize);
         } else if (source.getWidth() == source.getHeight() * 2 && source.getWidth() >= JAVA_SKIN_SIZE) {
-            normalized = expandLegacySkin(scaleNearest(source, JAVA_SKIN_SIZE, JAVA_SKIN_SIZE / 2));
+            normalized = expandLegacySkin(scaleNearest(source, targetSize, targetSize / 2));
         } else {
             return null;
         }
 
-        // Persona/creator geometry may deliberately leave parts of the ordinary skin base layer
-        // transparent because Bedrock renders those pixels through custom bones. Java discards
-        // base-layer alpha, which used to turn those transparent black pixels into solid black
-        // arms and legs. Flatten the matching legal overlay into each missing base part first and
-        // use a representative opaque colour only where the creator texture has no legal pixels.
+        // Some high-resolution Bedrock payloads still reuse the right-limb UVs and leave both
+        // modern left-limb regions empty. Recover only those wholly absent limbs before making the
+        // Java base layer opaque; real asymmetric left-side pixels must remain authoritative.
+        mirrorMissingLeftLimb(normalized, 0, 16, 0, 32, 16, 48, 0, 48);    // leg
+        mirrorMissingLeftLimb(normalized, 40, 16, 40, 32, 32, 48, 48, 48); // arm
+
+        // Classic/custom geometry may deliberately leave parts of the ordinary skin base layer
+        // transparent. Flatten the matching legal overlay into each missing base part first and
+        // use a representative opaque colour only where the texture has no legal pixels.
         final int globalFallback = representativeOpaqueColor(normalized, 0, 0,
                 normalized.getWidth(), normalized.getHeight(), 0, 0, 0, 0, DEFAULT_MISSING_BASE_COLOR);
         repairBaseLayerPart(normalized, 0, 0, 32, 16, 32, 0, globalFallback);       // head
@@ -353,7 +387,7 @@ public final class BedrockSkinBridge {
                 try (InputStream stream = resource.get().open(); NativeImage pixels = NativeImage.read(stream)) {
                     return copyPixels(pixels);
                 } catch (IOException e) {
-                    ViaFabricPlusImpl.INSTANCE.getLogger().debug(
+                    ViaFabricPlusImpl.impl().logger().debug(
                             "Could not read bundled fallback skin {}", texture.texturePath(), e);
                 }
             }
@@ -397,6 +431,13 @@ public final class BedrockSkinBridge {
     private static void registerBedrockSkin(final Minecraft minecraft, final UserConnection connection,
                                             final UUID playerUuid, final BufferedImage skinImage,
                                             final BufferedImage capeImage, final PlayerModelType model) {
+        registerBedrockSkin(minecraft, connection, playerUuid, skinImage, capeImage, model, null);
+    }
+
+    private static void registerBedrockSkin(final Minecraft minecraft, final UserConnection connection,
+                                            final UUID playerUuid, final BufferedImage skinImage,
+                                            final BufferedImage capeImage, final PlayerModelType model,
+                                            final Model<AvatarRenderState> creator) {
         if (connection != activeConnection) {
             return;
         }
@@ -420,7 +461,8 @@ public final class BedrockSkinBridge {
         }
 
         BEDROCK_SKINS.put(playerUuid, new RegisteredSkin(
-                connection, new PlayerSkin(body, cape, null, model, true), skinPath, capePath));
+                connection, new PlayerSkin(body, cape, null, model, false), skinPath, capePath));
+        if (creator != null) CREATOR_MODELS.put(skinPath, creator);
     }
 
     private static void registerPersonaFallback(final Minecraft minecraft, final UserConnection connection,
@@ -459,6 +501,7 @@ public final class BedrockSkinBridge {
     private static void releaseAllRegisteredSkins() {
         final RegisteredSkin[] registered = BEDROCK_SKINS.values().toArray(RegisteredSkin[]::new);
         BEDROCK_SKINS.clear();
+        CREATOR_MODELS.clear();
         if (registered.length == 0) {
             return;
         }
@@ -471,6 +514,7 @@ public final class BedrockSkinBridge {
     }
 
     private static void releaseRegisteredSkin(final Minecraft minecraft, final RegisteredSkin skin) {
+        CREATOR_MODELS.remove(skin.skinPath());
         minecraft.getTextureManager().release(skin.skinPath());
         if (skin.capePath() != null) {
             minecraft.getTextureManager().release(skin.capePath());
@@ -496,7 +540,7 @@ public final class BedrockSkinBridge {
     }
 
     private static BufferedImage expandLegacySkin(final BufferedImage legacy) {
-        final BufferedImage expanded = new BufferedImage(JAVA_SKIN_SIZE, JAVA_SKIN_SIZE, BufferedImage.TYPE_INT_ARGB);
+        final BufferedImage expanded = new BufferedImage(legacy.getWidth(), legacy.getWidth(), BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < legacy.getHeight(); y++) {
             for (int x = 0; x < legacy.getWidth(); x++) {
                 expanded.setRGB(x, y, legacy.getRGB(x, y));
@@ -521,12 +565,51 @@ public final class BedrockSkinBridge {
     private static void copyRect(final BufferedImage image, final int sourceX, final int sourceY,
                                  final int destinationX, final int destinationY,
                                  final int width, final int height, final boolean mirrorX) {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                final int readX = mirrorX ? sourceX + width - 1 - x : sourceX + x;
-                image.setRGB(destinationX + x, destinationY + y, image.getRGB(readX, sourceY + y));
+        final int scale = image.getWidth() / JAVA_SKIN_SIZE;
+        for (int y = 0; y < height * scale; y++) {
+            for (int x = 0; x < width * scale; x++) {
+                final int readX = mirrorX ? sourceX * scale + width * scale - 1 - x : sourceX * scale + x;
+                image.setRGB(destinationX * scale + x, destinationY * scale + y, image.getRGB(readX, sourceY * scale + y));
             }
         }
+    }
+
+    private static void mirrorMissingLeftLimb(final BufferedImage image,
+                                              final int sourceBaseX, final int sourceBaseY,
+                                              final int sourceOverlayX, final int sourceOverlayY,
+                                              final int destinationBaseX, final int destinationBaseY,
+                                              final int destinationOverlayX, final int destinationOverlayY) {
+        if (hasVisiblePixel(image, destinationBaseX, destinationBaseY, 16, 16)
+                || hasVisiblePixel(image, destinationOverlayX, destinationOverlayY, 16, 16)) {
+            return;
+        }
+        mirrorLimbFaces(image, sourceBaseX, sourceBaseY, destinationBaseX, destinationBaseY);
+        mirrorLimbFaces(image, sourceOverlayX, sourceOverlayY, destinationOverlayX, destinationOverlayY);
+    }
+
+    private static void mirrorLimbFaces(final BufferedImage image,
+                                        final int sourceX, final int sourceY,
+                                        final int destinationX, final int destinationY) {
+        copyRect(image, sourceX + 4, sourceY, destinationX + 4, destinationY, 4, 4, true);
+        copyRect(image, sourceX + 8, sourceY, destinationX + 8, destinationY, 4, 4, true);
+        copyRect(image, sourceX, sourceY + 4, destinationX + 8, destinationY + 4, 4, 12, true);
+        copyRect(image, sourceX + 4, sourceY + 4, destinationX + 4, destinationY + 4, 4, 12, true);
+        copyRect(image, sourceX + 8, sourceY + 4, destinationX, destinationY + 4, 4, 12, true);
+        copyRect(image, sourceX + 12, sourceY + 4, destinationX + 12, destinationY + 4, 4, 12, true);
+    }
+
+    private static boolean hasVisiblePixel(final BufferedImage image,
+                                           final int minX, final int minY,
+                                           final int width, final int height) {
+        final int scale = image.getWidth() / JAVA_SKIN_SIZE;
+        for (int y = minY * scale; y < (minY + height) * scale; y++) {
+            for (int x = minX * scale; x < (minX + width) * scale; x++) {
+                if ((image.getRGB(x, y) >>> 24) != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void repairBaseLayerPart(final BufferedImage image,
@@ -534,14 +617,15 @@ public final class BedrockSkinBridge {
                                             final int width, final int height,
                                             final int overlayX, final int overlayY,
                                             final int globalFallback) {
-        final int fallback = representativeOpaqueColor(image, baseX, baseY, width, height,
-                overlayX, overlayY, width, height, globalFallback);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                final int base = image.getRGB(baseX + x, baseY + y);
-                final int overlay = image.getRGB(overlayX + x, overlayY + y);
+        final int scale = image.getWidth() / JAVA_SKIN_SIZE;
+        final int fallback = representativeOpaqueColor(image, baseX * scale, baseY * scale, width * scale, height * scale,
+                overlayX * scale, overlayY * scale, width * scale, height * scale, globalFallback);
+        for (int y = 0; y < height * scale; y++) {
+            for (int x = 0; x < width * scale; x++) {
+                final int base = image.getRGB(baseX * scale + x, baseY * scale + y);
+                final int overlay = image.getRGB(overlayX * scale + x, overlayY * scale + y);
                 final int background = compositeOpaque(overlay, fallback);
-                image.setRGB(baseX + x, baseY + y, compositeOpaque(base, background));
+                image.setRGB(baseX * scale + x, baseY * scale + y, compositeOpaque(base, background));
             }
         }
     }

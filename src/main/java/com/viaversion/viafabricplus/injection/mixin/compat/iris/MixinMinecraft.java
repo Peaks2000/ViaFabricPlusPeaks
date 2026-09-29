@@ -54,7 +54,7 @@ public abstract class MixinMinecraft {
                 && !this.viaFabricPlus$previousDimension.equals(level.dimension());
         if (ClassicShaderCompatibility.shouldPreservePipeline(ProtocolTranslator.getTargetVersion(), dimensionChanged)) {
             if (ClassicShaderCompatibility.preservePipelineForSyntheticDimensionChange()) {
-                ViaFabricPlusImpl.INSTANCE.getLogger().info(
+                ViaFabricPlusImpl.impl().logger().info(
                         "Preserved the Iris pipeline across synthetic Classic dimension change: {} => {}",
                         this.viaFabricPlus$previousDimension.identifier(), level.dimension().identifier()
                 );

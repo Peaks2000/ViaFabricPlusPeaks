@@ -99,7 +99,7 @@ public class VFPScreen extends Screen {
      * @param subtitle The subtitle which should be rendered
      */
     public void setupUrlSubtitle(final String subtitle) {
-        this.setupSubtitle(Component.nullToEmpty(subtitle), ConfirmLinkScreen.confirmLink(this, subtitle));
+        this.setupSubtitle(Component.nullToEmpty(subtitle), ConfirmLinkScreen.confirmLink(this, java.net.URI.create(subtitle)));
     }
 
     /**
@@ -244,7 +244,7 @@ public class VFPScreen extends Screen {
      * @param next      The screen that should be opened after the error screen is closed
      */
     public static void showErrorScreen(final Component title, final Throwable throwable, final Screen next) {
-        ViaFabricPlusImpl.INSTANCE.getLogger().error("Something went wrong!", throwable);
+        ViaFabricPlusImpl.impl().logger().error("Something went wrong!", throwable);
 
         final Minecraft client = Minecraft.getInstance();
         client.execute(() -> client.gui.setScreen(new AlertScreen(() -> client.gui.setScreen(next), title, Component.translatable("base.viafabricplus.something_went_wrong").append("\n" + throwable.getMessage()), Component.translatable("base.viafabricplus.cancel"), false)));

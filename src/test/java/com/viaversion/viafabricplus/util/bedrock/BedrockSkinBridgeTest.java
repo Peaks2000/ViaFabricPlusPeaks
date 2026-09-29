@@ -50,6 +50,37 @@ public final class BedrockSkinBridgeTest {
     }
 
     @Test
+    public void absentModernLeftLimbsMirrorRightBaseAndOverlayFaces() {
+        final BufferedImage skin = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        skin.setRGB(0, 20, 0xFF102030);  // right-leg base side
+        skin.setRGB(4, 36, 0xFF405060);  // right-leg overlay side
+        skin.setRGB(40, 20, 0xFF708090); // right-arm base side
+        skin.setRGB(44, 36, 0xFFA0B0C0); // right-arm overlay side
+
+        final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(skin);
+
+        assertNotNull(normalized);
+        assertEquals(0xFF102030, normalized.getRGB(27, 52));
+        assertEquals(0xFF405060, normalized.getRGB(7, 52));
+        assertEquals(0xFF405060, normalized.getRGB(23, 52));
+        assertEquals(0xFF708090, normalized.getRGB(43, 52));
+        assertEquals(0xFFA0B0C0, normalized.getRGB(55, 52));
+        assertEquals(0xFFA0B0C0, normalized.getRGB(39, 52));
+    }
+
+    @Test
+    public void existingAsymmetricLeftLimbPixelsAreNeverMirroredOver() {
+        final BufferedImage skin = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        skin.setRGB(40, 20, 0xFF112233);
+        skin.setRGB(32, 52, 0xFFABCDEF);
+
+        final BufferedImage normalized = BedrockSkinBridge.normalizeSkin(skin);
+
+        assertNotNull(normalized);
+        assertEquals(0xFFABCDEF, normalized.getRGB(32, 52));
+    }
+
+    @Test
     public void personaAtlasUsesBundledFallbackWithoutChangingClassicNormalization() {
         final BufferedImage atlas = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
         final SkinData creator = skinData(atlas, true, List.of());
@@ -124,6 +155,32 @@ public final class BedrockSkinBridgeTest {
         assertTrue(BedrockSkinBridge.shouldPreferPreparedClientSkin(profileId, profileId));
         assertFalse(BedrockSkinBridge.shouldPreferPreparedClientSkin(
                 profileId, UUID.fromString("fedcba98-7654-3210-fedc-ba9876543210")));
+    }
+
+    @Test
+    public void highResolutionRenderingPreservesSubpixelAndAsymmetricLimbDetail() {
+        final BufferedImage source = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+        source.setRGB(2, 2, 0xFF123456);
+        source.setRGB(3, 2, 0xFFABCDEF);
+        source.setRGB(72, 104, 0xFF112233); // real left-arm face prevents replacement
+        source.setRGB(88, 40, 0xFF445566);
+        final BufferedImage result = BedrockSkinBridge.prepareClassicRenderTexture(source);
+        assertEquals(128, result.getWidth());
+        assertEquals(0xFF123456, result.getRGB(2, 2));
+        assertEquals(0xFFABCDEF, result.getRGB(3, 2));
+        assertEquals(0xFF112233, result.getRGB(72, 104));
+        assertEquals(0, source.getRGB(32, 96)); // repairs never mutate input
+    }
+
+    @Test
+    public void highResolutionLegacyLegIsMirroredAtItsOriginalResolution() {
+        final BufferedImage source = new BufferedImage(128, 64, BufferedImage.TYPE_INT_ARGB);
+        source.setRGB(8, 40, 0xFF102030);
+        source.setRGB(9, 40, 0xFF405060);
+        final BufferedImage result = BedrockSkinBridge.prepareClassicRenderTexture(source);
+        assertEquals(128, result.getHeight());
+        assertEquals(0xFF102030, result.getRGB(47, 104));
+        assertEquals(0xFF405060, result.getRGB(46, 104));
     }
 
     private static SkinData skinData(final BufferedImage skin, final boolean persona,

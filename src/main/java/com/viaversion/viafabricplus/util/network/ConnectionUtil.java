@@ -139,7 +139,7 @@ public final class ConnectionUtil {
     private static void connectNetherNet(final String name, final ServerAddress serverAddress, final int bedrockWireProtocol,
                                          final boolean useBedrockAccount, final String clientHostedNonce) {
         final ServerData entry = new ServerData(name, serverAddress.getHost(), ServerData.Type.OTHER);
-        ((IServerData) entry).viaFabricPlus$forceVersion(BedrockProtocolVersion.bedrockLatest);
+        ((IServerData) entry).viaFabricPlus$forceVersion(BedrockProtocolVersion.BEDROCK_LATEST);
         ((IServerData) entry).viaFabricPlus$setBedrockWireProtocol(bedrockWireProtocol);
         ((IServerData) entry).viaFabricPlus$setUseBedrockAccount(useBedrockAccount);
         ((IServerData) entry).viaFabricPlus$setClientHostedNonce(clientHostedNonce);

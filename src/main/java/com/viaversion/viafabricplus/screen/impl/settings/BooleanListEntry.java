@@ -21,9 +21,8 @@
 
 package com.viaversion.viafabricplus.screen.impl.settings;
 
-import com.viaversion.viafabricplus.settings.type.BooleanSetting;
-import com.viaversion.viafabricplus.screen.VFPListEntry;
-import java.awt.*;
+import com.viaversion.viafabricplus.api.settings.base.BooleanSetting;
+import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -32,6 +31,11 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
 public final class BooleanListEntry extends VFPListEntry {
+
+    private static final int ACTIVE_COLOR = 0xFF00FF00;
+    private static final int INACTIVE_COLOR = 0xFFFF0000;
+    private static final int STATE_MARGIN = 2;
+
     private final BooleanSetting value;
 
     public BooleanListEntry(BooleanSetting value) {
@@ -40,25 +44,23 @@ public final class BooleanListEntry extends VFPListEntry {
 
     @Override
     public @NonNull Component getNarration() {
-        return this.value.getName();
+        return this.value.name();
     }
 
     @Override
-    public void mappedMouseClicked(double mouseX, double mouseY, int button) {
-        this.value.setValue(!this.value.getCurrentValue());
+    public void mappedMouseClicked() {
+        this.value.setActive(!this.value.isActive());
     }
 
     @Override
-    public void mappedRender(GuiGraphicsExtractor context, int x, int y, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+    public void mappedRender(GuiGraphicsExtractor context, int entryWidth, int entryHeight) {
         final Font textRenderer = Minecraft.getInstance().font;
 
-        final Component text = this.value.getCurrentValue() ? Component.translatable("base.viafabricplus.on") : Component.translatable("base.viafabricplus.off");
+        final Component text = this.value.isActive() ? Component.translatable("base.viafabricplus.on") : Component.translatable("base.viafabricplus.off");
 
-        final int offset = textRenderer.width(text) + 2;
-        renderScrollableText(this.value.getName().withStyle(ChatFormatting.GRAY), offset);
-        context.text(textRenderer, text, entryWidth - offset, entryHeight / 2 - textRenderer.lineHeight / 2, this.value.getCurrentValue() ? Color.GREEN.getRGB() : Color.RED.getRGB());
-
-        renderTooltip(value.getTooltip(), mouseX, mouseY);
+        final int offset = textRenderer.width(text) + STATE_MARGIN;
+        renderScrollableText(context, this.value.name().copy().withStyle(ChatFormatting.GRAY), offset);
+        context.text(textRenderer, text, entryWidth - offset, entryHeight / 2 - textRenderer.lineHeight / 2, this.value.isActive() ? ACTIVE_COLOR : INACTIVE_COLOR);
     }
 
 }
