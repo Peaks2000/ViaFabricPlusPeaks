@@ -8,6 +8,7 @@ on:
       - experiment/4.6.14
       - experiment/4.6.15
       - next/v5
+      - modrinth/26.3
   workflow_dispatch:
 
 permissions:
