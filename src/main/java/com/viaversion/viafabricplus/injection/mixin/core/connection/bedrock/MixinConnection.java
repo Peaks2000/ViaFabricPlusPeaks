@@ -33,6 +33,7 @@ import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.protocoltranslator.netty.RakNetPingEncapsulationCodec;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentity;
+import com.viaversion.viafabricplus.util.bedrock.BedrockHttpSignaling;
 import com.viaversion.viafabricplus.util.bedrock.BedrockNetherNetIdentitySignaling;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
@@ -112,6 +113,22 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     private static AbstractBootstrap<?, ?> useRakNetChannelFactory(Bootstrap instance, Class<? extends Channel> channelTypeClass, Operation<AbstractBootstrap<Bootstrap, Channel>> original, @Local(argsOnly = true) InetSocketAddress address, @Local(argsOnly = true) Connection clientConnection) {
         if (ProtocolTranslator.isBedrock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
+                if (netherNetAddress.httpEndpoint() != null) {
+                    final BedrockAuthManager account = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
+                    final BedrockNetherNetIdentity identity = account == null
+                        ? BedrockNetherNetIdentity.createSelfSigned(Minecraft.getInstance().getUser().getName())
+                        : BedrockNetherNetIdentity.createAuthenticated(account.getMinecraftMultiplayerToken().getUpToDateUnchecked(), account.getSessionKeyPair(), account.getDeviceId());
+                    WebRtcNativeLibrary.ensureAvailable();
+                    final BedrockHttpSignaling signaling =
+                        new BedrockHttpSignaling(netherNetAddress.httpEndpoint(), identity);
+                    return instance.channelFactory(() -> {
+                        final NetherNetClientChannel channel = signaling.newChannel();
+                        channel.attr(BedrockNetherNetIdentity.CHANNEL_ATTRIBUTE).set(identity);
+                        channel.config().setOption(NetherChannelOption.NETHER_CLIENT_HANDSHAKE_TIMEOUT_MS, NETHERNET_HANDSHAKE_TIMEOUT_MS);
+                        channel.config().setOption(NetherChannelOption.NETHER_CLIENT_MAX_HANDSHAKE_ATTEMPTS, 0);
+                        return channel;
+                    });
+                }
                 if (netherNetAddress.isDiscoveryAddress()) {
                     final BedrockNetherNetIdentity identity = BedrockNetherNetIdentity.createSelfSigned(Minecraft.getInstance().getUser().getName());
                     return instance.channelFactory(configuredNetherNetClientFactory(new ViaFabricPlusNetherNetDiscoverySignaling(), identity));
@@ -152,7 +169,7 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     private static ChannelFuture useRakNetPingHandlers(Bootstrap instance, InetAddress inetHost, int inetPort, Operation<ChannelFuture> original, @Local(argsOnly = true) InetSocketAddress address, @Local(argsOnly = true) Connection clientConnection, @Local(argsOnly = true) EventLoopGroupHolder eventLoopGroupHolder) {
         if (ProtocolTranslator.isBedrock(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
             if (address instanceof NetherNetInetSocketAddress netherNetAddress) {
-                final ChannelFuture future = netherNetAddress.isDiscoveryAddress()
+                final ChannelFuture future = (netherNetAddress.isDiscoveryAddress() || netherNetAddress.httpEndpoint() != null)
                     ? original.call(instance, inetHost, inetPort)
                     : instance.connect(netherNetAddress.getNetherNetAddress());
                 return future.addListeners(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE, (ChannelFutureListener) f -> {

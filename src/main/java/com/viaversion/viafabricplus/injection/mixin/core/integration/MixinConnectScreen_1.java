@@ -27,6 +27,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.viaversion.viafabricplus.features.rendering.ShaderDisabler;
 import com.viaversion.viafabricplus.features.rendering.ShaderDisabler.ConnectionType;
 import com.viaversion.viafabricplus.ViaFabricPlus;
+import com.viaversion.viafabricplus.util.bedrock.BedrockHttpSignaling;
+import com.viaversion.viafabricplus.util.bedrock.CompatibilityViaBedrockRuntime;
+import com.viaversion.viafabricplus.util.bedrock.NetherNetInetSocketAddress;
+import java.net.URI;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.api.protocoltranslator.ProtocolTranslation;
 import com.viaversion.viafabricplus.features.global.ClassiCubeAccount;
@@ -118,6 +122,12 @@ public abstract class MixinConnectScreen_1 {
             ? markedConnectionType
             : ProtocolTranslator.isBedrock(targetVersion) ? ConnectionType.BEDROCK : ConnectionType.NONE;
 
+        if (CompatibilityViaBedrockRuntime.isCompatibility(targetVersion)) {
+            final URI endpoint = BedrockHttpSignaling.probe(address);
+            if (endpoint != null) {
+                return new NetherNetInetSocketAddress(address, endpoint);
+            }
+        }
         return address;
     }
 

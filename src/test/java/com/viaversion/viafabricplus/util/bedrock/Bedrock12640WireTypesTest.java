@@ -143,7 +143,6 @@ public final class Bedrock12640WireTypesTest {
         final ByteBuf buffer = Unpooled.buffer();
         try {
             BedrockTypes.STRING.write(buffer, "creator-skin");
-            BedrockTypes.STRING.write(buffer, "playfab-id");
             BedrockTypes.STRING.write(buffer, "{\"geometry\":{\"default\":\"geometry.humanoid.customSlim\"}}");
             BedrockTypes.IMAGE.write(buffer, new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB));
 
@@ -800,6 +799,18 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void hudAcceptsBothVerifiedProtocol2225SnapshotLengths() {
+        final HudContainer hud = new HudContainer(null);
+        final BedrockItem[] latest = new BedrockItem[57];
+        latest[0] = new BedrockItem(1, (short) 0, (byte) 4);
+        assertTrue(hud.setItems(latest));
+        assertEquals(4, hud.getItems()[0].amount());
+        assertTrue(hud.setItems(new BedrockItem[54]));
+        assertTrue(hud.getItems()[0].isEmpty());
+        assertEquals(57, hud.getItems().length);
+    }
+
+    @Test
     public void craftingTableHudSlotsUseCraftingInputContainer() {
         final HudContainer hud = new HudContainer(null);
         for (int slot = 28; slot <= 40; slot++) {
@@ -947,8 +958,8 @@ public final class Bedrock12640WireTypesTest {
             assertEquals(123, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(1, buffer.readUnsignedByte());
 
-            assertEquals(17, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
-            assertEquals(19, buffer.readUnsignedByte());
+            assertEquals(18, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(20, buffer.readUnsignedByte());
             assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(1, buffer.readUnsignedByte());
@@ -1011,8 +1022,8 @@ public final class Bedrock12640WireTypesTest {
             assertEquals(11, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(1, buffer.readUnsignedByte());
 
-            assertEquals(17, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
-            assertEquals(19, buffer.readUnsignedByte());
+            assertEquals(18, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
+            assertEquals(20, buffer.readUnsignedByte());
             assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(1, BedrockTypes.UNSIGNED_VAR_INT.read(buffer));
             assertEquals(1, buffer.readUnsignedByte());

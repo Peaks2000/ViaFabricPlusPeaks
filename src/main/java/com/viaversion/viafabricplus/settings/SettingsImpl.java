@@ -51,6 +51,7 @@ public final class SettingsImpl implements Settings {
         this.groups.add(this.general);
         this.groups.add(this.visual);
         this.groups.add(this.advanced);
+        this.groups.add(com.viaversion.viafabricplus.settings.impl.PrivacySettings.INSTANCE);
         this.groups.add(com.viaversion.viafabricplus.settings.impl.LegacySettings.INSTANCE);
         this.groups.add(com.viaversion.viafabricplus.settings.impl.BedrockSettings.INSTANCE);
         this.groups.add(com.viaversion.viafabricplus.settings.impl.ClassiCubeSettings.INSTANCE);
@@ -94,7 +95,8 @@ public final class SettingsImpl implements Settings {
         // Set target version AFTER protocol loading, so we can reach all versions
         if (this.selectedProtocolVersion != null) {
             if (this.general.saveSelectedProtocolVersion().isActive()) {
-                final ProtocolVersion protocolVersion = ProtocolVersion.getClosest(this.selectedProtocolVersion);
+                final ProtocolVersion protocolVersion = ProtocolVersion.getClosest(this.selectedProtocolVersion.startsWith("Bedrock ")
+                    ? net.raphimc.viabedrock.api.BedrockProtocolVersion.BEDROCK_LATEST.getName() : this.selectedProtocolVersion);
                 if (protocolVersion != null) {
                     ViaFabricPlus.api().setTargetVersion(protocolVersion);
                 }

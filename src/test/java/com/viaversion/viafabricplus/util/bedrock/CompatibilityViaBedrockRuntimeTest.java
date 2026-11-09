@@ -12,6 +12,8 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import org.junit.jupiter.api.Test;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -20,10 +22,11 @@ public final class CompatibilityViaBedrockRuntimeTest {
 
     @Test
     public void ordinaryServersUseCurrentWireSemanticsThroughAnIsolatedRoute() {
+        assertFalse(CompatibilityViaBedrockRuntime.isolatedRouteVersion().olderThanOrEqualTo(ProtocolVersion.v26_2));
         assertEquals(1001, CompatibilityViaBedrockRuntime.routeProtocolVersion());
-        assertEquals(2193, CompatibilityViaBedrockRuntime.wireProtocolVersion());
+        assertEquals(2225, CompatibilityViaBedrockRuntime.wireProtocolVersion());
         assertNotEquals(CompatibilityViaBedrockRuntime.routeProtocolVersion(), CompatibilityViaBedrockRuntime.wireProtocolVersion());
-        assertEquals("Bedrock 1.26.52 (isolated servers)", CompatibilityViaBedrockRuntime.isolatedRouteVersion().getName());
+        assertEquals("Bedrock 1.26.63 (isolated servers)", CompatibilityViaBedrockRuntime.isolatedRouteVersion().getName());
     }
 
 }

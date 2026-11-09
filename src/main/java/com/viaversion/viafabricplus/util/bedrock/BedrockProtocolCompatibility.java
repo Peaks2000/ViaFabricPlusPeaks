@@ -23,9 +23,9 @@ public final class BedrockProtocolCompatibility {
     private static final Logger LOGGER = LogManager.getLogger("ViaFabricPlus/Bedrock");
 
     public static final int UNKNOWN_PROTOCOL = -1;
-    public static final int VIA_BEDROCK_ROUTE_PROTOCOL = 2193;
-    public static final int CURRENT_PROTOCOL = 2193;
-    public static final String CURRENT_GAME_VERSION = "1.26.52";
+    public static final int VIA_BEDROCK_ROUTE_PROTOCOL = 2225;
+    public static final int CURRENT_PROTOCOL = 2225;
+    public static final String CURRENT_GAME_VERSION = "1.26.63";
 
     private static final AtomicInteger NEXT_CONNECTION_PROTOCOL = new AtomicInteger(UNKNOWN_PROTOCOL);
 
@@ -44,9 +44,9 @@ public final class BedrockProtocolCompatibility {
             return UNKNOWN_PROTOCOL;
         }
         final String normalized = version.startsWith("1.") ? version.substring(2) : version;
-        // 26.51 and the 26.52 hotfix use the same 2193 schema. Match complete
-        // dotted version components, never 26.520 or unknown preview releases.
-        return normalized.matches("26\\.(51|52)(\\.[0-9]+)*") ? CURRENT_PROTOCOL : UNKNOWN_PROTOCOL;
+        // Stable 26.60–26.63 releases share protocol 2225. Match complete
+        // version components so unknown releases do not select this codec.
+        return normalized.matches("26\\.(60|61|62|63)(\\.[0-9]+)*") ? CURRENT_PROTOCOL : UNKNOWN_PROTOCOL;
     }
 
     public static void prepareConnection(final int protocolVersion) {

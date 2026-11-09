@@ -45,6 +45,7 @@ public final class HudPacketsSkinCaptureTest {
         BedrockTypes.VAR_LONG.write(input, 42L);
         BedrockTypes.STRING.write(input, "player");
         BedrockTypes.STRING.write(input, "xuid");
+        BedrockTypes.STRING.write(input, "playfab-id");
         BedrockTypes.STRING.write(input, "platform-chat");
         BedrockTypes.INT_LE.write(input, 7);
         writeProtocol2168Skin(input, pixels);
@@ -72,7 +73,6 @@ public final class HudPacketsSkinCaptureTest {
 
     private static void writeProtocol2168Skin(final ByteBuf output, final BufferedImage pixels) {
         BedrockTypes.STRING.write(output, "skin-id");
-        BedrockTypes.STRING.write(output, "playfab-id");
         BedrockTypes.STRING.write(output, "{\"geometry\":{\"default\":\"geometry.humanoid.custom\"}}");
         BedrockTypes.IMAGE.write(output, pixels);
         BedrockTypes.UNSIGNED_VAR_INT.writePrimitive(output, 0); // animations

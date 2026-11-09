@@ -23,19 +23,33 @@ package com.viaversion.viafabricplus.util.bedrock;
 
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
 import java.net.InetSocketAddress;
+import java.net.URI;
 
 public final class NetherNetInetSocketAddress extends InetSocketAddress {
 
     private final NetherNetAddress netherNetAddress;
+    private final URI httpEndpoint;
 
     public NetherNetInetSocketAddress(final NetherNetAddress netherNetAddress) {
         super(netherNetAddress.getNetworkId() + ".nethernet.viafabricplus.localhost", 0);
         this.netherNetAddress = netherNetAddress;
+        this.httpEndpoint = null;
     }
 
     public NetherNetInetSocketAddress(final InetSocketAddress discoveryAddress) {
         super(discoveryAddress.getAddress(), discoveryAddress.getPort());
         this.netherNetAddress = null;
+        this.httpEndpoint = null;
+    }
+
+    public NetherNetInetSocketAddress(final InetSocketAddress address, final URI httpEndpoint) {
+        super(address.getAddress(), address.getPort());
+        this.netherNetAddress = null;
+        this.httpEndpoint = httpEndpoint;
+    }
+
+    public URI httpEndpoint() {
+        return this.httpEndpoint;
     }
 
     public NetherNetAddress getNetherNetAddress() {
@@ -43,7 +57,7 @@ public final class NetherNetInetSocketAddress extends InetSocketAddress {
     }
 
     public boolean isDiscoveryAddress() {
-        return this.netherNetAddress == null;
+        return this.netherNetAddress == null && this.httpEndpoint == null;
     }
 
 }

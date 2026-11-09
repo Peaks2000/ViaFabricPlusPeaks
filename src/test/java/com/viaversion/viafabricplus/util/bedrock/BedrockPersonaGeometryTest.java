@@ -50,12 +50,12 @@ final class BedrockPersonaGeometryTest {
 
     @Test void usesOnlyResourcePatchSelectedGeometry() {
         SkinData original = skin(BODY);
-        SkinData missing = new SkinData(original.skinId(), "", "{\"geometry\":{\"default\":\"missing\"}}", original.skinData(), List.of(), null, original.geometryData(), "", "", false, true, false, false, "", "", "Wide", "#FFFFFFFF", List.of(), List.of(), false);
+        SkinData missing = new SkinData(original.skinId(), "{\"geometry\":{\"default\":\"missing\"}}", original.skinData(), List.of(), null, original.geometryData(), "", "", false, true, false, false, "", "", "Wide", "#FFFFFFFF", List.of(), List.of(), false);
         assertNull(BedrockPersonaGeometry.parse(missing));
     }
 
     private static SkinData skin(final String bones) {
-        return new SkinData("creator", "", "{\"geometry\":{\"default\":\"geometry.creator\"}}", new BufferedImage(128,128,BufferedImage.TYPE_INT_ARGB), List.of(), null,
+        return new SkinData("creator", "{\"geometry\":{\"default\":\"geometry.creator\"}}", new BufferedImage(128,128,BufferedImage.TYPE_INT_ARGB), List.of(), null,
             "{\"format_version\":\"1.12.0\",\"minecraft:geometry\":[{\"description\":{\"identifier\":\"geometry.creator\",\"texture_width\":64,\"texture_height\":64},\"bones\":[" + bones + "]}]}", "1.12.0", "", false, true, false, false, "", "", "Wide", "#FFFFFFFF", List.of(), List.of(), false);
     }
 }
