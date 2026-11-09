@@ -71,7 +71,11 @@ public abstract class MixinConnectScreen_1 {
             if (netherNetIdentity != null) {
                 final AuthData authData = netherNetIdentity.authData();
                 authData.setClientHostedNonce(clientHostedNonce);
-                connection.put(authData);
+                if (CompatibilityViaBedrockRuntime.isCompatibility(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
+                    CompatibilityViaBedrockRuntime.putAuthData(connection, authData.getMultiplayerToken(), authData.getSessionKeyPair(), authData.getDeviceId());
+                } else {
+                    connection.put(authData);
+                }
                 ViaFabricPlusImpl.impl().logger().info(
                     useBedrockAccount
                         ? "Using the transport-bound authenticated Bedrock identity for the NetherNet world"

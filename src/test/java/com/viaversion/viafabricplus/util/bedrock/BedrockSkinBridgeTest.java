@@ -185,7 +185,7 @@ public final class BedrockSkinBridgeTest {
 
     private static SkinData skinData(final BufferedImage skin, final boolean persona,
                                      final List<SkinData.PersonaPieceData> pieces) {
-        return new SkinData("skin", "", "", skin, List.of(), null, "", "", "",
+        return new SkinData("skin", "", skin, List.of(), null, "", "", "",
                 false, persona, false, false, "", "", "Wide", "", pieces, List.of(), false);
     }
 

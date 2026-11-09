@@ -32,7 +32,7 @@ dependencies {
 
     jarInJar("net.raphimc:ViaBedrock") {
         version {
-            branch = "experiment/26.3"
+            branch = "experiment/26.3-26.63"
         }
         exclude(group = "com.mojang", module = "brigadier")
         exclude(group = "at.yawk.lz4", module = "lz4-java")
@@ -82,7 +82,7 @@ val maintainedRuntime = configurations.named("runtimeClasspath").get().incoming.
 val isolatedRuntime = tasks.register<Copy>("prepareIsolatedBedrockRuntime") {
     from(maintainedRuntime)
     into(layout.buildDirectory.dir("generated/isolated-bedrock/viafabricplus/compatibility"))
-    rename { "ViaBedrock-compatibility-1.26.52.jar" }
+    rename { "ViaBedrock-compatibility-1.26.63.jar" }
     doFirst { require(maintainedRuntime.files.size == 1) { "Expected exactly one maintained ViaBedrock artifact" } }
 }
 tasks.processResources {

@@ -24,6 +24,7 @@ package com.viaversion.viafabricplus.injection.mixin.core.connection;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.ViaFabricPlus;
+import com.viaversion.viafabricplus.settings.impl.PrivacySettings;
 import com.viaversion.viafabricplus.api.protocoltranslator.ProtocolTranslation;
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.injection.access.core.ILocalSampleLogger;
@@ -33,6 +34,7 @@ import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.platform.ViaChannelInitializer;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import java.net.InetSocketAddress;
@@ -42,6 +44,8 @@ import net.minecraft.network.CipherEncoder;
 import net.minecraft.network.Connection;
 import net.minecraft.network.HandlerNames;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.BrandPayload;
 import net.minecraft.server.network.EventLoopGroupHolder;
 import net.minecraft.util.debugchart.LocalSampleLogger;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
@@ -73,6 +77,21 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
 
     @Unique
     private Cipher viaFabricPlus$decryptionCipher;
+
+    @Inject(method = "doSendPacket", at = @At("HEAD"), cancellable = true)
+    private void applyBrandPrivacy(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
+        if (packet instanceof ServerboundCustomPayloadPacket customPayload
+            && customPayload.payload() instanceof BrandPayload
+            && !PrivacySettings.INSTANCE.sendClientBrand.isActive()) {
+            ci.cancel();
+            if (flush) {
+                this.channel.flush();
+            }
+            if (listener != null) {
+                this.channel.newSucceededFuture().addListener(listener);
+            }
+        }
+    }
 
     @Inject(method = "setupCompression", at = @At("RETURN"))
     private void reorderCompression(int threshold, boolean validateDecompressed, CallbackInfo ci) {

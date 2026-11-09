@@ -44,17 +44,18 @@ import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
 /**
  * Loads the ordinary-server ViaBedrock implementation in a child-first class loader. It shares
- * the maintained 1.26.52 gameplay fixes but keeps packet tables, mappings, providers, static
+ * the maintained 1.26.63 gameplay fixes but keeps packet tables, mappings, providers, static
  * state, and authentication independent from the LAN/friends runtime.
  */
 public final class CompatibilityViaBedrockRuntime {
 
-    private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.52.jar";
+    private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.63.jar";
+    private static final String ISOLATED_PIPELINE_PROVIDER = "com.viaversion.viafabricplus.protocoltranslator.impl.provider.viabedrock.ViaFabricPlusNettyPipelineProvider";
     private static final String VIA_BEDROCK_PACKAGE = "net.raphimc.viabedrock.";
     private static final String VIA_BEDROCK_ASSETS = "assets/viabedrock";
     private static final int ROUTE_PROTOCOL_VERSION = 1001;
-    private static final String ROUTE_PROTOCOL_NAME = "Bedrock 1.26.52 (isolated servers)";
-    private static final int WIRE_PROTOCOL_VERSION = 2193;
+    private static final String ROUTE_PROTOCOL_NAME = "Bedrock 1.26.63 (isolated servers)";
+    private static final int WIRE_PROTOCOL_VERSION = 2225;
 
     private static ProtocolVersion compatibilityVersion;
     private static ChildFirstClassLoader classLoader;
@@ -69,7 +70,7 @@ public final class CompatibilityViaBedrockRuntime {
 
         try {
             final Path runtimeFolder = dataFolder.resolve("compatibility-viabedrock");
-            final Path runtimeJar = runtimeFolder.resolve("ViaBedrock-compatibility-1.26.52.jar");
+            final Path runtimeJar = runtimeFolder.resolve("ViaBedrock-compatibility-1.26.63.jar");
             Files.createDirectories(runtimeFolder);
             try (InputStream input = CompatibilityViaBedrockRuntime.class.getResourceAsStream(EMBEDDED_JAR)) {
                 if (input == null) {
@@ -88,6 +89,7 @@ public final class CompatibilityViaBedrockRuntime {
                 classLoader.loadClass("net.raphimc.viabedrock.ViaBedrockPlatformImpl")
                     .getConstructor(ProtocolVersion.class, int.class)
                     .newInstance(compatibilityVersion, WIRE_PROTOCOL_VERSION);
+                registerIsolatedPipelineProvider();
             } finally {
                 thread.setContextClassLoader(previousContextLoader);
             }
@@ -95,6 +97,14 @@ public final class CompatibilityViaBedrockRuntime {
         } catch (ReflectiveOperationException | IOException e) {
             throw new IllegalStateException("Failed to initialize the isolated compatibility ViaBedrock runtime", e);
         }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void registerIsolatedPipelineProvider() throws ReflectiveOperationException {
+        final Class providerType = classLoader.loadClass("net.raphimc.viabedrock.protocol.provider.NettyPipelineProvider");
+        final com.viaversion.viaversion.api.platform.providers.Provider provider =
+            (com.viaversion.viaversion.api.platform.providers.Provider) classLoader.loadClass(ISOLATED_PIPELINE_PROVIDER).getConstructor().newInstance();
+        com.viaversion.viaversion.api.Via.getManager().getProviders().use(providerType, provider);
     }
 
     public static ProtocolVersion compatibilityVersion() {
@@ -122,7 +132,7 @@ public final class CompatibilityViaBedrockRuntime {
     }
 
     static ProtocolVersion isolatedRouteVersion() {
-        return new SpecialProtocolVersion(ROUTE_PROTOCOL_VERSION, ROUTE_PROTOCOL_NAME, ProtocolVersion.v26_2) {
+        return new SpecialProtocolVersion(ROUTE_PROTOCOL_VERSION, ROUTE_PROTOCOL_NAME, ProtocolVersion.v26_3) {
             @Override
             public ProtocolVersion getBaseProtocolVersion() {
                 return null;
@@ -180,7 +190,7 @@ public final class CompatibilityViaBedrockRuntime {
 
             final PacketType interactPacket = (PacketType) classLoader.loadClass("net.raphimc.viabedrock.protocol.ServerboundBedrockPackets")
                 .getField("INTERACT").get(null);
-            final Object openInventoryAction = classLoader.loadClass("net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.InteractPacket_Action")
+            final Object openInventoryAction = classLoader.loadClass("net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.InteractPacketPayload_Action")
                 .getField("OpenInventory").get(null);
             final short actionValue = ((Number) openInventoryAction.getClass().getMethod("getValue").invoke(openInventoryAction)).shortValue();
             final Class<?> bedrockTypes = classLoader.loadClass("net.raphimc.viabedrock.protocol.types.BedrockTypes");
@@ -227,6 +237,17 @@ public final class CompatibilityViaBedrockRuntime {
         protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
             synchronized (getClassLoadingLock(name)) {
                 Class<?> loaded = findLoadedClass(name);
+                if (loaded == null && name.equals(ISOLATED_PIPELINE_PROVIDER)) {
+                    try (InputStream input = getParent().getResourceAsStream(name.replace('.', '/') + ".class")) {
+                        if (input == null) {
+                            throw new ClassNotFoundException(name);
+                        }
+                        final byte[] bytes = input.readAllBytes();
+                        loaded = defineClass(name, bytes, 0, bytes.length);
+                    } catch (IOException e) {
+                        throw new ClassNotFoundException(name, e);
+                    }
+                }
                 if (loaded == null && name.startsWith(VIA_BEDROCK_PACKAGE)) {
                     try {
                         loaded = findClass(name);

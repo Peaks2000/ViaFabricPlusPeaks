@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.screen.impl.protocol;
 
 import com.viaversion.viafabricplus.protocoltranslator.impl.ViaFabricPlusMappingDataLoader;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.libs.gson.JsonObject;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -46,6 +47,9 @@ public record ProtocolVersionMetadata(@Nullable String title, LocalDate releaseD
     }
 
     public static Identifier icon(final @Nullable ProtocolVersion version) {
+        if (version != null && ProtocolTranslator.isBedrock(version)) {
+            return Identifier.withDefaultNamespace("textures/block/bedrock.png");
+        }
         final ProtocolVersionMetadata metadata = version == null ? null : of(version);
         return metadata != null ? metadata.icon() : UNKNOWN_ICON;
     }

@@ -156,5 +156,7 @@
   "bedrock_worlds.viafabricplus.source_xbox": "Xbox friend",
   "bedrock_worlds.viafabricplus.source_lan": "LAN",
   "setting_group_name.viafabricplus.peaks_visual": "Peaks visuals",
-  "setting_group_name.viafabricplus.peaks_legacy": "Legacy compatibility"
+  "setting_group_name.viafabricplus.peaks_legacy": "Legacy compatibility",
+  "privacy_settings.viafabricplus": "Privacy",
+  "privacy_settings.viafabricplus.send_client_brand": "Send client brand"
 }

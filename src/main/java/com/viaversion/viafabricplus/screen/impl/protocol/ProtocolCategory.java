@@ -22,6 +22,7 @@
 package com.viaversion.viafabricplus.screen.impl.protocol;
 
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
@@ -42,6 +43,10 @@ public enum ProtocolCategory {
     }
 
     public static ProtocolCategory of(final ProtocolVersion version) {
+        if (ProtocolTranslator.isBedrock(version)) {
+            return MODERN;
+        }
+
         // c0.30 CPE is registered as a special version and therefore doesn't report the classic version type
         if (version.equals(LegacyProtocolVersion.c0_30cpe)) {
             return CLASSIC;
