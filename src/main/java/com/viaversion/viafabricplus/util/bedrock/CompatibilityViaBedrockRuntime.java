@@ -51,6 +51,7 @@ public final class CompatibilityViaBedrockRuntime {
 
     private static final String EMBEDDED_JAR = "/viafabricplus/compatibility/ViaBedrock-compatibility-1.26.63.jar";
     private static final String ISOLATED_PIPELINE_PROVIDER = "com.viaversion.viafabricplus.protocoltranslator.impl.provider.viabedrock.ViaFabricPlusNettyPipelineProvider";
+    private static final String ISOLATED_SKIN_PROVIDER = "com.viaversion.viafabricplus.protocoltranslator.impl.provider.viabedrock.ViaFabricPlusSkinProvider";
     private static final String VIA_BEDROCK_PACKAGE = "net.raphimc.viabedrock.";
     private static final String VIA_BEDROCK_ASSETS = "assets/viabedrock";
     private static final int ROUTE_PROTOCOL_VERSION = 1001;
@@ -89,7 +90,8 @@ public final class CompatibilityViaBedrockRuntime {
                 classLoader.loadClass("net.raphimc.viabedrock.ViaBedrockPlatformImpl")
                     .getConstructor(ProtocolVersion.class, int.class)
                     .newInstance(compatibilityVersion, WIRE_PROTOCOL_VERSION);
-                registerIsolatedPipelineProvider();
+                registerIsolatedProvider("NettyPipelineProvider", ISOLATED_PIPELINE_PROVIDER);
+                registerIsolatedProvider("SkinProvider", ISOLATED_SKIN_PROVIDER);
             } finally {
                 thread.setContextClassLoader(previousContextLoader);
             }
@@ -100,10 +102,10 @@ public final class CompatibilityViaBedrockRuntime {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void registerIsolatedPipelineProvider() throws ReflectiveOperationException {
-        final Class providerType = classLoader.loadClass("net.raphimc.viabedrock.protocol.provider.NettyPipelineProvider");
+    private static void registerIsolatedProvider(final String type, final String implementation) throws ReflectiveOperationException {
+        final Class providerType = classLoader.loadClass("net.raphimc.viabedrock.protocol.provider." + type);
         final com.viaversion.viaversion.api.platform.providers.Provider provider =
-            (com.viaversion.viaversion.api.platform.providers.Provider) classLoader.loadClass(ISOLATED_PIPELINE_PROVIDER).getConstructor().newInstance();
+            (com.viaversion.viaversion.api.platform.providers.Provider) classLoader.loadClass(implementation).getConstructor().newInstance();
         com.viaversion.viaversion.api.Via.getManager().getProviders().use(providerType, provider);
     }
 
@@ -237,7 +239,7 @@ public final class CompatibilityViaBedrockRuntime {
         protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
             synchronized (getClassLoadingLock(name)) {
                 Class<?> loaded = findLoadedClass(name);
-                if (loaded == null && name.equals(ISOLATED_PIPELINE_PROVIDER)) {
+                if (loaded == null && (name.equals(ISOLATED_PIPELINE_PROVIDER) || name.equals(ISOLATED_SKIN_PROVIDER))) {
                     try (InputStream input = getParent().getResourceAsStream(name.replace('.', '/') + ".class")) {
                         if (input == null) {
                             throw new ClassNotFoundException(name);

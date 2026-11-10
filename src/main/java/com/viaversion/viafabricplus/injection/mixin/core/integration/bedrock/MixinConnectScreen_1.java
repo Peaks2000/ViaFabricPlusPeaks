@@ -59,10 +59,8 @@ public abstract class MixinConnectScreen_1 {
         final UserConnection connection = ((IConnection) clientConnection).viaFabricPlus$getUserConnection();
 
         if (ProtocolTranslator.isBedrock()) {
-            if (!CompatibilityViaBedrockRuntime.isCompatibility(((IConnection) clientConnection).viaFabricPlus$getTargetVersion())) {
-                BedrockSkinBridge.beginConnection(connection);
-                connection.getChannel().closeFuture().addListener(future -> BedrockSkinBridge.endConnection(connection));
-            }
+            BedrockSkinBridge.beginConnection(connection);
+            connection.getChannel().closeFuture().addListener(future -> BedrockSkinBridge.endConnection(connection));
             final BedrockAuthManager bedrockSession = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
             final IServerData serverData = (IServerData) this.val$server;
             final boolean useBedrockAccount = serverData.viaFabricPlus$useBedrockAccount();

@@ -113,7 +113,7 @@ public abstract class MixinConnectScreen_1 {
         }
         targetVersion = BedrockProtocolCompatibility.routeForConnection(targetVersion, mixinServerInfo.viaFabricPlus$bedrockWireProtocol());
         ViaFabricPlus.api().protocolTranslation().setTargetVersion(targetVersion, true);
-        if (targetVersion.equals(BedrockProtocolVersion.BEDROCK_LATEST)) {
+        if (ProtocolTranslator.isBedrock(targetVersion)) {
             BedrockSkinBridge.prepareClientSkin();
         }
         this.viaFabricPlus$useClassiCubeAccount = ClassiCubeSettings.INSTANCE.setSessionNameToClassiCubeNameInServerList.getValue() && ViaFabricPlusClassicMPPassProvider.classicubeMPPass != null;

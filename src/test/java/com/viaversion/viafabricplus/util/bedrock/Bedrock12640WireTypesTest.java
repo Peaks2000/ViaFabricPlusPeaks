@@ -33,6 +33,7 @@ import net.raphimc.viabedrock.api.model.container.player.HudContainer;
 import net.raphimc.viabedrock.api.model.container.player.OffhandContainer;
 import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
 import net.raphimc.viabedrock.api.model.entity.LivingEntity;
+import net.raphimc.viabedrock.api.util.MathUtil;
 import net.raphimc.viabedrock.api.util.PacketFactory;
 import net.raphimc.viabedrock.protocol.BedrockProtocol;
 import net.raphimc.viabedrock.protocol.data.enums.DyeColor;
@@ -1236,6 +1237,29 @@ public final class Bedrock12640WireTypesTest {
         assertEquals(false, buffer.readBoolean());
         assertEquals(slot, buffer.readUnsignedByte());
         assertEquals(stackNetworkId, buffer.readIntLE());
+    }
+
+    @Test
+    public void opposingMovementKeysCancelBeforeDiagonalNormalization() {
+        final PlayerAuthInputData[] directions = {PlayerAuthInputData.Left, PlayerAuthInputData.Right,
+            PlayerAuthInputData.Up, PlayerAuthInputData.Down};
+        for (int mask = 0; mask < 16; mask++) {
+            final java.util.Set<PlayerAuthInputData> input = java.util.EnumSet.noneOf(PlayerAuthInputData.class);
+            for (int bit = 0; bit < directions.length; bit++) {
+                if ((mask & (1 << bit)) != 0) {
+                    input.add(directions[bit]);
+                }
+            }
+            final float x = ((mask & 1) != 0 ? 1F : 0F) - ((mask & 2) != 0 ? 1F : 0F);
+            final float y = ((mask & 4) != 0 ? 1F : 0F) - ((mask & 8) != 0 ? 1F : 0F);
+            final float length = Math.max(1F, (float) Math.sqrt(x * x + y * y));
+            final var walking = MathUtil.calculateMovementDirections(input, false);
+            final var sneaking = MathUtil.calculateMovementDirections(input, true);
+            assertEquals(x / length, walking.x(), 0.000001F, "walking X mask " + mask);
+            assertEquals(y / length, walking.y(), 0.000001F, "walking Y mask " + mask);
+            assertEquals(x / length * 0.3F, sneaking.x(), 0.000001F, "sneaking X mask " + mask);
+            assertEquals(y / length * 0.3F, sneaking.y(), 0.000001F, "sneaking Y mask " + mask);
+        }
     }
 
 }

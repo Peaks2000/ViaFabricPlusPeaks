@@ -154,6 +154,10 @@ public final class BedrockSkinBridge {
     }
 
     public static void installBedrockSkin(final UserConnection connection, final UUID playerUuid, final SkinData skin) {
+        installAppearance(connection, playerUuid, BedrockSkinAppearance.from(skin));
+    }
+
+    public static void installAppearance(final UserConnection connection, final UUID playerUuid, final BedrockSkinAppearance skin) {
         if (connection != activeConnection || playerUuid == null || skin.skinData() == null) {
             return;
         }
@@ -167,7 +171,7 @@ public final class BedrockSkinBridge {
 
         final Minecraft minecraft = Minecraft.getInstance();
         final BufferedImage normalizedCape = normalizeCape(skin.capeData());
-        if (skin.persona() || skin.personaPieces() != null && !skin.personaPieces().isEmpty()) {
+        if (skin.persona()) {
             final BedrockPersonaGeometry.Geometry geometry = BedrockPersonaGeometry.parse(skin);
             minecraft.execute(() -> {
                 if (geometry == null) {
@@ -521,7 +525,7 @@ public final class BedrockSkinBridge {
         }
     }
 
-    private static boolean isSlim(final SkinData skin) {
+    private static boolean isSlim(final BedrockSkinAppearance skin) {
         final String resourcePatch = skin.skinResourcePatch();
         return "slim".equalsIgnoreCase(skin.armSize())
                 || resourcePatch != null && resourcePatch.toLowerCase(java.util.Locale.ROOT).contains("customslim");
