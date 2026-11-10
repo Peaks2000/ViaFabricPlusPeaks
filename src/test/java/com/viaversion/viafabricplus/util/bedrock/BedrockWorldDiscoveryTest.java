@@ -211,6 +211,52 @@ public final class BedrockWorldDiscoveryTest {
     }
 
     @Test
+    public void parsesVersion7LanAdvertisementWithGameProtocol() {
+        assertVersion7Advertisement("1.26.62", "0123456789abcdef");
+        assertVersion7Advertisement("1.26.63", "0123456789abcdef");
+    }
+
+    @Test
+    public void parsesVersion7DedicatedServerWithoutNonce() {
+        assertVersion7Advertisement("1.26.63", "");
+    }
+
+    private void assertVersion7Advertisement(final String gameVersion, final String nonce) {
+        final ByteBuf advertisement = Unpooled.buffer();
+        advertisement.writeByte(7);
+        writeString(advertisement, "Host");
+        writeSignedVarInt(advertisement, 2225);
+        writeString(advertisement, gameVersion);
+        writeString(advertisement, "iPad World");
+        writeSignedVarInt(advertisement, 1);
+        writeSignedVarInt(advertisement, 5);
+        writeSignedVarInt(advertisement, 0);
+        advertisement.writeBoolean(false);
+        advertisement.writeBoolean(false);
+        advertisement.writeBoolean(true);
+        advertisement.writeBoolean(true);
+        writeString(advertisement, nonce);
+        writeSignedVarInt(advertisement, 4);
+        final ByteBuf response = wrapLanAdvertisement(advertisement);
+        try {
+            final var sender = new InetSocketAddress("192.168.1.30", 7551);
+            final BedrockWorld world = BedrockWorldDiscovery.parseLanAdvertisement(response, sender);
+            assertEquals("iPad World", world.name());
+            assertEquals("Host", world.owner());
+            assertEquals("Survival", world.gameMode());
+            assertEquals(gameVersion, world.version());
+            assertEquals(2225, world.protocolVersion());
+            assertEquals(1, world.playerCount());
+            assertEquals(5, world.maxPlayerCount());
+            assertEquals(sender, world.connection().discoveryAddress());
+            assertEquals(nonce.isEmpty() ? null : nonce, world.connection().clientHostedNonce());
+            assertFalse(response.isReadable());
+        } finally {
+            response.release();
+        }
+    }
+
+    @Test
     public void parsesLegacyLanAdvertisementWithoutNonce() {
         final ByteBuf advertisement = Unpooled.buffer();
         advertisement.writeByte(4);
