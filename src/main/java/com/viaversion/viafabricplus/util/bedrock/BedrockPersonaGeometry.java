@@ -38,6 +38,10 @@ public final class BedrockPersonaGeometry {
     }
 
     public static Geometry parse(final SkinData skin) {
+        return parse(skin == null ? null : BedrockSkinAppearance.from(skin));
+    }
+
+    public static Geometry parse(final BedrockSkinAppearance skin) {
         try {
             final BufferedImage atlas = skin.skinData();
             require(atlas != null && atlas.getWidth() > 0 && atlas.getHeight() > 0
