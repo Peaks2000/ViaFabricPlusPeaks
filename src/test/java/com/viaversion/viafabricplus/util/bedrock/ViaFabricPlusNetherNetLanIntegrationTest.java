@@ -27,6 +27,17 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public final class ViaFabricPlusNetherNetLanIntegrationTest {
 
     @Test
+    public void discoversConfiguredLanWorld() throws InterruptedException {
+        final String host = System.getenv("VFP_LAN_TEST_HOST");
+        assumeTrue(host != null && !host.isBlank());
+        assertTrue(BedrockWorldDiscovery.discoverLanWorlds().stream().anyMatch(world ->
+            world.connection().discoveryAddress() != null
+                && world.connection().discoveryAddress().getAddress().getHostAddress().equals(host)
+                && BedrockProtocolCompatibility.isSupported(world.protocolVersion())
+        ), "The configured LAN host must be discovered with a supported game protocol");
+    }
+
+    @Test
     public void connectsToConfiguredLanWorld() throws InterruptedException {
         final String host = System.getenv("VFP_LAN_TEST_HOST");
         assumeTrue(host != null && !host.isBlank());

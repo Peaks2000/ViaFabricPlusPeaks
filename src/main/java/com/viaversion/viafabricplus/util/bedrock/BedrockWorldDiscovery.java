@@ -344,11 +344,24 @@ public final class BedrockWorldDiscovery {
         final ByteBuf decoded = Unpooled.wrappedBuffer(ByteBufUtil.decodeHexDump(hex));
         try {
             final int advertisementVersion = decoded.readUnsignedByte();
+            final boolean version7 = advertisementVersion == 7;
             final String serverName = readString(decoded);
+            final int protocolVersion = version7 ? readSignedVarInt(decoded)
+                : BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(advertisementVersion);
+            final String gameVersion = version7 ? readString(decoded) : "NetherNet " + advertisementVersion;
             final String levelName = readString(decoded);
-            final int gameMode = readSignedVarInt(decoded);
-            final int playerCount = decoded.readIntLE();
-            final int maxPlayerCount = decoded.readIntLE();
+            final int gameMode;
+            final int playerCount;
+            final int maxPlayerCount;
+            if (version7) {
+                playerCount = readSignedVarInt(decoded);
+                maxPlayerCount = readSignedVarInt(decoded);
+                gameMode = readSignedVarInt(decoded);
+            } else {
+                gameMode = readSignedVarInt(decoded);
+                playerCount = decoded.readIntLE();
+                maxPlayerCount = decoded.readIntLE();
+            }
             final boolean editor = decoded.readBoolean();
             final boolean hardcore = decoded.readBoolean();
             String clientHostedNonce = null;
@@ -356,10 +369,16 @@ public final class BedrockWorldDiscovery {
                 decoded.readBoolean(); // Accepts online-authenticated identities.
                 decoded.readBoolean(); // Accepts self-signed identities.
                 clientHostedNonce = readString(decoded);
-                if (clientHostedNonce.isBlank() || clientHostedNonce.getBytes(StandardCharsets.UTF_8).length > MAX_CLIENT_HOSTED_NONCE_BYTES) {
+                if ((!version7 && clientHostedNonce.isBlank())
+                    || clientHostedNonce.getBytes(StandardCharsets.UTF_8).length > MAX_CLIENT_HOSTED_NONCE_BYTES) {
                     throw new IllegalArgumentException("Invalid client-hosted nonce");
                 }
-                readSignedVarInt(decoded); // Transport layer.
+                if (clientHostedNonce.isBlank()) {
+                    clientHostedNonce = null;
+                }
+                if (!version7) {
+                    readSignedVarInt(decoded); // Transport layer.
+                }
                 readSignedVarInt(decoded); // Connection type.
                 if (decoded.isReadable()) {
                     throw new IllegalArgumentException("Unexpected trailing advertisement data");
@@ -377,8 +396,8 @@ public final class BedrockWorldDiscovery {
                 !levelName.isBlank() ? levelName : serverName,
                 serverName,
                 BedrockWorld.Source.LAN,
-                "NetherNet " + advertisementVersion,
-                BedrockProtocolCompatibility.protocolForNetherNetAdvertisement(advertisementVersion),
+                gameVersion,
+                protocolVersion,
                 flags,
                 playerCount,
                 maxPlayerCount,
