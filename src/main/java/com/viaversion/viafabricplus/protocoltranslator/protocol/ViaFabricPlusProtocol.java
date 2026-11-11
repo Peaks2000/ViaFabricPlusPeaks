@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.protocoltranslator.protocol;
 
+import com.viaversion.viafabricplus.features.networking.privacy.ClientIdentityPrivacy;
 import com.google.common.collect.Lists;
 import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.features.v1_21_5.WolfHealthTracker1_14_4;
@@ -98,9 +99,14 @@ public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPac
         // Fixes an issue where the Fabric Particle API causes disconnects when both the client and server have the mod installed and both are 1.21.5+.
         // See https://github.com/ViaVersion/ViaFabric/issues/428
         this.registerServerbound(ServerboundConfigurationPackets1_21_9.CUSTOM_PAYLOAD, wrapper -> {
+            final String rawChannel = wrapper.passthrough(Types.STRING);
+            if (ClientIdentityPrivacy.shouldSuppress(rawChannel)) {
+                wrapper.cancel();
+                return;
+            }
             final ProtocolVersion serverVersion = wrapper.user().getProtocolInfo().serverProtocolVersion();
             if (serverVersion.newerThanOrEqualTo(ProtocolVersion.v1_21_5) && !serverVersion.equals(wrapper.user().getProtocolInfo().protocolVersion())) {
-                final String channel = Key.namespaced(wrapper.passthrough(Types.STRING));
+                final String channel = Key.namespaced(rawChannel);
                 if (channel.equals("minecraft:register") || channel.equals("minecraft:unregister")) {
                     final List<String> channels = Lists.newArrayList(new String(wrapper.passthrough(Types.SERVERBOUND_CUSTOM_PAYLOAD_DATA), StandardCharsets.UTF_8).split("\0"));
                     if (channels.remove("fabric:extended_block_particle_option_sync")) {
@@ -111,6 +117,11 @@ public final class ViaFabricPlusProtocol extends AbstractProtocol<ClientboundPac
                         }
                     }
                 }
+            }
+        });
+        this.registerServerbound(ServerboundPackets26_3.CUSTOM_PAYLOAD, wrapper -> {
+            if (ClientIdentityPrivacy.shouldSuppress(wrapper.passthrough(Types.STRING))) {
+                wrapper.cancel();
             }
         });
     }

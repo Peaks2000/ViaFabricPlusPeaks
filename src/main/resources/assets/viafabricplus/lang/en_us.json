@@ -158,5 +158,5 @@
   "setting_group_name.viafabricplus.peaks_visual": "Peaks visuals",
   "setting_group_name.viafabricplus.peaks_legacy": "Legacy compatibility",
   "privacy_settings.viafabricplus": "Privacy",
-  "privacy_settings.viafabricplus.send_client_brand": "Send client brand"
+  "privacy_settings.viafabricplus.privacy_mode": "Privacy mode (hide client announcements)"
 }

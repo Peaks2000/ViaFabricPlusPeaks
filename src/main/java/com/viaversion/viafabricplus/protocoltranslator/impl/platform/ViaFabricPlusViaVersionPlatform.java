@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.protocoltranslator.impl.platform;
 
+import com.viaversion.viafabricplus.features.networking.privacy.ClientIdentityPrivacy;
 import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.api.settings.base.SettingGroup;
@@ -76,6 +77,9 @@ public final class ViaFabricPlusViaVersionPlatform extends UserConnectionViaVers
 
     @Override
     public void sendCustomPayload(UserConnection connection, String channel, byte[] message) {
+        if (ClientIdentityPrivacy.shouldSuppress(channel)) {
+            return;
+        }
         final PacketWrapper customPayload = PacketWrapper.create(ViaFabricPlusProtocol.INSTANCE.getCustomPayloadPacketType(), connection);
         customPayload.write(Types.STRING, channel);
         customPayload.write(Types.REMAINING_BYTES, message);

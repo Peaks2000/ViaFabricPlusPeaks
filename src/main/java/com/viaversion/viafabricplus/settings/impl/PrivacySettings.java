@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.settings.impl;
 
+import com.google.gson.JsonObject;
 import com.viaversion.viafabricplus.api.settings.base.BooleanSetting;
 import com.viaversion.viafabricplus.settings.base.SettingGroupImpl;
 
@@ -28,10 +29,17 @@ public final class PrivacySettings extends SettingGroupImpl {
 
     public static final PrivacySettings INSTANCE = new PrivacySettings();
 
-    public final BooleanSetting sendClientBrand = registerBoolean("send_client_brand", false);
+    public final BooleanSetting privacyMode = registerBoolean("privacy_mode", true);
 
     private PrivacySettings() {
         super("privacy");
+    }
+
+    @Override
+    public void read(final JsonObject object) {
+        // Legacy send_client_brand settings upgrade to the privacy-preserving default.
+        this.privacyMode.setActive(true);
+        super.read(object);
     }
 
 }
