@@ -24,8 +24,8 @@ package com.viaversion.viafabricplus.injection.mixin.core.connection;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.ViaFabricPlus;
-import com.viaversion.viafabricplus.settings.impl.PrivacySettings;
 import com.viaversion.viafabricplus.api.protocoltranslator.ProtocolTranslation;
+import com.viaversion.viafabricplus.features.networking.privacy.ClientIdentityPrivacy;
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.injection.access.core.ILocalSampleLogger;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslationImpl;
@@ -45,7 +45,6 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.HandlerNames;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
-import net.minecraft.network.protocol.common.custom.BrandPayload;
 import net.minecraft.server.network.EventLoopGroupHolder;
 import net.minecraft.util.debugchart.LocalSampleLogger;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
@@ -79,10 +78,9 @@ public abstract class MixinConnection extends SimpleChannelInboundHandler<Packet
     private Cipher viaFabricPlus$decryptionCipher;
 
     @Inject(method = "doSendPacket", at = @At("HEAD"), cancellable = true)
-    private void applyBrandPrivacy(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
+    private void applyClientPrivacy(Packet<?> packet, ChannelFutureListener listener, boolean flush, CallbackInfo ci) {
         if (packet instanceof ServerboundCustomPayloadPacket customPayload
-            && customPayload.payload() instanceof BrandPayload
-            && !PrivacySettings.INSTANCE.sendClientBrand.isActive()) {
+            && ClientIdentityPrivacy.shouldSuppress(customPayload.payload().type().id().toString())) {
             ci.cancel();
             if (flush) {
                 this.channel.flush();
