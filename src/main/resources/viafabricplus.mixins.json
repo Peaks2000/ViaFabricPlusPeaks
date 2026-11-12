@@ -18,6 +18,8 @@
     "core.access.MixinLocalSampleLogger",
     "core.connection.MixinClientHandshakePacketListenerImpl",
     "core.connection.MixinConnection",
+    "core.privacy.MixinAbstractSignEditScreen",
+    "core.privacy.MixinAnvilScreen",
     "core.connection.MixinConnection_1",
     "core.connection.MixinMinecraft",
     "core.connection.MixinServerStatusPinger",
