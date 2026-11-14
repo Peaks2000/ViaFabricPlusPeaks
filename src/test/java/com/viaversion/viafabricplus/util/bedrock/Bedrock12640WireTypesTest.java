@@ -285,6 +285,59 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void chainedPlacementUsesPendingSupportOnlyUntilTheServerCanReportItsState() {
+        final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(50);
+        final BlockPosition clicked = new BlockPosition(0, 99, 12);
+        final BlockPosition placed = new BlockPosition(0, 99, 13);
+        final int air = -604749536;
+        final int stone = -2144268767;
+
+        tracker.trackPlacement(1, clicked, placed, stone, 100);
+        assertEquals(stone, tracker.predictedBlockState(placed, air, air, 110));
+        assertEquals(750, tracker.predictedBlockState(placed, 750, air, 110));
+        assertEquals(air, tracker.predictedBlockState(clicked, air, air, 110));
+        assertEquals(air, tracker.predictedBlockState(placed, air, air, 150));
+        tracker.confirm(placed, false);
+        assertEquals(air, tracker.predictedBlockState(placed, air, air, 120));
+
+        tracker.trackPlacement(2, clicked, placed, stone, 130);
+        tracker.clearPredictionsForDimensionChange();
+        assertEquals(air, tracker.predictedBlockState(placed, air, air, 140));
+    }
+
+    @Test
+    public void instantBreakEffectDoesNotCreateAPendingBlockUpdate() {
+        final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(50);
+        final BlockPosition position = new BlockPosition(0, 101, 1);
+
+        tracker.rememberInstantBreakSound(position, 100);
+
+        assertFalse(tracker.isPendingBreaking(position));
+        assertTrue(tracker.consumeLocalBreakSound(position, 101));
+        assertFalse(tracker.consumeLocalBreakSound(position, 102));
+    }
+
+    @Test
+    public void localBreakEffectIsMatchedOnceEvenAfterAcknowledgement() {
+        final var position = new BlockPosition(1, 61, -2);
+        final var other = new BlockPosition(2, 61, -2);
+        final var tracker = new BlockPlacementPredictionTracker(200L);
+        tracker.trackBreaking(1, position, 0L);
+        assertTrue(tracker.confirm(position, true));
+        assertEquals(1, tracker.requestAcknowledgement(1));
+
+        assertFalse(tracker.consumeLocalBreakSound(other, 40L));
+        assertTrue(tracker.consumeLocalBreakSound(position, 40L));
+        assertFalse(tracker.consumeLocalBreakSound(position, 41L));
+
+        tracker.trackBreaking(2, position, 100L);
+        assertFalse(tracker.consumeLocalBreakSound(position, 300L));
+        tracker.trackBreaking(3, position, 310L);
+        tracker.clearPredictionsForDimensionChange();
+        assertFalse(tracker.consumeLocalBreakSound(position, 311L));
+    }
+
+    @Test
     public void breakingAcknowledgementWaitsForItsAuthoritativeBlockUpdate() {
         final BlockPlacementPredictionTracker tracker = new BlockPlacementPredictionTracker(100L);
         final BlockPosition broken = new BlockPosition(4, 70, 4);
@@ -616,6 +669,41 @@ public final class Bedrock12640WireTypesTest {
 
         assertEquals(new Position3f(0.3F, 64.5F, 0F), correction.position());
         assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void historicalAirborneServerCorrectionDoesNotPushThroughCurrentSupport() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        final Position3f past = new Position3f(0.5F, 101.62F, 14.61248F);
+        final Position3f current = new Position3f(0.5F, 101.62F, 15.69172F);
+        tracker.record(155, past, Position3f.ZERO, true, false, false, 20);
+        tracker.record(160, current, Position3f.ZERO, true, false, false, 20);
+
+        final var correction = tracker.replay(
+            155, new Position3f(past.x(), 101.5416F, past.z()), new Position3f(0F, -0.15523948F, 0.1178346F),
+            false, 160, current, true, false, false, false
+        );
+
+        assertEquals(current, correction.position());
+        assertTrue(correction.preserveVertical());
+        assertFalse(correction.changesClientMovement(current, true));
+    }
+
+    @Test
+    public void historicalAirborneServerCorrectionStillMovesAStationaryPlayerDown() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        final Position3f supported = new Position3f(0.5F, 101.62F, 14.61248F);
+        final Position3f falling = new Position3f(supported.x(), 101.5416F, supported.z());
+        tracker.record(155, supported, Position3f.ZERO, true, false, false, 20);
+        tracker.record(160, supported, Position3f.ZERO, true, false, false, 20);
+
+        final var correction = tracker.replay(
+            155, falling, new Position3f(0F, -0.15523948F, 0F), false,
+            160, supported, true, false, false, false
+        );
+
+        assertEquals(falling, correction.position());
+        assertFalse(correction.preserveVertical());
     }
 
     @Test

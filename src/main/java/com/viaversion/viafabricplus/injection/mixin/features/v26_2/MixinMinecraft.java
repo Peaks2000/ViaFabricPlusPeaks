@@ -36,7 +36,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.Packet;
@@ -53,10 +52,6 @@ public abstract class MixinMinecraft {
     @Shadow
     @Nullable
     public ClientLevel level;
-
-    @Shadow
-    @Nullable
-    public LocalPlayer player;
 
     @WrapWithCondition(method = "startAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;send(Lnet/minecraft/network/protocol/Packet;)V"))
     private boolean dontSendPunch(ClientPacketListener instance, Packet<?> packet) {
@@ -79,8 +74,9 @@ public abstract class MixinMinecraft {
         if (!ProtocolTranslator.isBedrock(version)) {
             return dontSendPunch(listener, packet);
         }
-        // Preserve the real mining punches used for CrackBlock on non-authoritative Bedrock worlds.
-        return !cooldown.get() || this.player.getAbilities().instabuild;
+        // A cooldown tick does not mine a block, in either Survival or Creative.
+        // Keep punches from active mining for worlds that still use CrackBlock.
+        return !cooldown.get();
     }
 
     @Inject(method = "continueAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;swing(Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/component/SwingAnimation;Z)Z"))
