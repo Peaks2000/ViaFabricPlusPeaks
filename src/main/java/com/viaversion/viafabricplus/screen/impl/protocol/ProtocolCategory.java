@@ -21,8 +21,10 @@
 
 package com.viaversion.viafabricplus.screen.impl.protocol;
 
-import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import net.raphimc.vialegacy.api.LegacyProtocolVersion;
@@ -40,6 +42,12 @@ public enum ProtocolCategory {
 
     ProtocolCategory() {
         this.title = Component.translatable("protocol_selection.viafabricplus." + name().toLowerCase(Locale.ROOT));
+    }
+
+    public static List<ProtocolVersion> selectableVersions() {
+        return ProtocolVersion.getReversedProtocols().stream()
+            .filter(version -> BedrockProtocolCompatibility.selectableVersion(version) == version)
+            .toList();
     }
 
     public static ProtocolCategory of(final ProtocolVersion version) {

@@ -73,7 +73,7 @@ public abstract class AbstractProtocolSelectionScreen extends VFPTabbedScreen<Pr
             entries.add(new ProtocolSlot(ProtocolTranslation.AUTO_DETECT_VERSION, this));
         }
 
-        for (final ProtocolVersion version : ProtocolVersion.getReversedProtocols()) {
+        for (final ProtocolVersion version : ProtocolCategory.selectableVersions()) {
             if (version != ProtocolTranslation.AUTO_DETECT_VERSION && ProtocolCategory.of(version) == tab) {
                 entries.add(new ProtocolSlot(version, this));
             }
@@ -83,7 +83,7 @@ public abstract class AbstractProtocolSelectionScreen extends VFPTabbedScreen<Pr
 
     @Override
     protected List<VFPListEntry> results(final String query) {
-        return ProtocolVersion.getReversedProtocols().stream()
+        return ProtocolCategory.selectableVersions().stream()
             .filter(version -> matches(version, query))
             .<VFPListEntry>map(version -> new ProtocolSlot(version, this))
             .toList();
@@ -92,7 +92,7 @@ public abstract class AbstractProtocolSelectionScreen extends VFPTabbedScreen<Pr
     @Override
     protected ProtocolCategory initialTab() {
         // Open the tab holding the selected version so it doesn't have to be searched for
-        for (final ProtocolVersion version : ProtocolVersion.getReversedProtocols()) {
+        for (final ProtocolVersion version : ProtocolCategory.selectableVersions()) {
             if (this.selected(version)) {
                 // Auto Detect is no Minecraft version and therefore has no category of its own
                 return version == ProtocolTranslation.AUTO_DETECT_VERSION ? ProtocolCategory.MODERN : ProtocolCategory.of(version);

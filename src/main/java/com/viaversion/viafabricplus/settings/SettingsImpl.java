@@ -28,12 +28,14 @@ import com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusEntrypoint;
 import com.viaversion.viafabricplus.api.settings.Settings;
 import com.viaversion.viafabricplus.api.settings.base.SettingGroup;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslationImpl;
+import com.viaversion.viafabricplus.save.impl.SettingsSave;
 import com.viaversion.viafabricplus.settings.base.SettingGroupImpl;
 import com.viaversion.viafabricplus.settings.impl.AdvancedSettingsImpl;
 import com.viaversion.viafabricplus.settings.impl.GeneralSettingsImpl;
 import com.viaversion.viafabricplus.settings.impl.VisualSettingsImpl;
 import com.viaversion.viafabricplus.util.JsonSave;
 import com.viaversion.viafabricplus.util.LegacySaveMigrator;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +89,7 @@ public final class SettingsImpl implements Settings {
         for (final SettingGroup group : this.groups) {
             group.write(object);
         }
-        object.addProperty("selected_protocol_version", ViaFabricPlus.api().targetVersion().getName());
+        object.addProperty("selected_protocol_version", BedrockProtocolCompatibility.selectableVersion(ViaFabricPlus.api().targetVersion()).getName());
         return object;
     }
 
@@ -95,8 +97,7 @@ public final class SettingsImpl implements Settings {
         // Set target version AFTER protocol loading, so we can reach all versions
         if (this.selectedProtocolVersion != null) {
             if (this.general.saveSelectedProtocolVersion().isActive()) {
-                final ProtocolVersion protocolVersion = ProtocolVersion.getClosest(this.selectedProtocolVersion.startsWith("Bedrock ")
-                    ? net.raphimc.viabedrock.api.BedrockProtocolVersion.BEDROCK_LATEST.getName() : this.selectedProtocolVersion);
+                final ProtocolVersion protocolVersion = SettingsSave.protocolVersionByName(this.selectedProtocolVersion);
                 if (protocolVersion != null) {
                     ViaFabricPlus.api().setTargetVersion(protocolVersion);
                 }

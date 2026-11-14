@@ -21,15 +21,15 @@
 
 package com.viaversion.viafabricplus.save.impl;
 
-import com.viaversion.viafabricplus.util.bedrock.CompatibilityViaBedrockRuntime;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
+import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 
 public final class SettingsSave {
     private SettingsSave() { }
 
     public static ProtocolVersion protocolVersionByName(final String name) {
         if (name == null) return null;
-        if (name.contains("Bedrock")) return CompatibilityViaBedrockRuntime.compatibilityVersion();
+        if (name.contains("Bedrock")) return BedrockProtocolVersion.BEDROCK_LATEST;
         return ProtocolVersion.getClosest(name);
     }
 }

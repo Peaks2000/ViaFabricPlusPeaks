@@ -22,6 +22,7 @@
 package com.viaversion.viafabricplus.screen.impl;
 
 import com.viaversion.viafabricplus.screen.impl.protocol.AbstractProtocolSelectionScreen;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -56,7 +57,7 @@ public final class PerServerVersionScreen extends AbstractProtocolSelectionScree
 
     @Override
     protected boolean selected(final ProtocolVersion version) {
-        return version.equals(this.selectionSupplier.get());
+        return version.equals(BedrockProtocolCompatibility.selectableVersion(this.selectionSupplier.get()));
     }
 
     @Override

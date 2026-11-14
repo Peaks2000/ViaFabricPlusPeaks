@@ -49,6 +49,19 @@ public final class BedrockProtocolCompatibility {
         return normalized.matches("26\\.(60|61|62|63)(\\.[0-9]+)*") ? CURRENT_PROTOCOL : UNKNOWN_PROTOCOL;
     }
 
+    public static ProtocolVersion selectableVersion(final ProtocolVersion version) {
+        if (version == null || !version.getName().startsWith("Bedrock ")) {
+            return version;
+        }
+        final ProtocolVersion bedrock = BedrockProtocolVersion.BEDROCK_LATEST;
+        // The child classloader can register another copy of the public Bedrock version.
+        if (CompatibilityViaBedrockRuntime.isCompatibility(version)
+            || (version.getVersion() == bedrock.getVersion() && version.getName().equals(bedrock.getName()))) {
+            return bedrock;
+        }
+        return version;
+    }
+
     public static void prepareConnection(final int protocolVersion) {
         NEXT_CONNECTION_PROTOCOL.set(initialProtocol(protocolVersion));
     }
