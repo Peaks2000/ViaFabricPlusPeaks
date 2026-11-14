@@ -9,6 +9,20 @@ PeaksManager reads this file to find public Fabric JARs. It selects the most rec
   "releases": [
     {
       "minecraft": "26.3",
+      "version": "5.2.5",
+      "publishedAt": "2026-11-14T14:56:51Z",
+      "url": "https://github.com/Peaks2000/ViaFabricPlusPeaks/releases/download/5.2.5/ViaFabricPlusPeaks-5.2.5.jar",
+      "sha256": "d03e8736ec999e6aa4a3fecd37670ff5f210ad1f18a97cd75aebcac3d00e9a8a"
+    },
+    {
+      "minecraft": "26.3",
+      "version": "5.2",
+      "publishedAt": "2026-11-14T14:00:33Z",
+      "url": "https://github.com/Peaks2000/ViaFabricPlusPeaks/releases/download/5.2/ViaFabricPlusPeaks-5.2.jar",
+      "sha256": "2b0294c8f17ca8d0291c432482960620b5946916bc2385ae72af8475ee7a05c6"
+    },
+    {
+      "minecraft": "26.3",
       "version": "5.1.3-peaks.1",
       "publishedAt": "2026-11-12T20:16:58Z",
       "url": "https://github.com/Peaks2000/ViaFabricPlusPeaks/releases/download/5.1.3-peaks.1/ViaFabricPlusPeaks-5.1.3-peaks.1.jar",
