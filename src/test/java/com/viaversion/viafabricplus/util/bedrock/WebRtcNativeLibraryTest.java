@@ -44,6 +44,7 @@ public final class WebRtcNativeLibraryTest {
         final ClassLoader classLoader = WebRtcNativeLibrary.class.getClassLoader();
         assertNotNull(classLoader.getResource("libwebrtc-java-linux-x86_64.so"));
         assertNotNull(classLoader.getResource("libwebrtc-java-macos-aarch64.dylib"));
+        assertNotNull(classLoader.getResource("webrtc-java-windows-x86_64.dll"));
     }
 
     @Test

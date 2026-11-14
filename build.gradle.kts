@@ -52,6 +52,7 @@ dependencies {
     jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152")
     jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:linux-x86_64")
     jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:macos-aarch64")
+    jarInJar("dev.kastle.webrtc:webrtc-java-m152test:1.0.4-m152:windows-x86_64")
 
     compileOnly(libs.modmenu)
 }
