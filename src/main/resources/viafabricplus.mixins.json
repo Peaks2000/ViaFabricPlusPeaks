@@ -482,6 +482,7 @@
     "features.bedrock.entity.MixinPlayerName",
     "features.bedrock.entity.MixinSectionCompiler",
     "features.bedrock.inventory.MixinInventoryScreen",
+    "features.bedrock.visual.MixinHud",
     "features.bedrock.movement.MixinEntity",
     "features.bedrock.movement.MixinHoneyBlock",
     "features.bedrock.movement.MixinLivingEntity",
