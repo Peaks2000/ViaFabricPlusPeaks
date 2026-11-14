@@ -10,18 +10,25 @@
  */
 package net.raphimc.viabedrock.protocol.rewriter;
 
+import com.viaversion.nbt.io.NBTIO;
+import com.viaversion.nbt.limiter.TagLimiter;
+import com.viaversion.nbt.tag.CompoundTag;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.minecraft.entities.EntityTypes26_3;
 import com.viaversion.viaversion.api.minecraft.entitydata.EntityData;
+import com.viaversion.viaversion.api.type.types.version.VersionedTypes;
+import java.io.DataInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 import net.raphimc.viabedrock.api.model.entity.Entity;
 import net.raphimc.viabedrock.protocol.BedrockProtocol;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.ActorDataIds;
 import net.raphimc.viabedrock.protocol.data.enums.bedrock.ActorFlags;
 import net.raphimc.viabedrock.protocol.data.generated.java.EntityDataFields;
+import net.raphimc.viabedrock.protocol.data.generated.java.RegistryKeys;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataTypesBedrock;
 import org.junit.jupiter.api.*;
 
@@ -32,7 +39,7 @@ final class MobAnimationMetadataTest {
         EntityDataFields.NO_GRAVITY, EntityDataFields.MOB_FLAGS, EntityDataFields.IS_POWERED,
         EntityDataFields.IS_IGNITED, EntityDataFields.SWELL_DIR, EntityDataFields.LIVING_ENTITY_FLAGS,
         EntityDataFields.SHEARED, EntityDataFields.CUSTOM_NAME, EntityDataFields.CUSTOM_NAME_VISIBLE,
-        EntityDataFields.WIDTH, EntityDataFields.HEIGHT);
+        EntityDataFields.WIDTH, EntityDataFields.HEIGHT, EntityDataFields.VARIANT);
     private final UserConnection user = (UserConnection) Proxy.newProxyInstance(UserConnection.class.getClassLoader(),
         new Class<?>[]{UserConnection.class}, (proxy, method, args) -> null);
     private Field mappingField;
@@ -69,6 +76,39 @@ final class MobAnimationMetadataTest {
             final Entity skeleton = entity(type);
             assertEquals((byte) 5, value(flags(skeleton, Set.of(ActorFlags.NOAI, ActorFlags.FACING_TARGET_TO_RANGE_ATTACK)), EntityDataFields.MOB_FLAGS));
             assertEquals((byte) 1, value(flags(skeleton, Set.of(ActorFlags.NOAI)), EntityDataFields.MOB_FLAGS));
+        }
+    }
+
+    @Test void catsUseTheJavaVariantSerializerAndRegistryOrder() throws Exception {
+        final CompoundTag registries;
+        try (var resource = BedrockProtocol.class.getResourceAsStream("/assets/viabedrock/data/java/registries.nbt");
+             var input = new DataInputStream(new GZIPInputStream(Objects.requireNonNull(resource)))) {
+            registries = NBTIO.readTag(input, TagLimiter.noop(), true, CompoundTag.class);
+        }
+        final var registryField = BedrockProtocol.MAPPINGS.getClass().getDeclaredField("javaRegistries");
+        registryField.setAccessible(true);
+        final Object previous = registryField.get(BedrockProtocol.MAPPINGS);
+        registryField.set(BedrockProtocol.MAPPINGS, registries);
+        try {
+            final List<String> variants = new ArrayList<>(registries.getCompoundTag(RegistryKeys.CAT_VARIANT).keySet());
+            final Entity cat = entity(EntityTypes26_3.CAT);
+            final List<String> expected = List.of("white", "black", "red", "siamese", "british_shorthair", "calico",
+                "persian", "ragdoll", "tabby", "all_black", "jellie");
+            for (int i = 0; i < expected.size(); i++) {
+                final List<EntityData> output = new ArrayList<>();
+                EntityMetadataRewriter.rewrite(user, cat, ActorDataIds.VARIANT,
+                    new EntityData(ActorDataIds.VARIANT.getValue(), EntityDataTypesBedrock.INT, i), output);
+                assertEquals(1, output.size());
+                final EntityData variant = output.getFirst();
+                assertSame(VersionedTypes.V26_3.entityDataTypes().catVariantType, variant.dataType());
+                assertEquals("minecraft:" + expected.get(i), variants.get(variant.<Integer>value()));
+            }
+            final List<EntityData> output = new ArrayList<>();
+            EntityMetadataRewriter.rewrite(user, cat, ActorDataIds.VARIANT,
+                new EntityData(ActorDataIds.VARIANT.getValue(), EntityDataTypesBedrock.INT, -1), output);
+            assertTrue(output.isEmpty());
+        } finally {
+            registryField.set(BedrockProtocol.MAPPINGS, previous);
         }
     }
 

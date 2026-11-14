@@ -479,6 +479,7 @@
     "features.bedrock.chat.MixinClientSuggestionProvider",
     "features.bedrock.entity.MixinEntityRenderer",
     "features.bedrock.entity.MixinMultiPlayerGameMode",
+    "features.bedrock.entity.MixinPlayerName",
     "features.bedrock.entity.MixinSectionCompiler",
     "features.bedrock.inventory.MixinInventoryScreen",
     "features.bedrock.movement.MixinEntity",
