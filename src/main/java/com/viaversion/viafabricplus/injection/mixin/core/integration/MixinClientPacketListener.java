@@ -40,7 +40,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.minecraft.world.item.ItemStack;
-import net.raphimc.viabedrock.ViaBedrock;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -94,8 +93,11 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
     @ModifyArg(method = "handleTabListCustomisation", at = @At(value = "INVOKE",
         target = "Lnet/minecraft/client/gui/components/PlayerTabOverlay;setFooter(Lnet/minecraft/network/chat/Component;)V"))
     private @Nullable Component usePeaksTabFooter(final @Nullable Component footer) {
-        if (footer == null || !ProtocolTranslator.isBedrock(((IConnection) getConnection()).viaFabricPlus$getTargetVersion())
-            || !footer.getString().equals("ViaBedrock v" + ViaBedrock.VERSION + "\nhttps://github.com/RaphiMC/ViaBedrock")) {
+        if (footer == null || !ProtocolTranslator.isBedrock(((IConnection) getConnection()).viaFabricPlus$getTargetVersion())) {
+            return footer;
+        }
+        final String text = footer.getString();
+        if (!text.startsWith("ViaBedrock v") || !text.endsWith("\nhttps://github.com/RaphiMC/ViaBedrock")) {
             return footer;
         }
 
