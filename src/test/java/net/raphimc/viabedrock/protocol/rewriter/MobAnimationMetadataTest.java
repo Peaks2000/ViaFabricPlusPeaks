@@ -31,7 +31,8 @@ final class MobAnimationMetadataTest {
     private static final List<String> FIELDS = List.of(EntityDataFields.SHARED_FLAGS, EntityDataFields.SILENT,
         EntityDataFields.NO_GRAVITY, EntityDataFields.MOB_FLAGS, EntityDataFields.IS_POWERED,
         EntityDataFields.IS_IGNITED, EntityDataFields.SWELL_DIR, EntityDataFields.LIVING_ENTITY_FLAGS,
-        EntityDataFields.SHEARED);
+        EntityDataFields.SHEARED, EntityDataFields.CUSTOM_NAME, EntityDataFields.CUSTOM_NAME_VISIBLE,
+        EntityDataFields.WIDTH, EntityDataFields.HEIGHT);
     private final UserConnection user = (UserConnection) Proxy.newProxyInstance(UserConnection.class.getClassLoader(),
         new Class<?>[]{UserConnection.class}, (proxy, method, args) -> null);
     private Field mappingField;
@@ -81,6 +82,52 @@ final class MobAnimationMetadataTest {
             .noneMatch(data -> data.id() == FIELDS.indexOf(EntityDataFields.LIVING_ENTITY_FLAGS)));
     }
 
+    @Test void customEntityUsesServerHitboxAndName() {
+        final Entity npc = entity(EntityTypes26_3.INTERACTION);
+        final List<EntityData> output = new ArrayList<>();
+        EntityMetadataRewriter.rewrite(user, npc, ActorDataIds.RESERVED_053,
+            new EntityData(53, EntityDataTypesBedrock.FLOAT, 0.75F), output);
+        EntityMetadataRewriter.rewrite(user, npc, ActorDataIds.RESERVED_054,
+            new EntityData(54, EntityDataTypesBedrock.FLOAT, 2.0F), output);
+        EntityMetadataRewriter.rewrite(user, npc, ActorDataIds.RESERVED_054,
+            new EntityData(54, EntityDataTypesBedrock.FLOAT, Float.NaN), output);
+        EntityMetadataRewriter.rewrite(user, npc, ActorDataIds.NAME,
+            new EntityData(4, EntityDataTypesBedrock.STRING, "SkyWars"), output);
+        assertEquals(0.75F, value(output, EntityDataFields.WIDTH));
+        assertEquals(2.0F, value(output, EntityDataFields.HEIGHT));
+        assertEquals(3, output.size());
+        assertNotNull(value(output, EntityDataFields.CUSTOM_NAME));
+        final EntityData visibility = new EntityData(81, EntityDataTypesBedrock.BYTE, (byte) 1);
+        npc.entityData().put(ActorDataIds.NAMETAG_ALWAYS_SHOW, visibility);
+        EntityMetadataRewriter.rewrite(user, npc, ActorDataIds.NAMETAG_ALWAYS_SHOW, visibility, output);
+        assertEquals(true, value(output, EntityDataFields.CUSTOM_NAME_VISIBLE));
+    }
+
+    @Test void zeroScaleArmorStandHidesOnlyTheModel() {
+        final Entity stand = entity(EntityTypes26_3.ARMOR_STAND);
+        assertEquals((byte) 0, value(flags(stand, Set.of()), EntityDataFields.SHARED_FLAGS));
+        final EntityData zero = new EntityData(38, EntityDataTypesBedrock.FLOAT, 0F);
+        stand.entityData().put(ActorDataIds.RESERVED_038, zero);
+        final List<EntityData> output = new ArrayList<>();
+        EntityMetadataRewriter.rewrite(user, stand, ActorDataIds.RESERVED_038, zero, output);
+        assertEquals((byte) 32, value(output, EntityDataFields.SHARED_FLAGS));
+        final EntityData name = new EntityData(4, EntityDataTypesBedrock.STRING, "EggWars");
+        stand.entityData().put(ActorDataIds.NAME, name);
+        final List<EntityData> named = flags(stand, Set.of(ActorFlags.ALWAYS_SHOW_NAME));
+        assertEquals((byte) 32, value(named, EntityDataFields.SHARED_FLAGS));
+        assertEquals(true, value(named, EntityDataFields.CUSTOM_NAME_VISIBLE));
+
+        stand.entityData().put(ActorDataIds.RESERVED_038, new EntityData(38, EntityDataTypesBedrock.FLOAT, 1F));
+        assertEquals((byte) 0, value(flags(stand, Set.of()), EntityDataFields.SHARED_FLAGS));
+        assertEquals((byte) 32, value(flags(stand, Set.of(ActorFlags.INVISIBLE)), EntityDataFields.SHARED_FLAGS));
+        stand.entityData().remove(ActorDataIds.NAME);
+        assertEquals(false, value(flags(stand, Set.of(ActorFlags.ALWAYS_SHOW_NAME)), EntityDataFields.CUSTOM_NAME_VISIBLE));
+
+        final Entity other = entity(EntityTypes26_3.CREEPER);
+        other.entityData().put(ActorDataIds.RESERVED_038, zero);
+        assertEquals((byte) 0, value(flags(other, Set.of()), EntityDataFields.SHARED_FLAGS));
+    }
+
     private Entity entity(final EntityTypes26_3 type) {
         return new Entity(user, 1, 2, "minecraft:test", 3, UUID.randomUUID(), type);
     }
@@ -95,7 +142,7 @@ final class MobAnimationMetadataTest {
         entity.entityData().put(ActorDataIds.RESERVED_0, low);
         entity.entityData().put(ActorDataIds.RESERVED_092, high);
         final List<EntityData> output = new ArrayList<>();
-        EntityMetadataRewriter.rewrite(user, entity, ActorDataIds.RESERVED_092, high, output);
+        EntityMetadataRewriter.rewrite(user, entity, ActorDataIds.RESERVED_0, low, output);
         return output;
     }
 

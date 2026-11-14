@@ -20,7 +20,7 @@ permissions:
 
 env:
   VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
-  VIABEDROCK_REF: 1e8a269e2b8ec238fdc545603e70050e10f1bc72
+  VIABEDROCK_REF: 0c9ebc226ffe1c14bdf8ba3b0f68dece421a0404
 
 jobs:
   preserve-fork:
