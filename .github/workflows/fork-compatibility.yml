@@ -35,6 +35,16 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Verify PeaksManager only lists stable release assets
+        if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+        working-directory: ViaFabricPlus
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[] | select(.draft == false and .prerelease == false) | .assets[].browser_download_url' \
+            | python3 .github/scripts/check-peaksmanager-catalog.py
+
       - name: Checkout pinned ViaBedrock fork
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

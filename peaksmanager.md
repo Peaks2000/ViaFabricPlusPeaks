@@ -1,6 +1,6 @@
 # PeaksManager releases for ViaFabricPlusPeaks
 
-PeaksManager reads this file to find public Fabric JARs. It selects the most recently published release whose `minecraft` predicate matches the client. Use the exact mod `version` from `fabric.mod.json`, the GitHub release's `published_at` timestamp, the JAR download URL, and its SHA-256. Keep earlier entries so PeaksManager can recognize installed versions.
+PeaksManager reads this file to find public Fabric JARs from stable GitHub releases. It selects the most recently published stable release whose `minecraft` predicate matches the client. Use the exact mod `version` from `fabric.mod.json`, the GitHub release's `published_at` timestamp, the JAR download URL, and its SHA-256. Keep earlier entries so PeaksManager can recognize installed versions.
 
 ```json
 {
