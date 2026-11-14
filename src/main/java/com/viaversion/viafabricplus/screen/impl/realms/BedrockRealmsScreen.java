@@ -26,6 +26,7 @@ import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viafabricplus.util.bedrock.NetherNetJsonRpcAddress;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
 import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
@@ -129,9 +130,9 @@ public final class BedrockRealmsScreen extends VFPScreen {
                 if (server.getNetworkProtocol().equalsIgnoreCase(RealmsJoinInformation.PROTOCOL_DEFAULT)) {
                     ConnectionUtil.connect(server.getAddress(), BedrockProtocolVersion.BEDROCK_LATEST);
                 } else if (server.getNetworkProtocol().equalsIgnoreCase(RealmsJoinInformation.PROTOCOL_NETHERNET)) {
-                    ConnectionUtil.connectNetherNet(new NetherNetAddress(server.getAddress()));
+                    ConnectionUtil.connectNetherNet(entry.realmsServer.getName(), new NetherNetAddress(server.getAddress()), BedrockProtocolCompatibility.CURRENT_PROTOCOL);
                 } else if (server.getNetworkProtocol().equalsIgnoreCase(RealmsJoinInformation.PROTOCOL_NETHERNET_JSONRPC)) {
-                    ConnectionUtil.connectNetherNet(new NetherNetJsonRpcAddress(server.getAddress()));
+                    ConnectionUtil.connectNetherNet(entry.realmsServer.getName(), new NetherNetJsonRpcAddress(server.getAddress()), BedrockProtocolCompatibility.CURRENT_PROTOCOL);
                 } else {
                     setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.unsupported_protocol", server.getNetworkProtocol()));
                 }
