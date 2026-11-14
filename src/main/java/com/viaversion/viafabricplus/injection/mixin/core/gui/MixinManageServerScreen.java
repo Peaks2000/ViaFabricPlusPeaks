@@ -90,7 +90,13 @@ public abstract class MixinManageServerScreen extends Screen {
                     : new PerServerVersionScreen(this,
                         mixinServerInfo::viaFabricPlus$forceVersion, mixinServerInfo::viaFabricPlus$forcedVersion));
             }).size(98, 20);
-            orientation.getPositioner().setPosition(this.addRenderableWidget(buttonBuilder.build()), width, height);
+            final Button button = buttonBuilder.build();
+            orientation.getPositioner().setPosition(button, this.width, this.height);
+            if ((orientation == Orientation.LEFT_BOTTOM || orientation == Orientation.RIGHT_BOTTOM)
+                && this.children().stream().anyMatch(child -> child instanceof Button other && other.getRectangle().overlaps(button.getRectangle()))) {
+                button.setY(this.height - button.getHeight());
+            }
+            this.addRenderableWidget(button);
         }
     }
 

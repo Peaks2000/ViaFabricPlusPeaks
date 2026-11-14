@@ -31,8 +31,8 @@ import com.viaversion.viafabricplus.settings.base.SettingGroupImpl;
 
 public final class GeneralSettingsImpl extends SettingGroupImpl implements GeneralSettings {
 
-    private final EnumSetting<Orientation> multiplayerScreenButtonOrientation = registerEnum("multiplayer_screen_button_orientation", Orientation.RIGHT_TOP);
-    private final EnumSetting<Orientation> addServerScreenButtonOrientation = registerEnum("add_server_screen_button_orientation", Orientation.RIGHT_TOP);
+    private final EnumSetting<Orientation> multiplayerScreenButtonOrientation = registerEnum("multiplayer_screen_button_orientation", Orientation.LEFT_BOTTOM);
+    private final EnumSetting<Orientation> addServerScreenButtonOrientation = registerEnum("add_server_screen_button_orientation", Orientation.LEFT_BOTTOM);
     private final EnumSetting<Orientation> directConnectScreenButtonOrientation = registerEnum("direct_connect_screen_button_orientation", Orientation.RIGHT_TOP);
     private final EnumSetting<ItemFilter> removeNotAvailableItemsFromCreativeTab = registerEnum("filter_creative_tabs", ItemFilter.VANILLA_AND_MODDED);
     private final BooleanSetting saveSelectedProtocolVersion = registerBoolean("save_selected_protocol_version", true);

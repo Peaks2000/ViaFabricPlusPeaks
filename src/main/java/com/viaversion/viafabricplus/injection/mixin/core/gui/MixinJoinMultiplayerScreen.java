@@ -25,10 +25,13 @@ import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.api.settings.impl.Orientation;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -37,6 +40,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(JoinMultiplayerScreen.class)
 public abstract class MixinJoinMultiplayerScreen extends Screen {
 
+    @Shadow
+    @Final
+    private HeaderAndFooterLayout layout;
+
+    @Unique
+    private int viaFabricPlus$extraFooterHeight;
+
     @Unique
     private Button viaFabricPlus$button;
 
@@ -44,19 +54,35 @@ public abstract class MixinJoinMultiplayerScreen extends Screen {
         super(title);
     }
 
+    @Inject(method = "repositionElements", at = @At("HEAD"))
+    private void reserveSpaceForCornerButton(CallbackInfo ci) {
+        final Orientation orientation = ViaFabricPlusImpl.impl().options().multiplayerScreenButtonOrientation().value();
+        final boolean bottomCorner = orientation == Orientation.LEFT_BOTTOM || orientation == Orientation.RIGHT_BOTTOM;
+        // The centered vanilla footer is 308 pixels wide. Leave space for a 98-pixel button and margins at either side.
+        final int extraHeight = bottomCorner && this.width < 308 + 2 * (98 + 5 + 4) ? 44 : 0;
+        this.layout.setFooterHeight(this.layout.getFooterHeight() - this.viaFabricPlus$extraFooterHeight + extraHeight);
+        this.viaFabricPlus$extraFooterHeight = extraHeight;
+    }
+
     @Inject(method = "repositionElements", at = @At("RETURN"))
     private void addProtocolSelectionButton(CallbackInfo ci) {
         final Orientation orientation = ViaFabricPlusImpl.impl().options().multiplayerScreenButtonOrientation().value();
-        if (orientation != Orientation.NONE) {
-            if (viaFabricPlus$button == null) {
-                viaFabricPlus$button = Button
-                    .builder(Component.nullToEmpty("ViaFabricPlus"), _ -> ViaFabricPlus.api().screens().openViaFabricPlusScreen(this))
-                    .size(98, 20)
-                    .build();
-                this.addRenderableWidget(viaFabricPlus$button);
+        if (orientation == Orientation.NONE) {
+            if (this.viaFabricPlus$button != null) {
+                this.removeWidget(this.viaFabricPlus$button);
             }
-            orientation.getPositioner().setPosition(viaFabricPlus$button, width, height);
+            return;
         }
+        if (this.viaFabricPlus$button == null) {
+            this.viaFabricPlus$button = Button
+                .builder(Component.nullToEmpty("ViaFabricPlus"), _ -> ViaFabricPlus.api().screens().openViaFabricPlusScreen(this))
+                .size(98, 20)
+                .build();
+        }
+        if (!this.children().contains(this.viaFabricPlus$button)) {
+            this.addRenderableWidget(this.viaFabricPlus$button);
+        }
+        orientation.getPositioner().setPosition(this.viaFabricPlus$button, this.width, this.height);
     }
 
 }
