@@ -22,7 +22,7 @@
 package com.viaversion.viafabricplus.features.global;
 
 import com.viaversion.viafabricplus.ViaFabricPlus;
-import com.viaversion.viafabricplus.util.ChatUtil;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viaversion.api.connection.ProtocolInfo;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.util.ArrayList;
@@ -47,7 +47,8 @@ public final class VFPDebugHudEntry implements DebugScreenEntry {
     @Override
     public void display(final @NonNull DebugScreenDisplayer lines, @Nullable final Level world, @Nullable final LevelChunk clientChunk, @Nullable final LevelChunk chunk) {
         final List<String> information = new ArrayList<>();
-        information.add(ChatUtil.PREFIX + ChatFormatting.RESET + ' ' + ViaFabricPlus.api().version());
+        information.add(ChatFormatting.WHITE + "[" + ChatFormatting.BLUE + ViaFabricPlusImpl.DISPLAY_NAME
+            + ChatFormatting.WHITE + "]" + ChatFormatting.RESET + ' ' + ViaFabricPlus.api().version());
 
         final UserConnection connection = ViaFabricPlus.api().userConnection();
         if (connection == null) {

@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.screen.base;
 
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import java.util.Locale;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
@@ -54,7 +55,7 @@ public abstract class VFPScreen extends Screen {
     private static final Component SEARCH_HINT = SEARCH_TITLE.copy().setStyle(EditBox.SEARCH_HINT_STYLE);
     private static final int SEARCH_WIDTH = 260;
 
-    private static final Component TOAST_TITLE = Component.nullToEmpty("ViaFabricPlus");
+    private static final Component TOAST_TITLE = Component.literal(ViaFabricPlusImpl.DISPLAY_NAME);
     private static final SystemToast.SystemToastId TOAST_ID = new SystemToast.SystemToastId();
 
     private static final int TITLE_Y = 6; // Inside the doubled matrix of the title
@@ -135,7 +136,7 @@ public abstract class VFPScreen extends Screen {
 
         matrices.pushMatrix();
         matrices.scale(2F, 2F);
-        context.centeredText(font, "ViaFabricPlus", width / 4, TITLE_Y, ACCENT_COLOR);
+        context.centeredText(font, ViaFabricPlusImpl.DISPLAY_NAME, width / 4, TITLE_Y, ACCENT_COLOR);
         matrices.popMatrix();
     }
 

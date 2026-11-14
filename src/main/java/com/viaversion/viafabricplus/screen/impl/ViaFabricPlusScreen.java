@@ -35,7 +35,7 @@ import net.minecraft.network.chat.Component;
 public final class ViaFabricPlusScreen extends AbstractProtocolSelectionScreen {
 
     public ViaFabricPlusScreen() {
-        super(Component.nullToEmpty("ViaFabricPlus"), true);
+        super(Component.literal(ViaFabricPlusImpl.DISPLAY_NAME), true);
     }
 
     @Override

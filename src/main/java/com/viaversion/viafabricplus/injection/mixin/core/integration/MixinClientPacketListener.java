@@ -20,26 +20,34 @@
  */
 package com.viaversion.viafabricplus.injection.mixin.core.integration;
 
+import com.viaversion.viafabricplus.ViaFabricPlus;
+import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.injection.access.core.IConnection;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.save.SaveManager;
 import com.viaversion.viafabricplus.util.bedrock.BedrockCreativeInventory;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.connection.ConnectionDetails;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.minecraft.world.item.ItemStack;
+import net.raphimc.viabedrock.ViaBedrock;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
@@ -81,6 +89,20 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
         if (user != null) {
             ConnectionDetails.sendConnectionDetails(user, ConnectionDetails.MOD_CHANNEL);
         }
+    }
+
+    @ModifyArg(method = "handleTabListCustomisation", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/gui/components/PlayerTabOverlay;setFooter(Lnet/minecraft/network/chat/Component;)V"))
+    private @Nullable Component usePeaksTabFooter(final @Nullable Component footer) {
+        if (footer == null || !ProtocolTranslator.isBedrock(((IConnection) getConnection()).viaFabricPlus$getTargetVersion())
+            || !footer.getString().equals("ViaBedrock v" + ViaBedrock.VERSION + "\nhttps://github.com/RaphiMC/ViaBedrock")) {
+            return footer;
+        }
+
+        return Component.empty()
+            .append(Component.literal(ViaFabricPlusImpl.DISPLAY_NAME).withStyle(ChatFormatting.GREEN))
+            .append(Component.literal(" v" + ViaFabricPlus.api().version()).withStyle(ChatFormatting.DARK_AQUA))
+            .append(Component.literal("\nhttps://github.com/Peaks2000/ViaFabricPlusPeaks").withStyle(ChatFormatting.GRAY));
     }
 
     @Inject(method = "handleContainerContent", at = @At("HEAD"))

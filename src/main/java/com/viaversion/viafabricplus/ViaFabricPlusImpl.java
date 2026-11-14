@@ -44,6 +44,8 @@ import org.apache.logging.log4j.Logger;
 
 public final class ViaFabricPlusImpl implements ViaFabricPlusAPI, ViaFabricPlusEntrypoint {
 
+    public static final String DISPLAY_NAME = "ViaFabricPlusPeaks";
+
     private static ViaFabricPlusImpl INSTANCE;
 
     private final Logger logger = LogManager.getLogger("ViaFabricPlus");

@@ -50,7 +50,7 @@ public final class LegacyProtocolSelectionScreen extends VFPScreen {
     private final boolean perServer;
 
     public LegacyProtocolSelectionScreen() {
-        super("ViaFabricPlus", true);
+        super(ViaFabricPlusImpl.DISPLAY_NAME, true);
         this.selectionConsumer = ViaFabricPlus.api()::setTargetVersion;
         this.selectionPredicate = version -> ViaFabricPlus.api().targetVersion().equals(version);
         this.selectable = () -> Minecraft.getInstance().getConnection() == null;
