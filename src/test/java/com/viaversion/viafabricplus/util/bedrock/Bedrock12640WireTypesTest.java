@@ -86,6 +86,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -424,6 +426,25 @@ public final class Bedrock12640WireTypesTest {
         assertFalse(tracker.isJavaInventoryRefreshPending());
         tracker.schedulePlayerInventoryResync(true);
         assertTrue(tracker.isJavaInventoryRefreshPending());
+    }
+
+    @Test
+    public void dimensionChangeFinishesPendingContainerCloseWithoutSendingItAgain() {
+        final InventoryTracker tracker = new InventoryTracker(null);
+        final Container closing = new SlotChangeCountingContainer();
+        tracker.setCurrentContainer(closing);
+        tracker.markPendingClose(closing);
+        assertTrue(tracker.isContainerOpen());
+        assertNull(tracker.getCurrentContainer());
+        assertSame(closing, tracker.getPendingCloseContainer());
+
+        tracker.setCurrentContainerClosed(true);
+
+        assertFalse(tracker.isContainerOpen());
+        assertNull(tracker.getPendingCloseContainer());
+        final Container next = new SlotChangeCountingContainer();
+        tracker.setCurrentContainer(next);
+        assertSame(next, tracker.getCurrentContainer());
     }
 
     @Test
