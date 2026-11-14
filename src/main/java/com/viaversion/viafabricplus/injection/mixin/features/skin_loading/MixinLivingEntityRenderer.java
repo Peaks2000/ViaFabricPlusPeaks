@@ -13,13 +13,29 @@ import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.UvMapping;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class MixinLivingEntityRenderer {
+
+    @Inject(method = "getRenderType", at = @At("HEAD"), cancellable = true)
+    private void useCreatorMaterial(final LivingEntityRenderState state, final boolean visible,
+                                    final boolean translucent, final boolean glowing,
+                                    final CallbackInfoReturnable<RenderType> result) {
+        if (visible && !translucent && state instanceof AvatarRenderState avatar) {
+            final Model<AvatarRenderState> creator = BedrockSkinBridge.creatorModel(avatar.skin);
+            if (creator != null) {
+                result.setReturnValue(creator.renderType(avatar.skin.body().texturePath()));
+            }
+        }
+    }
 
     @WrapOperation(method = "submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/texture/UvMapping;I)V"))
@@ -28,9 +44,17 @@ public abstract class MixinLivingEntityRenderer {
                                       final int light, final int overlay, final int color, final UvMapping uv,
                                       final int outline, final Operation<Void> original) {
         if (state instanceof AvatarRenderState avatar) {
-            final Model<AvatarRenderState> creator = BedrockSkinBridge.creatorModel(avatar.skin);
+            final var creator = BedrockSkinBridge.creatorRender(avatar.skin);
             if (creator != null) {
-                collector.submitModel(creator, avatar, poses, renderType, light, overlay, color, uv, outline);
+                if (creator.staticLayer()) {
+                    if (creator.model() == null) original.call(collector, originalModel, state, poses, renderType, light, overlay, color, uv, outline);
+                    else collector.submitModel(creator.model(), avatar, poses, renderType, light, overlay, color, uv, outline);
+                }
+                for (var layer : creator.layers()) {
+                    final RenderType material = avatar.isInvisible && avatar.isInvisibleToPlayer
+                        ? RenderTypes.outline(layer.texture()) : layer.model().renderType(layer.texture());
+                    collector.order(1).submitModel(layer.model(), avatar, poses, material, light, overlay, color, layer.uv(avatar), outline);
+                }
                 return;
             }
         }

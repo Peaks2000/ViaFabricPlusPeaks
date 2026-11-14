@@ -22,40 +22,19 @@
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.movement;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
-import com.viaversion.viaversion.api.connection.UserConnection;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
-import net.raphimc.viabedrock.protocol.data.enums.bedrock.generated.PlayerAuthInputData;
-import net.raphimc.viabedrock.protocol.storage.EntityTracker;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
 
     @Shadow
-    public abstract boolean isSwimming();
-
-    @Shadow
     protected Vec3 stuckSpeedMultiplier;
-
-    @Inject(method = "setSwimming", at = @At("HEAD"))
-    private void cancelSwimming(boolean swimming, CallbackInfo ci) {
-        if (!ProtocolTranslator.isBedrock()) {
-            return;
-        }
-
-        final UserConnection connection = ProtocolTranslator.getPlayNetworkUserConnection();
-        if (connection != null && swimming != isSwimming()) {
-            connection.get(EntityTracker.class).getClientPlayer().addAuthInputData(swimming ? PlayerAuthInputData.StartSwimming : PlayerAuthInputData.StopSwimming);
-        }
-    }
 
     @Redirect(method = "makeStuckInBlock", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;stuckSpeedMultiplier:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
     private void prioritySlowestMovementMultiplier(Entity instance, Vec3 value) {

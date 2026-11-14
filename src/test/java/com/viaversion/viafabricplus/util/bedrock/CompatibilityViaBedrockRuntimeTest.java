@@ -52,7 +52,11 @@ public final class CompatibilityViaBedrockRuntimeTest {
             assertSame(loader, provider.getClassLoader());
             assertSame(loader, provider.getSuperclass().getClassLoader());
             final var pixels = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
-            final Object skin = skinType.getConstructors()[0].newInstance("creator", "patch", pixels, List.of(), null,
+            final var strip = new BufferedImage(32, 96, BufferedImage.TYPE_INT_ARGB);
+            final var animationType = loader.loadClass(skinType.getName() + "$AnimationData");
+            final var animation = animationType.getConstructor(BufferedImage.class, int.class, float.class, int.class)
+                .newInstance(strip, 2, 3F, 0);
+            final Object skin = skinType.getConstructors()[0].newInstance("creator", "patch", pixels, List.of(animation), null,
                 "geometry", "1.12.0", "", false, true, false, false, "", "", "slim", "", List.of(), List.of(), false);
             final var appearance = (BedrockSkinAppearance) provider.getMethod("appearance", skinType).invoke(null, skin);
             assertSame(pixels, appearance.skinData());
@@ -60,6 +64,7 @@ public final class CompatibilityViaBedrockRuntimeTest {
             assertEquals("patch", appearance.skinResourcePatch());
             assertEquals("geometry", appearance.geometryData());
             assertEquals("slim", appearance.armSize());
+            assertEquals(List.of(new BedrockSkinAppearance.Animation(strip, 2, 3F, 0)), appearance.animations());
         }
     }
 

@@ -12,15 +12,16 @@
 package com.viaversion.viafabricplus.util.bedrock;
 
 import java.awt.image.BufferedImage;
-import net.raphimc.viabedrock.protocol.model.SkinData;
+import java.util.List;
 
 /** Renderer payload shared by both runtimes without crossing their SkinData class identities. */
 public record BedrockSkinAppearance(BufferedImage skinData, BufferedImage capeData, String skinResourcePatch,
-                                    String geometryData, String armSize, boolean persona) {
+                                    String geometryData, String armSize, boolean persona, boolean premium,
+                                    List<Animation> animations) {
 
-    public static BedrockSkinAppearance from(final SkinData skin) {
-        return new BedrockSkinAppearance(skin.skinData(), skin.capeData(), skin.skinResourcePatch(),
-            skin.geometryData(), skin.armSize(), skin.persona()
-                || skin.personaPieces() != null && !skin.personaPieces().isEmpty());
+    public BedrockSkinAppearance {
+        animations = List.copyOf(animations);
     }
+
+    public record Animation(BufferedImage image, int type, float frames, int expression) { }
 }

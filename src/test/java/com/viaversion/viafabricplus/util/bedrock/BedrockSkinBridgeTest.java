@@ -11,6 +11,7 @@
 
 package com.viaversion.viafabricplus.util.bedrock;
 
+import io.netty.buffer.Unpooled;
 import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -20,6 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 import net.raphimc.viabedrock.protocol.model.SkinData;
 import net.raphimc.viabedrock.protocol.storage.AuthData;
+import net.raphimc.viabedrock.protocol.types.BedrockTypes;
+import net.raphimc.viabedrock.protocol.types.primitive.ImageType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +32,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class BedrockSkinBridgeTest {
+
+    @Test
+    public void oversizedSkinImagePreservesTheFollowingPacketFields() {
+        final var bytes = Unpooled.buffer();
+        try {
+            bytes.writeIntLE(2049).writeIntLE(1);
+            BedrockTypes.BYTE_ARRAY.write(bytes, new byte[2049 * 4]);
+            BedrockTypes.STRING.write(bytes, "following-field");
+
+            assertNull(new ImageType(2048).read(bytes));
+            assertEquals("following-field", BedrockTypes.STRING.read(bytes));
+            assertEquals(0, bytes.readableBytes());
+        } finally {
+            bytes.release();
+        }
+    }
 
     @Test
     public void highResolutionClassicTextureIsReducedToAnOpaqueStandardJavaModel() {
@@ -121,6 +140,16 @@ public final class BedrockSkinBridgeTest {
         final String resourcePatch = new String(Base64.getDecoder().decode(
                 (String) claims.get("SkinResourcePatch")), StandardCharsets.UTF_8);
         assertTrue(resourcePatch.contains("geometry.humanoid.customSlim"));
+    }
+
+    @Test
+    public void theSameJavaPixelsUseDistinctWideAndSlimBedrockSkinIds() {
+        final BufferedImage skin = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+        final Map<String, Object> wide = new HashMap<>();
+        final Map<String, Object> slim = new HashMap<>();
+        assertTrue(BedrockSkinBridge.applyClientSkinClaims(wide, skin, false, true, null));
+        assertTrue(BedrockSkinBridge.applyClientSkinClaims(slim, skin, true, true, null));
+        assertFalse(wide.get("SkinId").equals(slim.get("SkinId")));
     }
 
     @Test

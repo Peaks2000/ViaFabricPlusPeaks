@@ -11,7 +11,6 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.skin_loading;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.authlib.GameProfile;
 import com.viaversion.viafabricplus.util.bedrock.BedrockSkinBridge;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -19,6 +18,8 @@ import net.minecraft.world.entity.player.PlayerSkin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlayerInfo.class)
 public abstract class MixinPlayerInfo {
@@ -26,9 +27,12 @@ public abstract class MixinPlayerInfo {
     @Shadow
     public abstract GameProfile getProfile();
 
-    @ModifyReturnValue(method = "getSkin", at = @At("RETURN"))
-    private PlayerSkin useLocalBedrockSkin(final PlayerSkin original) {
-        return BedrockSkinBridge.localBedrockSkin(getProfile().id(), original);
+    @Inject(method = "getSkin", at = @At("HEAD"), cancellable = true)
+    private void useLocalBedrockSkin(final CallbackInfoReturnable<PlayerSkin> result) {
+        final PlayerSkin skin = BedrockSkinBridge.localBedrockSkin(getProfile().id(), null);
+        if (skin != null) {
+            result.setReturnValue(skin);
+        }
     }
 
 }

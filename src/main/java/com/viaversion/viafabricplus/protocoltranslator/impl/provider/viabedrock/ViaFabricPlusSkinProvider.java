@@ -14,6 +14,7 @@ package com.viaversion.viafabricplus.protocoltranslator.impl.provider.viabedrock
 import com.viaversion.viafabricplus.util.bedrock.BedrockSkinAppearance;
 import com.viaversion.viafabricplus.util.bedrock.BedrockSkinBridge;
 import com.viaversion.viaversion.api.connection.UserConnection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.raphimc.viabedrock.protocol.model.SkinData;
@@ -30,9 +31,12 @@ public final class ViaFabricPlusSkinProvider extends SkinProvider {
     }
 
     public static BedrockSkinAppearance appearance(final SkinData skin) {
+        final var animations = skin.animations() == null ? List.<BedrockSkinAppearance.Animation>of()
+            : skin.animations().stream().map(animation -> new BedrockSkinAppearance.Animation(
+                animation.image(), animation.type(), animation.frames(), animation.expression())).toList();
         return new BedrockSkinAppearance(skin.skinData(), skin.capeData(), skin.skinResourcePatch(),
             skin.geometryData(), skin.armSize(), skin.persona()
-                || skin.personaPieces() != null && !skin.personaPieces().isEmpty());
+                || skin.personaPieces() != null && !skin.personaPieces().isEmpty(), skin.premium(), animations);
     }
 
     @Override

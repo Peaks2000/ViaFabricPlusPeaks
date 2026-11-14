@@ -41,6 +41,34 @@ final class BedrockPersonaGeometryTest {
         assertEquals(12F / 64, maxU);
     }
 
+    @Test void rendersDressingRoomGeometryWithoutThePersonaFlag() {
+        final var skin = skin(BODY);
+        final var appearance = new BedrockSkinAppearance(skin.skinData(), null, skin.skinResourcePatch(),
+            skin.geometryData(), "wide", false, false, List.of());
+        assertTrue(BedrockPersonaGeometry.usesCustomGeometry(appearance));
+        assertNotNull(BedrockPersonaGeometry.parse(appearance));
+
+        final var classic = new BedrockSkinAppearance(skin.skinData(), null,
+            "{\"geometry\":{\"default\":\"geometry.humanoid.custom\"}}", skin.geometryData(), "wide", false, false, List.of());
+        assertFalse(BedrockPersonaGeometry.usesCustomGeometry(classic));
+    }
+
+    @Test void rotatesNamedMaterialFacesUsingTheSerializedAtlas() {
+        final String bone = "{\"name\":\"body\",\"cubes\":[{\"origin\":[0,0,0],\"size\":[4,4,4],"
+            + "\"uv\":{\"north\":{\"uv\":[8,12],\"uv_size\":[4,4],\"material_instance\":\"skin\"%s}}}]}";
+        final var before = BedrockPersonaGeometry.parse(skin(bone.formatted("")));
+        final var rotated = BedrockPersonaGeometry.parse(skin(bone.formatted(",\"uv_rotation\":90")));
+        assertNotNull(before);
+        assertNotNull(rotated);
+        final var originalFace = before.bake(false).root().getChild("body").getChild("cube_0")
+            .getRandomCube(RandomSource.create(1)).polygons[0];
+        final var rotatedFace = rotated.bake(false).root().getChild("body").getChild("cube_0")
+            .getRandomCube(RandomSource.create(1)).polygons[0];
+        assertEquals(originalFace.vertices()[1].u(), rotatedFace.vertices()[0].u());
+        assertEquals(originalFace.vertices()[1].v(), rotatedFace.vertices()[0].v());
+        assertEquals(originalFace.vertices()[0].x(), rotatedFace.vertices()[0].x());
+    }
+
     @Test void rejectsMissingPiecesCyclesAndInvalidAtlasBounds() {
         assertNull(BedrockPersonaGeometry.parse(skin(HEAD)));
         assertNull(BedrockPersonaGeometry.parse(skin(BODY.replace("\"body\"", "\"body\",\"parent\":\"head\"") + "," + HEAD)));

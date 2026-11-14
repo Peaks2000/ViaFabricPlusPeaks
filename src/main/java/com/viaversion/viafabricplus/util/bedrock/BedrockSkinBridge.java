@@ -15,6 +15,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.viaversion.viafabricplus.ViaFabricPlusImpl;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
+import com.viaversion.viafabricplus.protocoltranslator.impl.provider.viabedrock.ViaFabricPlusSkinProvider;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -22,7 +23,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,8 +37,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.UvMapping;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.ClientAsset;
 import net.minecraft.resources.Identifier;
@@ -47,8 +51,8 @@ import net.raphimc.viabedrock.protocol.types.primitive.ImageType;
 /**
  * Bridges Bedrock skin packets into Minecraft's local texture manager and converts the signed
  * Java player's already-loaded skin into Bedrock client-data claims. No skin upload service is
- * involved. Classic skins use the Java wide/slim model. Complete creator cube geometries use
- * their own atlas and skeleton; incomplete creator payloads use a deterministic bundled skin.
+ * involved. Classic skins use the Java wide/slim model. Complete creator geometries use their
+ * own atlas and skeleton; incomplete creator payloads use a deterministic bundled skin.
  */
 public final class BedrockSkinBridge {
 
@@ -56,6 +60,7 @@ public final class BedrockSkinBridge {
     private static final int JAVA_CAPE_WIDTH = 64;
     private static final int JAVA_CAPE_HEIGHT = 32;
     private static final int MAX_SOURCE_DIMENSION = 1024;
+    private static final int MAX_REGISTERED_SKINS = 256;
     private static final int OPAQUE_ALPHA = 0xFF;
     private static final int DEFAULT_MISSING_BASE_COLOR = 0xFFB57B61;
     private static final long CLIENT_SKIN_WAIT_SECONDS = 5L;
@@ -63,8 +68,11 @@ public final class BedrockSkinBridge {
     private static final String WIDE_RESOURCE_PATCH = "{\"geometry\":{\"default\":\"geometry.humanoid.custom\"}}";
     private static final String SLIM_RESOURCE_PATCH = "{\"geometry\":{\"default\":\"geometry.humanoid.customSlim\"}}";
 
-    private static final Map<UUID, RegisteredSkin> BEDROCK_SKINS = new ConcurrentHashMap<>();
-    private static final Map<Identifier, Model<AvatarRenderState>> CREATOR_MODELS = new ConcurrentHashMap<>();
+    // Texture registration and eviction run on Minecraft's client thread.
+    private static final LinkedHashMap<UUID, RegisteredSkin> BEDROCK_SKINS = new LinkedHashMap<>(16, 0.75F, true);
+    private static final Map<Identifier, CreatorRender> CREATOR_MODELS = new ConcurrentHashMap<>();
+    private static final java.util.concurrent.atomic.AtomicInteger SKIN_TRACE_REMAINING = new java.util.concurrent.atomic.AtomicInteger();
+    private static volatile String sentSkinDigest;
     private static final AtomicLong TEXTURE_SEQUENCE = new AtomicLong();
 
     private static volatile UserConnection activeConnection;
@@ -90,15 +98,19 @@ public final class BedrockSkinBridge {
             final ClientSkin fallback = captureBuiltInClientSkin(minecraft, profile);
             CompletableFuture.delayedExecutor(OFFLINE_FALLBACK_DELAY_SECONDS, TimeUnit.SECONDS)
                     .execute(() -> acceptPreparedClientSkin(prepared, fallback, false));
-            minecraft.getSkinManager().get(profile).whenComplete((skin, error) -> minecraft.execute(() -> {
-                if (error != null) {
-                    ViaFabricPlusImpl.impl().logger().debug("Could not prepare the local Java skin for Bedrock", error);
-                    acceptPreparedClientSkin(prepared, fallback, false);
-                    return;
-                }
-                final ClientSkin captured = captureClientSkin(minecraft, profile, skin);
-                acceptPreparedClientSkin(prepared, captured != null ? captured : fallback, captured != null);
-            }));
+            SignedJavaSkinProfile.resolve(minecraft.services().sessionService(), profile,
+                ViaFabricPlusImpl.impl().path().resolve("signed-java-skin.txt"))
+                .thenCompose(signed -> signed == null ? CompletableFuture.completedFuture(Optional.<PlayerSkin>empty())
+                    : minecraft.getSkinManager().get(signed))
+                .whenComplete((skin, error) -> minecraft.execute(() -> {
+                    if (error != null) {
+                        ViaFabricPlusImpl.impl().logger().debug("Could not prepare the local Java skin for Bedrock", error);
+                        acceptPreparedClientSkin(prepared, fallback, false);
+                        return;
+                    }
+                    final ClientSkin captured = captureClientSkin(minecraft, profile, skin);
+                    acceptPreparedClientSkin(prepared, captured != null ? captured : fallback, captured != null);
+                }));
         });
     }
 
@@ -107,7 +119,9 @@ public final class BedrockSkinBridge {
             return;
         }
         activeConnection = connection;
-        releaseAllRegisteredSkins();
+        SKIN_TRACE_REMAINING.set(32);
+        sentSkinDigest = null;
+        Minecraft.getInstance().execute(BedrockSkinBridge::releaseInactiveSkins);
         preparedClientSkin.thenAccept(clientSkin -> installClientSkin(connection, clientSkin));
     }
 
@@ -116,13 +130,15 @@ public final class BedrockSkinBridge {
             return;
         }
         activeConnection = null;
-        releaseAllRegisteredSkins();
+        Minecraft.getInstance().execute(BedrockSkinBridge::releaseInactiveSkins);
     }
 
     public static void applyClientPlayerSkin(final UserConnection connection, final Map<String, Object> claims) {
         final ClientSkin clientSkin;
         try {
-            clientSkin = preparedClientSkin.get(CLIENT_SKIN_WAIT_SECONDS, TimeUnit.SECONDS);
+            final ClientSkin prepared = preparedClientSkin.get(CLIENT_SKIN_WAIT_SECONDS, TimeUnit.SECONDS);
+            final ClientSkin latest = latestClientSkin;
+            clientSkin = latest != null ? latest : prepared;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return;
@@ -143,6 +159,12 @@ public final class BedrockSkinBridge {
             // Java PlayerInfo can resolve the same pixels even if the server omits self from its
             // initial player list.
             installClientSkin(connection, clientSkin, connection.getProtocolInfo().getUuid());
+            final String encodedPixels = (String) claims.get("SkinData");
+            sentSkinDigest = shortHash(Base64.getDecoder().decode(encodedPixels));
+            ViaFabricPlusImpl.impl().logger().info(
+                "Skin trace outbound Java texture {}x{} slim={} digest={} playFabPresent={}",
+                claims.get("SkinImageWidth"), claims.get("SkinImageHeight"), clientSkin.slim(), sentSkinDigest,
+                claims.get("PlayFabId") instanceof String id && !id.isBlank());
             if (clientSkin.signedMojangTexture()) {
                 ViaFabricPlusImpl.impl().logger().info(
                         "Applied the signed local Java skin to the Bedrock login");
@@ -154,47 +176,80 @@ public final class BedrockSkinBridge {
     }
 
     public static void installBedrockSkin(final UserConnection connection, final UUID playerUuid, final SkinData skin) {
-        installAppearance(connection, playerUuid, BedrockSkinAppearance.from(skin));
+        installAppearance(connection, playerUuid, ViaFabricPlusSkinProvider.appearance(skin));
     }
 
     public static void installAppearance(final UserConnection connection, final UUID playerUuid, final BedrockSkinAppearance skin) {
-        if (connection != activeConnection || playerUuid == null || skin.skinData() == null) {
+        if (connection != activeConnection || playerUuid == null) {
             return;
         }
 
         final ClientSkin clientSkin = latestClientSkin;
-        if (clientSkin != null && shouldPreferPreparedClientSkin(
-                connection.getProtocolInfo().getUuid(), playerUuid)) {
+        final boolean local = shouldPreferPreparedClientSkin(connection.getProtocolInfo().getUuid(), playerUuid);
+        final boolean trace = SKIN_TRACE_REMAINING.getAndUpdate(remaining -> Math.max(0, remaining - 1)) > 0;
+        if (trace) {
+            final BufferedImage image = skin.skinData();
+            final String geometry = skin.geometryData();
+            final String digest = image != null ? shortHash(ImageType.getImageData(image)) : "none";
+            ViaFabricPlusImpl.impl().logger().info(
+                "Skin trace inbound local={} texture={} matchesOutbound={} persona={} premium={} geometryChars={} patch={}",
+                local, image == null ? "none" : image.getWidth() + "x" + image.getHeight(),
+                digest.equals(sentSkinDigest), skin.persona(), skin.premium(), geometry == null ? 0 : geometry.length(),
+                BedrockPersonaGeometry.traceGeometryIdentifier(skin.skinResourcePatch()));
+        }
+        if (clientSkin != null && local) {
             installClientSkin(connection, clientSkin, playerUuid);
             return;
         }
 
         final Minecraft minecraft = Minecraft.getInstance();
-        final BufferedImage normalizedCape = normalizeCape(skin.capeData());
-        if (skin.persona()) {
-            final BedrockPersonaGeometry.Geometry geometry = BedrockPersonaGeometry.parse(skin);
-            minecraft.execute(() -> {
-                if (geometry == null) {
-                    registerPersonaFallback(minecraft, connection, playerUuid, normalizedCape);
-                    return;
-                }
+        final BufferedImage cape = normalizeCape(skin.capeData());
+        final boolean slim = isSlim(skin);
+        final PlayerModelType model = slim ? PlayerModelType.SLIM : PlayerModelType.WIDE;
+        final boolean customGeometry = BedrockPersonaGeometry.usesCustomGeometry(skin);
+        final boolean traceGeometry = trace && (skin.persona() || !skin.animations().isEmpty());
+        final BedrockPersonaGeometry.Geometry geometry = customGeometry || skin.premium()
+            ? BedrockPersonaGeometry.parse(skin, traceGeometry) : null;
+        final List<BedrockSkinAnimation.Layer> animations = BedrockSkinAnimation.layers(skin, traceGeometry);
+        if (traceGeometry) {
+            ViaFabricPlusImpl.impl().logger().info(
+                "Skin trace animation baseGeometry={} decodedLayers={} renderableLayers={} slots={} strips={}",
+                geometry != null, skin.animations().size(), animations.size(),
+                BedrockPersonaGeometry.traceAnimationSlots(skin.skinResourcePatch()),
+                skin.animations().stream().limit(6).map(animation -> {
+                    final BufferedImage image = animation.image();
+                    return animation.type() + "/" + animation.expression() + "/" + animation.frames() + "/"
+                        + (image == null ? "none" : image.getWidth() + "x" + image.getHeight());
+                }).toList());
+        }
+        final BufferedImage classic = customGeometry || geometry != null ? null : prepareClassicRenderTexture(skin.skinData());
+        minecraft.execute(() -> {
+            if (connection != activeConnection) {
+                return;
+            }
+            if (geometry != null || !animations.isEmpty()) {
                 try {
-                    final Model<AvatarRenderState> creator = geometry.bake(isSlim(skin));
-                    registerBedrockSkin(minecraft, connection, playerUuid, skin.skinData(), normalizedCape,
-                        isSlim(skin) ? PlayerModelType.SLIM : PlayerModelType.WIDE, creator);
+                    final Model<AvatarRenderState> base = geometry == null ? null : geometry.bake(slim);
+                    final var layers = new ArrayList<BakedAnimation>(animations.size());
+                    for (var animation : animations) {
+                        layers.add(new BakedAnimation(animation.geometry().bake(slim), animation));
+                    }
+                    final boolean animatedBody = layers.stream().anyMatch(layer -> layer.animation().body());
+                    if (base != null || classic != null || animatedBody) {
+                        final BufferedImage pixels = base != null ? skin.skinData() : classic;
+                        registerBedrockSkin(minecraft, connection, playerUuid, pixels, cape, model, base, layers);
+                        return;
+                    }
                 } catch (final RuntimeException e) {
-                    registerPersonaFallback(minecraft, connection, playerUuid, normalizedCape);
+                    ViaFabricPlusImpl.impl().logger().debug("Skin trace could not bake Bedrock geometry", e);
                 }
-            });
-            return;
-        }
-
-        final BufferedImage normalizedSkin = prepareClassicRenderTexture(skin.skinData());
-        if (normalizedSkin == null) {
-            return;
-        }
-        final PlayerModelType model = isSlim(skin) ? PlayerModelType.SLIM : PlayerModelType.WIDE;
-        minecraft.execute(() -> registerBedrockSkin(minecraft, connection, playerUuid, normalizedSkin, normalizedCape, model));
+            }
+            if (classic != null) {
+                registerBedrockSkin(minecraft, connection, playerUuid, classic, cape, model);
+            } else {
+                registerPersonaFallback(minecraft, connection, playerUuid, cape);
+            }
+        });
     }
 
     static boolean requiresPersonaFallback(final SkinData skin) {
@@ -203,6 +258,11 @@ public final class BedrockSkinBridge {
     }
 
     public static Model<AvatarRenderState> creatorModel(final PlayerSkin skin) {
+        final CreatorRender creator = creatorRender(skin);
+        return creator != null ? creator.model() : null;
+    }
+
+    public static CreatorRender creatorRender(final PlayerSkin skin) {
         final UserConnection connection = activeConnection;
         if (connection == null || ProtocolTranslator.getPlayNetworkUserConnection() != connection || skin == null) return null;
         return CREATOR_MODELS.get(skin.body().texturePath());
@@ -279,7 +339,7 @@ public final class BedrockSkinBridge {
 
         final byte[] skinBytes = ImageType.getImageData(normalizedSkin);
         final String skinHash = shortHash(skinBytes);
-        claims.put("SkinId", "ViaFabricPlusPeaks-" + skinHash);
+        claims.put("SkinId", "ViaFabricPlusPeaks-" + (slim ? "slim-" : "wide-") + skinHash);
         claims.put("SkinData", Base64.getEncoder().encodeToString(skinBytes));
         claims.put("SkinImageWidth", normalizedSkin.getWidth());
         claims.put("SkinImageHeight", normalizedSkin.getHeight());
@@ -305,6 +365,12 @@ public final class BedrockSkinBridge {
             claims.put("CapeImageWidth", normalizedCape.getWidth());
             claims.put("CapeImageHeight", normalizedCape.getHeight());
             claims.put("CapeOnClassicSkin", true);
+        } else {
+            claims.put("CapeId", "");
+            claims.put("CapeData", "");
+            claims.put("CapeImageWidth", 0);
+            claims.put("CapeImageHeight", 0);
+            claims.put("CapeOnClassicSkin", false);
         }
         return true;
     }
@@ -355,18 +421,24 @@ public final class BedrockSkinBridge {
             return;
         }
 
-        final boolean firstResult = prepared.complete(clientSkin);
-        if (!firstResult && !replaceCompletedFallback) {
-            return;
+        synchronized (prepared) {
+            if (preparedClientSkin != prepared || prepared.isDone() && !replaceCompletedFallback) {
+                return;
+            }
+            latestClientSkin = clientSkin;
+            prepared.complete(clientSkin);
         }
-        latestClientSkin = clientSkin;
         final UserConnection connection = activeConnection;
         if (connection != null) {
             installClientSkin(connection, clientSkin);
+            final UUID translated = connection.getProtocolInfo().getUuid();
+            if (translated != null && !translated.equals(clientSkin.profileId())) {
+                installClientSkin(connection, clientSkin, translated);
+            }
         }
     }
 
-    private static boolean isOfficialTexture(final String url) {
+    static boolean isOfficialTexture(final String url) {
         try {
             final java.net.URI uri = java.net.URI.create(url);
             return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
@@ -380,13 +452,16 @@ public final class BedrockSkinBridge {
         if (texture == null) {
             return null;
         }
-        final AbstractTexture abstractTexture = minecraft.getTextureManager().getTexture(texture.texturePath());
-        if (abstractTexture instanceof DynamicTexture dynamicTexture && dynamicTexture.getPixels() != null) {
+        if (texture instanceof ClientAsset.DownloadedTexture
+                && minecraft.getTextureManager().getTexture(texture.texturePath()) instanceof DynamicTexture dynamicTexture
+                && dynamicTexture.getPixels() != null) {
             return copyPixels(dynamicTexture.getPixels());
         }
 
         if (texture instanceof ClientAsset.ResourceTexture) {
-            final Optional<Resource> resource = minecraft.getResourceManager().getResource(texture.texturePath());
+            final Optional<Resource> resource = minecraft.getResourceManager().getResourceStack(texture.texturePath()).stream()
+                .filter(candidate -> candidate.sourcePackId().equals("vanilla"))
+                .findFirst();
             if (resource.isPresent()) {
                 try (InputStream stream = resource.get().open(); NativeImage pixels = NativeImage.read(stream)) {
                     return copyPixels(pixels);
@@ -428,45 +503,65 @@ public final class BedrockSkinBridge {
         final BufferedImage normalizedCape = normalizeCape(clientSkin.cape());
         final PlayerModelType model = clientSkin.slim() ? PlayerModelType.SLIM : PlayerModelType.WIDE;
         final Minecraft minecraft = Minecraft.getInstance();
-        minecraft.execute(() -> registerBedrockSkin(
-                minecraft, connection, playerUuid, normalizedSkin, normalizedCape, model));
+        minecraft.execute(() -> {
+            final ClientSkin latest = latestClientSkin;
+            if (!clientSkin.signedMojangTexture() && latest != null && latest.signedMojangTexture()
+                && latest.profileId().equals(clientSkin.profileId())) {
+                return;
+            }
+            registerBedrockSkin(minecraft, connection, playerUuid, normalizedSkin, normalizedCape, model);
+        });
     }
 
     private static void registerBedrockSkin(final Minecraft minecraft, final UserConnection connection,
                                             final UUID playerUuid, final BufferedImage skinImage,
                                             final BufferedImage capeImage, final PlayerModelType model) {
-        registerBedrockSkin(minecraft, connection, playerUuid, skinImage, capeImage, model, null);
+        registerBedrockSkin(minecraft, connection, playerUuid, skinImage, capeImage, model, null, List.of());
     }
 
     private static void registerBedrockSkin(final Minecraft minecraft, final UserConnection connection,
                                             final UUID playerUuid, final BufferedImage skinImage,
                                             final BufferedImage capeImage, final PlayerModelType model,
-                                            final Model<AvatarRenderState> creator) {
+                                            final Model<AvatarRenderState> creator,
+                                            final List<BakedAnimation> animations) {
         if (connection != activeConnection) {
             return;
         }
 
-        final RegisteredSkin previous = BEDROCK_SKINS.remove(playerUuid);
-        if (previous != null) {
-            releaseRegisteredSkin(minecraft, previous);
-        }
-
         final long sequence = TEXTURE_SEQUENCE.incrementAndGet();
         final Identifier skinPath = texturePath(playerUuid, "skin", sequence);
-        minecraft.getTextureManager().register(skinPath, dynamicTexture(playerUuid, "skin", skinImage));
-        final ClientAsset.Texture body = new ClientAsset.DownloadedTexture(skinPath, "local://viafabricplus/bedrock-skin/" + playerUuid);
-
         Identifier capePath = null;
         ClientAsset.Texture cape = null;
-        if (capeImage != null) {
-            capePath = texturePath(playerUuid, "cape", sequence);
-            minecraft.getTextureManager().register(capePath, dynamicTexture(playerUuid, "cape", capeImage));
-            cape = new ClientAsset.DownloadedTexture(capePath, "local://viafabricplus/bedrock-cape/" + playerUuid);
+        final List<AnimatedLayer> animatedLayers = new ArrayList<>(animations.size());
+        try {
+            if (skinImage != null) {
+                minecraft.getTextureManager().register(skinPath, dynamicTexture(playerUuid, "skin", skinImage));
+            }
+            for (final BakedAnimation baked : animations) {
+                // The first strip also identifies skins with no separate static layer.
+                final Identifier path = skinImage == null && animatedLayers.isEmpty() ? skinPath
+                    : texturePath(playerUuid, "animation_" + animatedLayers.size(), sequence);
+                final var animation = baked.animation();
+                animatedLayers.add(new AnimatedLayer(baked.model(), path, animation.frames(),
+                    animation.strip().getHeight(), animation.blinking()));
+                minecraft.getTextureManager().register(path, dynamicTexture(playerUuid, "skin animation", animation.strip()));
+            }
+            if (capeImage != null) {
+                capePath = texturePath(playerUuid, "cape", sequence);
+                minecraft.getTextureManager().register(capePath, dynamicTexture(playerUuid, "cape", capeImage));
+                cape = new ClientAsset.ResourceTexture(capePath, capePath);
+            }
+        } catch (final RuntimeException e) {
+            releaseSkinTextures(minecraft, skinPath, capePath, animatedLayers);
+            throw e;
         }
 
-        BEDROCK_SKINS.put(playerUuid, new RegisteredSkin(
-                connection, new PlayerSkin(body, cape, null, model, false), skinPath, capePath));
-        if (creator != null) CREATOR_MODELS.put(skinPath, creator);
+        if (creator != null || !animatedLayers.isEmpty()) {
+            CREATOR_MODELS.put(skinPath, new CreatorRender(creator, skinImage != null, List.copyOf(animatedLayers)));
+        }
+        final ClientAsset.Texture body = new ClientAsset.ResourceTexture(skinPath, skinPath);
+        replaceRegisteredSkin(minecraft, playerUuid, new RegisteredSkin(
+            connection, new PlayerSkin(body, cape, null, model, false), skinPath, capePath));
     }
 
     private static void registerPersonaFallback(final Minecraft minecraft, final UserConnection connection,
@@ -475,16 +570,20 @@ public final class BedrockSkinBridge {
             return;
         }
 
-        final ClientSkin fallback = captureBuiltInClientSkin(minecraft, new GameProfile(playerUuid, ""));
-        if (fallback == null) {
+        final PlayerSkin fallback = DefaultPlayerSkin.get(playerUuid);
+        if (capeImage == null) {
+            final RegisteredSkin previous = BEDROCK_SKINS.remove(playerUuid);
+            if (previous != null) {
+                releaseRegisteredSkin(minecraft, previous);
+            }
             return;
         }
-        final BufferedImage normalizedSkin = normalizeSkin(fallback.skin());
-        if (normalizedSkin == null) {
-            return;
-        }
-        registerBedrockSkin(minecraft, connection, playerUuid, normalizedSkin, capeImage,
-                fallback.slim() ? PlayerModelType.SLIM : PlayerModelType.WIDE);
+
+        final Identifier capePath = texturePath(playerUuid, "cape", TEXTURE_SEQUENCE.incrementAndGet());
+        minecraft.getTextureManager().register(capePath, dynamicTexture(playerUuid, "cape", capeImage));
+        final ClientAsset.Texture cape = new ClientAsset.ResourceTexture(capePath, capePath);
+        replaceRegisteredSkin(minecraft, playerUuid, new RegisteredSkin(connection,
+            new PlayerSkin(fallback.body(), cape, null, fallback.model(), false), null, capePath));
     }
 
     private static DynamicTexture dynamicTexture(final UUID playerUuid, final String kind, final BufferedImage image) {
@@ -502,26 +601,39 @@ public final class BedrockSkinBridge {
                 "bedrock_skins/" + playerUuid.toString().replace("-", "") + "/" + kind + "_" + sequence);
     }
 
-    private static void releaseAllRegisteredSkins() {
-        final RegisteredSkin[] registered = BEDROCK_SKINS.values().toArray(RegisteredSkin[]::new);
-        BEDROCK_SKINS.clear();
-        CREATOR_MODELS.clear();
-        if (registered.length == 0) {
-            return;
+    private static void replaceRegisteredSkin(final Minecraft minecraft, final UUID playerUuid, final RegisteredSkin skin) {
+        final RegisteredSkin previous = BEDROCK_SKINS.put(playerUuid, skin);
+        if (previous != null) {
+            releaseRegisteredSkin(minecraft, previous);
         }
+        if (BEDROCK_SKINS.size() > MAX_REGISTERED_SKINS) {
+            releaseRegisteredSkin(minecraft, BEDROCK_SKINS.pollFirstEntry().getValue());
+        }
+    }
+
+    private static void releaseInactiveSkins() {
         final Minecraft minecraft = Minecraft.getInstance();
-        minecraft.execute(() -> {
-            for (RegisteredSkin skin : registered) {
+        final var iterator = BEDROCK_SKINS.values().iterator();
+        while (iterator.hasNext()) {
+            final RegisteredSkin skin = iterator.next();
+            if (skin.connection() != activeConnection) {
+                iterator.remove();
                 releaseRegisteredSkin(minecraft, skin);
             }
-        });
+        }
     }
 
     private static void releaseRegisteredSkin(final Minecraft minecraft, final RegisteredSkin skin) {
-        CREATOR_MODELS.remove(skin.skinPath());
-        minecraft.getTextureManager().release(skin.skinPath());
-        if (skin.capePath() != null) {
-            minecraft.getTextureManager().release(skin.capePath());
+        final CreatorRender creator = skin.skinPath() == null ? null : CREATOR_MODELS.remove(skin.skinPath());
+        releaseSkinTextures(minecraft, skin.skinPath(), skin.capePath(), creator == null ? List.of() : creator.layers());
+    }
+
+    private static void releaseSkinTextures(final Minecraft minecraft, final Identifier skinPath,
+                                            final Identifier capePath, final List<AnimatedLayer> layers) {
+        if (skinPath != null) minecraft.getTextureManager().release(skinPath);
+        if (capePath != null) minecraft.getTextureManager().release(capePath);
+        for (var layer : layers) {
+            if (!layer.texture().equals(skinPath)) minecraft.getTextureManager().release(layer.texture());
         }
     }
 
@@ -703,6 +815,18 @@ public final class BedrockSkinBridge {
     }
 
     private record RegisteredSkin(UserConnection connection, PlayerSkin skin, Identifier skinPath, Identifier capePath) {
+    }
+
+    private record BakedAnimation(Model<AvatarRenderState> model, BedrockSkinAnimation.Layer animation) { }
+
+    public record CreatorRender(Model<AvatarRenderState> model, boolean staticLayer, List<AnimatedLayer> layers) { }
+
+    public record AnimatedLayer(Model<AvatarRenderState> model, Identifier texture,
+                                int frames, int stripHeight, boolean blinking) {
+        public UvMapping uv(final AvatarRenderState avatar) {
+            return new BedrockSkinAnimation.FrameUv(
+                BedrockSkinAnimation.frame(avatar.ageInTicks, avatar.id, this.frames, this.blinking), this.frames, this.stripHeight);
+        }
     }
 
 }

@@ -480,12 +480,12 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalMovementCorrectionPreservesLaterJumpDisplacement() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(100, new Position3f(0F, 64F, 0F), true, false, false, 20);
-        tracker.record(101, new Position3f(0F, 64.42F, 0F), false, false, false, 20);
-        tracker.record(102, new Position3f(0F, 65F, 0F), false, false, false, 20);
+        tracker.record(100, new Position3f(0F, 64F, 0F), Position3f.ZERO, true, false, false, 20);
+        tracker.record(101, new Position3f(0F, 64.42F, 0F), Position3f.ZERO, false, false, false, 20);
+        tracker.record(102, new Position3f(0F, 65F, 0F), Position3f.ZERO, false, false, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            100, new Position3f(-0.1F, 64F, 0F), true,
+            100, new Position3f(-0.1F, 64F, 0F), Position3f.ZERO, true,
             102, new Position3f(0F, 65F, 0F), false, false, false, false
         );
 
@@ -497,10 +497,10 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void currentMovementCorrectionUsesAuthoritativeCollisionState() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(200, new Position3f(3F, 70F, 4F), false, false, false, 20);
+        tracker.record(200, new Position3f(3F, 70F, 4F), Position3f.ZERO, false, false, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            200, new Position3f(3F, 69.9F, 4F), true,
+            200, new Position3f(3F, 69.9F, 4F), Position3f.ZERO, true,
             200, new Position3f(3F, 70F, 4F), false, false, false, false
         );
 
@@ -509,13 +509,27 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void delayedCorrectionCannotReplayAcrossAnAbsolutePositionSync() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(590, new Position3f(0F, 64F, 1F), Position3f.ZERO, true, false, false, 20);
+        assertTrue(tracker.acceptsCorrection(590, 591, 20));
+
+        tracker.reset(591);
+
+        assertFalse(tracker.acceptsCorrection(590, 592, 20));
+        assertFalse(tracker.acceptsCorrection(591, 592, 20));
+        assertTrue(tracker.acceptsCorrection(592, 592, 20));
+        assertFalse(tracker.acceptsCorrection(593, 592, 20));
+    }
+
+    @Test
     public void repeatedWallCorrectionsDoNotPushTheCurrentPredictionBackAgain() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(300, new Position3f(0.98F, 64F, 0F), true, true, false, 20);
-        tracker.record(301, new Position3f(0.98F, 64F, 0F), true, true, false, 20);
+        tracker.record(300, new Position3f(0.98F, 64F, 0F), Position3f.ZERO, true, true, false, 20);
+        tracker.record(301, new Position3f(0.98F, 64F, 0F), Position3f.ZERO, true, true, false, 20);
 
         final MovementPredictionTracker.Correction firstCorrection = tracker.replay(
-            300, new Position3f(0.7F, 64F, 0F), true,
+            300, new Position3f(0.7F, 64F, 0F), Position3f.ZERO, true,
             302, new Position3f(0.98F, 64F, 0F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0F), firstCorrection.position());
@@ -524,7 +538,7 @@ public final class Bedrock12640WireTypesTest {
         // correction arrives. It must settle to the server point, not apply the old
         // offset to 0.98 and get shoved farther backwards.
         final MovementPredictionTracker.Correction secondCorrection = tracker.replay(
-            301, new Position3f(0.7F, 64F, 0F), true,
+            301, new Position3f(0.7F, 64F, 0F), Position3f.ZERO, true,
             303, new Position3f(0.98F, 64F, 0F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0F), secondCorrection.position());
@@ -533,11 +547,11 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void wallCorrectionPreservesMovementAlongTheSurface() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(350, new Position3f(0.98F, 64F, 0F), true, true, false, 20);
-        tracker.record(351, new Position3f(0.98F, 64F, 0.2F), true, true, false, 20);
+        tracker.record(350, new Position3f(0.98F, 64F, 0F), Position3f.ZERO, true, true, false, 20);
+        tracker.record(351, new Position3f(0.98F, 64F, 0.2F), Position3f.ZERO, true, true, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            350, new Position3f(0.7F, 64F, 0F), true,
+            350, new Position3f(0.7F, 64F, 0F), Position3f.ZERO, true,
             352, new Position3f(0.98F, 64F, 0.4F), true, true, false, false
         );
 
@@ -547,7 +561,7 @@ public final class Bedrock12640WireTypesTest {
         // A later zero-delta correction still remembers that X was the rejected
         // axis, without freezing the continued Z movement along the wall.
         final MovementPredictionTracker.Correction repeatedCorrection = tracker.replay(
-            351, new Position3f(0.7F, 64F, 0.2F), true,
+            351, new Position3f(0.7F, 64F, 0.2F), Position3f.ZERO, true,
             353, new Position3f(0.98F, 64F, 0.6F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0.6F), repeatedCorrection.position());
@@ -557,10 +571,10 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void cornerCorrectionCanSettleBothHorizontalAxes() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(360, new Position3f(0.98F, 64F, 0.98F), true, true, false, 20);
+        tracker.record(360, new Position3f(0.98F, 64F, 0.98F), Position3f.ZERO, true, true, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            360, new Position3f(0.7F, 64F, 0.7F), true,
+            360, new Position3f(0.7F, 64F, 0.7F), Position3f.ZERO, true,
             361, new Position3f(0.98F, 64F, 0.98F), true, true, false, false
         );
 
@@ -571,11 +585,11 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalGroundedDescentDoesNotReplayAnOldVerticalOffset() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(400, new Position3f(0F, 65F, 0F), true, false, false, 20);
-        tracker.record(401, new Position3f(0.2F, 64.5F, 0F), true, false, false, 20);
+        tracker.record(400, new Position3f(0F, 65F, 0F), Position3f.ZERO, true, false, false, 20);
+        tracker.record(401, new Position3f(0.2F, 64.5F, 0F), Position3f.ZERO, true, false, false, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            400, new Position3f(0.1F, 65.2F, 0F), true,
+            400, new Position3f(0.1F, 65.2F, 0F), Position3f.ZERO, true,
             401, new Position3f(0.2F, 64.5F, 0F), true, false, false, false
         );
 
@@ -586,11 +600,11 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalFlightDescentDoesNotReplayAnOldVerticalOffset() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(500, new Position3f(2F, 80F, 3F), false, false, true, 20);
-        tracker.record(501, new Position3f(2F, 79.5F, 3F), false, false, true, 20);
+        tracker.record(500, new Position3f(2F, 80F, 3F), Position3f.ZERO, false, false, true, 20);
+        tracker.record(501, new Position3f(2F, 79.5F, 3F), Position3f.ZERO, false, false, true, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            500, new Position3f(2F, 80.25F, 3F), false,
+            500, new Position3f(2F, 80.25F, 3F), Position3f.ZERO, false,
             501, new Position3f(2F, 79.5F, 3F), false, false, true, true
         );
 
@@ -601,19 +615,87 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalCrouchedEdgeCorrectionKeepsAStableJavaHeight() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(600, new Position3f(4F, 64F, 7F), true, false, false, 20);
-        tracker.record(601, new Position3f(4.1F, 64F, 7F), false, false, false, 20);
+        tracker.record(600, new Position3f(4F, 64F, 7F), Position3f.ZERO, true, false, false, 20);
+        tracker.record(601, new Position3f(4.1F, 64F, 7F), Position3f.ZERO, false, false, false, 20);
 
         // Safe-walk at a block edge can transiently clear onGround without changing Y.
         // Continuous Shift must prevent the older positive Y delta from causing a snap.
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            600, new Position3f(4F, 64.2F, 7F), true,
+            600, new Position3f(4F, 64.2F, 7F), Position3f.ZERO, true,
             601, new Position3f(4.1F, 64F, 7F), false, false, true, false
         );
 
         assertEquals(new Position3f(4.1F, 64F, 7F), correction.position());
         assertFalse(correction.onGround());
         assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void crouchedPaneCorrectionStopsTheRejectedAxisAndKeepsTangentialMotion() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        final Position3f step = new Position3f(0.05F, 0F, 0.04F);
+        tracker.record(606, new Position3f(0.85F, 64F, 0.4F), step, true, false, false, 20);
+        tracker.record(607, new Position3f(0.9F, 64F, 0.44F), step, true, false, false, 20);
+
+        final var correction = tracker.replay(
+            606, new Position3f(0.8F, 64F, 0.4F), new Position3f(0F, -0.0784F, 0.03F), true,
+            607, new Position3f(0.9F, 64F, 0.44F), true, false, true, false
+        );
+
+        assertEquals(new Position3f(0.8F, 64F, 0.44F), correction.position());
+        assertTrue(correction.stopX());
+        assertFalse(correction.stopZ());
+    }
+
+    @Test
+    public void crouchedPaneCorrectionKeepsMomentumAfterMovingAwayFromThePane() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(608, new Position3f(0.85F, 64F, 0F), new Position3f(0.05F, 0F, 0F), true, false, false, 20);
+
+        final var correction = tracker.replay(
+            608, new Position3f(0.8F, 64F, 0F), Position3f.ZERO, true,
+            609, new Position3f(0.7F, 64F, 0F), true, false, true, false
+        );
+
+        assertEquals(0.65F, correction.position().x(), 0.0001F);
+        assertFalse(correction.stopX());
+    }
+
+    @Test
+    public void staleGroundCorrectionKeepsTheCrouchJumpAndDoesNotSendAnEmptyTeleport() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(610, new Position3f(0F, 64F, 0F), Position3f.ZERO, true, false, false, 20);
+        final Position3f airborne = new Position3f(0F, 64.42F, 0F);
+        tracker.record(611, airborne, new Position3f(0F, 0.42F, 0F), false, false, false, 20);
+
+        final var correction = tracker.replay(
+            610, new Position3f(0F, 63.9F, 0F), Position3f.ZERO, true,
+            611, airborne, false, false, true, false
+        );
+        assertEquals(airborne, correction.position());
+        assertTrue(correction.preserveVertical());
+        assertFalse(correction.changesClientMovement(airborne, false));
+
+        final var nextCorrection = tracker.replay(
+            611, airborne, Position3f.ZERO, false, 612, airborne, false, false, true, false
+        );
+        assertFalse(nextCorrection.changesClientMovement(airborne, false));
+    }
+
+    @Test
+    public void anOlderFallingCorrectionDoesNotSinkThePlayerIntoNewBridgeSupport() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(620, new Position3f(0F, 64.2F, 1F), new Position3f(0F, -0.2F, 0.2F), false, false, false, 20);
+        final Position3f landed = new Position3f(0F, 64F, 1.4F);
+        tracker.record(621, landed, new Position3f(0F, -0.2F, 0.4F), true, false, false, 20);
+
+        final var correction = tracker.replay(
+            620, new Position3f(0F, 63.8F, 1.1F), new Position3f(0F, -0.3F, 0.1F), false,
+            621, landed, true, false, false, false
+        );
+        assertEquals(new Position3f(0F, 64F, 1.5F), correction.position());
+        assertTrue(correction.onGround());
+        assertTrue(correction.preserveVertical());
     }
 
     @Test
@@ -633,11 +715,11 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void historicalFlightAscentKeepsTheNewerJavaHeight() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(700, new Position3f(2F, 80F, 3F), false, false, true, 20);
-        tracker.record(701, new Position3f(2F, 80.5F, 3F), false, false, true, 20);
+        tracker.record(700, new Position3f(2F, 80F, 3F), Position3f.ZERO, false, false, true, 20);
+        tracker.record(701, new Position3f(2F, 80.5F, 3F), Position3f.ZERO, false, false, true, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            700, new Position3f(2F, 79.75F, 3F), false,
+            700, new Position3f(2F, 79.75F, 3F), Position3f.ZERO, false,
             701, new Position3f(2F, 80.5F, 3F), false, false, false, true
         );
 
@@ -648,10 +730,10 @@ public final class Bedrock12640WireTypesTest {
     @Test
     public void sameTickFlightCorrectionRemainsAuthoritative() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
-        tracker.record(710, new Position3f(2F, 80F, 3F), false, false, true, 20);
+        tracker.record(710, new Position3f(2F, 80F, 3F), Position3f.ZERO, false, false, true, 20);
 
         final MovementPredictionTracker.Correction correction = tracker.replay(
-            710, new Position3f(2F, 79.75F, 3F), false,
+            710, new Position3f(2F, 79.75F, 3F), Position3f.ZERO, false,
             710, new Position3f(2F, 80F, 3F), false, false, false, true
         );
 
