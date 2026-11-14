@@ -27,6 +27,7 @@ import com.viaversion.viafabricplus.screen.ScreensImpl;
 import com.viaversion.viafabricplus.screen.impl.protocol.AbstractProtocolSelectionScreen;
 import com.viaversion.viafabricplus.screen.impl.serverlist.BetaCraftServerListScreen;
 import com.viaversion.viafabricplus.screen.impl.serverlist.ClassiCubeServerListScreen;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -68,7 +69,7 @@ public final class ViaFabricPlusScreen extends AbstractProtocolSelectionScreen {
 
     @Override
     protected boolean selected(final ProtocolVersion version) {
-        return ViaFabricPlus.api().targetVersion().equals(version);
+        return version.equals(BedrockProtocolCompatibility.selectableVersion(ViaFabricPlus.api().targetVersion()));
     }
 
     @Override

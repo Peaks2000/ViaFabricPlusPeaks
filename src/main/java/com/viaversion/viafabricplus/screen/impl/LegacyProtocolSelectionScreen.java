@@ -27,6 +27,8 @@ import com.viaversion.viafabricplus.api.protocoltranslator.ProtocolTranslation;
 import com.viaversion.viafabricplus.screen.VFPList;
 import com.viaversion.viafabricplus.screen.VFPListEntry;
 import com.viaversion.viafabricplus.screen.VFPScreen;
+import com.viaversion.viafabricplus.screen.impl.protocol.ProtocolCategory;
+import com.viaversion.viafabricplus.util.bedrock.BedrockProtocolCompatibility;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import java.awt.Color;
 import java.util.function.BooleanSupplier;
@@ -52,7 +54,7 @@ public final class LegacyProtocolSelectionScreen extends VFPScreen {
     public LegacyProtocolSelectionScreen() {
         super(ViaFabricPlusImpl.DISPLAY_NAME, true);
         this.selectionConsumer = ViaFabricPlus.api()::setTargetVersion;
-        this.selectionPredicate = version -> ViaFabricPlus.api().targetVersion().equals(version);
+        this.selectionPredicate = version -> version.equals(BedrockProtocolCompatibility.selectableVersion(ViaFabricPlus.api().targetVersion()));
         this.selectable = () -> Minecraft.getInstance().getConnection() == null;
         this.perServer = false;
     }
@@ -62,7 +64,7 @@ public final class LegacyProtocolSelectionScreen extends VFPScreen {
         super(Component.translatable("screen.viafabricplus.force_version"), true);
         this.prevScreen = parent;
         this.selectionConsumer = selectionConsumer;
-        this.selectionPredicate = version -> version.equals(selectionSupplier.get());
+        this.selectionPredicate = version -> version.equals(BedrockProtocolCompatibility.selectableVersion(selectionSupplier.get()));
         this.selectable = () -> true;
         this.perServer = true;
         this.setupSubtitle(Component.translatable("force_version.viafabricplus.title"));
@@ -98,10 +100,11 @@ public final class LegacyProtocolSelectionScreen extends VFPScreen {
             if (perServer) {
                 this.addEntry(new ResetSlot());
             }
-            if (!ProtocolVersion.getReversedProtocols().contains(ProtocolTranslation.AUTO_DETECT_VERSION)) {
+            final var versions = ProtocolCategory.selectableVersions();
+            if (!versions.contains(ProtocolTranslation.AUTO_DETECT_VERSION)) {
                 this.addEntry(new ProtocolSlot(ProtocolTranslation.AUTO_DETECT_VERSION));
             }
-            ProtocolVersion.getReversedProtocols().stream().map(ProtocolSlot::new).forEach(this::addEntry);
+            versions.stream().map(ProtocolSlot::new).forEach(this::addEntry);
             if (!perServer) {
                 this.initScrollY(globalScrollAmount);
             }
