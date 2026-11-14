@@ -476,6 +476,7 @@
     "features.bedrock.block.MixinSeaPickleBlock",
     "features.bedrock.block.MixinTrapDoorBlock",
     "features.bedrock.chat.MixinClientSuggestionProvider",
+    "features.bedrock.entity.MixinItemEntityRenderer",
     "features.bedrock.inventory.MixinInventoryScreen",
     "features.bedrock.movement.MixinEntity",
     "features.bedrock.movement.MixinHoneyBlock",
