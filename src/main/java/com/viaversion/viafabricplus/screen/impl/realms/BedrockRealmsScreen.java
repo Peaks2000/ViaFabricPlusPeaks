@@ -79,25 +79,27 @@ public final class BedrockRealmsScreen extends VFPScreen {
     private void loadRealms() {
         final BedrockAuthManager account = SaveManager.INSTANCE.getAccountsSave().getBedrockAccount();
         if (account == null) { // Just in case...
-            setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.warning"));
+            Minecraft.getInstance().execute(() -> setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.warning")));
             return;
         }
 
         service = new BedrockRealmsService(MinecraftAuth.createHttpClient(), ProtocolConstants.BEDROCK_VERSION_NAME, account.getRealmsXstsToken());
         service.isCompatibleAsync().thenAccept(state -> {
             if (state) {
-                service.getWorldsAsync().thenAccept(realmsServers -> {
+                service.getWorldsAsync().thenAcceptAsync(realmsServers -> {
                     this.realmsServers = realmsServers;
-                    createView();
-                }).exceptionally(throwable -> error("Failed to load realm worlds", throwable));
+                    if (Minecraft.getInstance().gui.screen() == this) {
+                        createView();
+                    }
+                }, Minecraft.getInstance()).exceptionally(throwable -> error("Failed to load realm worlds", throwable));
             } else {
-                setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.unavailable"));
+                Minecraft.getInstance().execute(() -> setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.unavailable")));
             }
         }).exceptionally(throwable -> error("Failed to check realms availability", throwable));
     }
 
     private Void error(final String message, final Throwable throwable) {
-        setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.error"));
+        Minecraft.getInstance().execute(() -> setupSubtitle(Component.translatable("bedrock_realms.viafabricplus.error")));
         ViaFabricPlusImpl.impl().logger().log(Level.ERROR, message, throwable);
         return null;
     }
@@ -145,19 +147,19 @@ public final class BedrockRealmsScreen extends VFPScreen {
         xPos += 115 + 5;
         this.addRenderableWidget(leaveButton = Button.builder(Component.translatable("bedrock_realms.viafabricplus.leave"), _ -> {
             final SlotEntry entry = (SlotEntry) slotList.getFocused();
-            service.leaveInvitedRealmAsync(entry.realmsServer).thenAccept(_ -> {
+            service.leaveInvitedRealmAsync(entry.realmsServer).thenAcceptAsync(_ -> {
                 this.realmsServers.remove(entry.realmsServer);
                 INSTANCE.open(prevScreen);
-            }).exceptionally(throwable -> error("Failed to leave realm", throwable));
+            }, Minecraft.getInstance()).exceptionally(throwable -> error("Failed to leave realm", throwable));
         }).pos(xPos, height - 20 - 5).size(115, 20).build());
         leaveButton.active = false;
 
         xPos += 115 + 5;
         this.addRenderableWidget(Button.builder(Component.translatable("bedrock_realms.viafabricplus.invite"), _ -> {
-            final AcceptInvitationCodeScreen screen = new AcceptInvitationCodeScreen(code -> service.acceptInviteAsync(code).thenAccept(world -> {
+            final AcceptInvitationCodeScreen screen = new AcceptInvitationCodeScreen(code -> service.acceptInviteAsync(code).thenAcceptAsync(world -> {
                 this.realmsServers.add(world);
                 INSTANCE.open(this);
-            }).exceptionally(throwable -> error("Failed to accept invite", throwable)));
+            }, Minecraft.getInstance()).exceptionally(throwable -> error("Failed to accept invite", throwable)));
             screen.open(this);
         }).pos(xPos, height - 20 - 5).size(115, 20).build());
     }
