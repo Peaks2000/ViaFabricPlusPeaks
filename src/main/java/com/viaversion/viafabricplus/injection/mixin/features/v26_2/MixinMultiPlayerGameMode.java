@@ -21,8 +21,13 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.v26_2;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.ViaFabricPlus;
+import com.viaversion.viafabricplus.injection.access.core.IConnection;
+import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -32,6 +37,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.raphimc.viabedrock.protocol.storage.BlockPlacementPredictionTracker;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,6 +62,20 @@ public abstract class MixinMultiPlayerGameMode {
         if (ViaFabricPlus.api().targetVersion().olderThanOrEqualTo(ProtocolVersion.v26_2) && this.destroyTicks % 4.0F == 0.0F) {
             this.minecraft.level.playBreakingSound(pos, this.minecraft.level.getBlockState(pos));
         }
+    }
+
+    @WrapOperation(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;destroyBlock(Lnet/minecraft/core/BlockPos;)Z"))
+    private boolean recordInstantBedrockBreak(final MultiPlayerGameMode gameMode, final BlockPos pos,
+                                              final Operation<Boolean> original, @Local(argsOnly = true) final int sequence) {
+        final boolean destroyed = original.call(gameMode, pos);
+        final var listener = this.minecraft.getConnection();
+        if (destroyed && listener != null && ProtocolTranslator.isBedrock(((IConnection) listener.getConnection()).viaFabricPlus$getTargetVersion())) {
+            final var channel = listener.getConnection().channel;
+            // The START packet is queued on the same event loop immediately after prediction.
+            channel.eventLoop().execute(() -> channel.attr(BlockPlacementPredictionTracker.INSTANT_BREAK_SEQUENCE).set(sequence));
+        }
+        return destroyed;
     }
 
     @WrapWithCondition(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;addBreakingBlockEffects(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Z)V"))

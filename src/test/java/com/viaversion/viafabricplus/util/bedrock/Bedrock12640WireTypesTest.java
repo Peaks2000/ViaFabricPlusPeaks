@@ -643,6 +643,23 @@ public final class Bedrock12640WireTypesTest {
     }
 
     @Test
+    public void delayedWallCorrectionRetainsLaterTravelOnAnAxisStillMovingOnTheServer() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(165, new Position3f(0.33F, 101.62F, 8.48F),
+            new Position3f(0F, 0F, 0.15F), true, true, false, 20);
+
+        final var correction = tracker.replay(
+            165, new Position3f(0.3F, 101.62F, 8.52F), new Position3f(0F, -0.0784F, 0.094F),
+            true, 168, new Position3f(0.38F, 101.62F, 8.94F), true, true, false, false
+        );
+
+        assertEquals(0.3F, correction.position().x(), 0.0001F);
+        assertEquals(8.98F, correction.position().z(), 0.0001F);
+        assertTrue(correction.stopX());
+        assertFalse(correction.stopZ());
+    }
+
+    @Test
     public void cornerCorrectionCanSettleBothHorizontalAxes() {
         final MovementPredictionTracker tracker = new MovementPredictionTracker();
         tracker.record(360, new Position3f(0.98F, 64F, 0.98F), Position3f.ZERO, true, true, false, 20);
