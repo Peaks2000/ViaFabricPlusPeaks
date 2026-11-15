@@ -7,12 +7,14 @@ on:
       - experiment/4.6.14
       - experiment/4.6.15
       - main
+      - release/5.6.12
   push:
     branches:
       - ver/26.2
       - experiment/4.6.14
       - experiment/4.6.15
       - main
+      - release/5.6.12
   workflow_dispatch:
 
 permissions:
@@ -20,7 +22,7 @@ permissions:
 
 env:
   VIABEDROCK_REPOSITORY: Peaks2000/ViaBedrock
-  VIABEDROCK_REF: a4e77fb161ce3d3a8ead4c345b943d564b22c9f2
+  VIABEDROCK_REF: 7ff0b2992b7f958df04940cd9b989b989d4dfd83
 
 jobs:
   preserve-fork:
