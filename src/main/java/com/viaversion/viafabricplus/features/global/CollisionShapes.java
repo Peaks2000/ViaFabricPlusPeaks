@@ -32,6 +32,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.EndPortalBlock;
 import net.minecraft.world.level.block.EndPortalFrameBlock;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.FenceBlock;
@@ -54,7 +55,7 @@ public final class CollisionShapes {
         for (Block block : BuiltInRegistries.BLOCK) {
             if (block instanceof AnvilBlock || block instanceof BedBlock || block instanceof BrewingStandBlock
                 || block instanceof CarpetBlock || block instanceof CauldronBlock || block instanceof ChestBlock
-                || block instanceof EnderChestBlock || block instanceof EndPortalBlock || block instanceof EndPortalFrameBlock
+                || block instanceof DoorBlock || block instanceof EnderChestBlock || block instanceof EndPortalBlock || block instanceof EndPortalFrameBlock
                 || block instanceof FarmlandBlock || block instanceof FenceBlock || block instanceof FenceGateBlock
                 || block instanceof HopperBlock || block instanceof LadderBlock || block instanceof LeavesBlock
                 || block instanceof LilyPadBlock || block instanceof IronBarsBlock || block instanceof PistonBaseBlock

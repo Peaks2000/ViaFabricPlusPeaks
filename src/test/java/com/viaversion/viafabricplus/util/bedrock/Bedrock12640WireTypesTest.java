@@ -24,6 +24,7 @@ import io.netty.buffer.Unpooled;
 import net.raphimc.viabedrock.api.chunk.BedrockBlockEntity;
 import net.raphimc.viabedrock.api.chunk.section.BedrockChunkSectionImpl;
 import net.raphimc.viabedrock.api.model.BlockState;
+import net.raphimc.viabedrock.protocol.rewriter.BlockStateRewriter;
 import net.raphimc.viabedrock.api.model.container.ChestContainer;
 import net.raphimc.viabedrock.api.model.container.Container;
 import net.raphimc.viabedrock.api.model.container.CraftingTableContainer;
@@ -616,6 +617,54 @@ public final class Bedrock12640WireTypesTest {
             303, new Position3f(0.98F, 64F, 0F), true, true, false, false
         );
         assertEquals(new Position3f(0.7F, 64F, 0F), secondCorrection.position());
+    }
+
+    @Test
+    public void doorUsesLowerFacingAndOpenStateAndUpperHinge() {
+        final var lower = BlockState.fromString(
+            "oak_door[facing=east,half=lower,hinge=left,open=true,powered=false]");
+        final var upper = BlockState.fromString(
+            "oak_door[facing=north,half=upper,hinge=right,open=false,powered=false]");
+        final var rejoined = lower.withProperty("hinge", "right");
+
+        assertEquals(rejoined, BlockStateRewriter.pairDoorHalves(lower, upper));
+        assertEquals(rejoined.withProperty("half", "upper"), BlockStateRewriter.pairDoorHalves(upper, lower));
+        assertEquals(upper, BlockStateRewriter.pairDoorHalves(upper, lower.withIdentifier("iron_door")));
+        assertEquals(upper, BlockStateRewriter.pairDoorHalves(upper, null));
+        assertEquals(upper, BlockStateRewriter.pairDoorHalves(upper, upper));
+    }
+
+    @Test
+    public void walkingIntoADoorEdgeStopsTheRejectedAxisWithoutRewindingTheSlide() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        final Position3f step = new Position3f(0.05F, 0F, 0.04F);
+        tracker.record(606, new Position3f(0.85F, 64F, 0.4F), step, true, false, false, 20);
+
+        final var correction = tracker.replay(
+            606, new Position3f(0.8F, 64F, 0.4F), new Position3f(0F, -0.0784F, 0.03F), true,
+            607, new Position3f(0.9F, 64F, 0.44F), true, false, false, false
+        );
+
+        assertEquals(new Position3f(0.8F, 64F, 0.44F), correction.position());
+        assertTrue(correction.stopX());
+        assertFalse(correction.stopZ());
+    }
+
+    @Test
+    public void olderGroundCorrectionKeepsANewerJumpOrUphillStep() {
+        for (boolean onGround : new boolean[]{false, true}) {
+            final MovementPredictionTracker tracker = new MovementPredictionTracker();
+            tracker.record(10, new Position3f(0F, 64F, 0F), Position3f.ZERO, true, false, false, 20);
+            final var raised = new Position3f(0.2F, onGround ? 64.5F : 64.42F, 0F);
+            tracker.record(11, raised, new Position3f(0.2F, 0.42F, 0F), onGround, false, false, 20);
+
+            final var correction = tracker.replay(10, new Position3f(0F, 63.9F, 0F), Position3f.ZERO, true,
+                11, raised, onGround, false, false, false);
+
+            assertEquals(raised, correction.position());
+            assertTrue(correction.preserveVertical());
+            assertFalse(correction.changesClientMovement(raised, onGround));
+        }
     }
 
     @Test
