@@ -1,6 +1,10 @@
 
 ## ViaFabricPlusPeaks is ViaFabricPlus with the ability to join Xbox Friends and LAN worlds. 
 and some ClassiCube and BetaCraft fixes thanks to SC-MC-Mod-Dev (shunnoni_31072 on Discord)!
+
+
+## ⚠️DO NOT ATTEMPT TO USE WITH THE BEDROCK PLUGIN FROM VIAFABRICPLUS VIAFABRICPLUSPEAKS HAS BUILT IN BEDROCK SUPPORT NO PLUGIN NEEDED⚠️"
+
 # What changed from ViaFabricPlus
     -In server lists added a menu for LAN worlds and XBOX friends
     -Adds a join anyway button to bypass Mojang Blacklisted servers
