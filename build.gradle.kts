@@ -32,7 +32,7 @@ dependencies {
 
     jarInJar("net.raphimc:ViaBedrock") {
         version {
-            branch = "experiment/6.0.0-beta4-upstream"
+            branch = "release/6.0.0-beta.4"
         }
         exclude(group = "com.mojang", module = "brigadier")
         exclude(group = "at.yawk.lz4", module = "lz4-java")
