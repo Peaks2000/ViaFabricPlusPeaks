@@ -17,7 +17,7 @@ dependencyResolutionManagement {
         maven(rootDir.resolve("vendor/maven"))
         maven("https://maven.lenni0451.net/everything")
         maven("https://jitpack.io") {
-            content { includeGroup("com.github.oryxel1") }
+            content { includeGroup("com.github.oryxel1"); includeGroup("com.github.oryxel1.CubeConverter") }
         }
         maven("https://repo.viaversion.com")
         maven("https://maven.terraformersmc.com/releases")

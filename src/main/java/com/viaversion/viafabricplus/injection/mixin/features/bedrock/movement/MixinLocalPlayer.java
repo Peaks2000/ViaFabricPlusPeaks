@@ -23,7 +23,8 @@ package com.viaversion.viafabricplus.injection.mixin.features.bedrock.movement;
 
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import net.minecraft.client.player.LocalPlayer;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
+import net.minecraft.world.phys.Vec3;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,6 +35,22 @@ public abstract class MixinLocalPlayer {
 
     @Shadow
     protected abstract boolean isSprintingPossible(final boolean allowedInShallowWater);
+
+    @Redirect(method = "shouldStopRunSprinting", at = @At(value = "FIELD",
+        target = "Lnet/minecraft/client/player/LocalPlayer;horizontalCollision:Z", opcode = Opcodes.GETFIELD))
+    private boolean keepSprintWhileJumpingAlongWalls(final LocalPlayer player) {
+        if (player.horizontalCollision && ProtocolTranslator.isBedrock() && player.input.keyPresses.jump()
+            && !player.isPassenger() && !player.isInWater() && !player.isInLava() && !player.getAbilities().flying) {
+            final Vec3 motion = player.getDeltaMovement();
+            final double yaw = Math.toRadians(player.getYRot());
+            final double forward = motion.z * Math.cos(yaw) - motion.x * Math.sin(yaw);
+            // Collision clipped one axis. Keep sprint only when substantial forward travel remains.
+            if (forward > 0.04D && forward * forward >= motion.horizontalDistanceSqr() * 0.5D) {
+                return false;
+            }
+        }
+        return player.horizontalCollision;
+    }
 
     @Redirect(method = {"shouldStopRunSprinting", "canStartSprinting"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isSprintingPossible(Z)Z"))
     private boolean allowNonSwimWaterSprinting(LocalPlayer instance, boolean allowedInShallowWater) {

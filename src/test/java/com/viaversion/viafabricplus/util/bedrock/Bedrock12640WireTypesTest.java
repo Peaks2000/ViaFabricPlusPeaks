@@ -34,6 +34,8 @@ import net.raphimc.viabedrock.api.model.container.player.HudContainer;
 import net.raphimc.viabedrock.api.model.container.player.OffhandContainer;
 import net.raphimc.viabedrock.api.model.entity.ClientPlayerEntity;
 import net.raphimc.viabedrock.api.model.entity.LivingEntity;
+import net.raphimc.viabedrock.api.resourcepack.ResourcePack;
+import net.raphimc.viabedrock.api.resourcepack.content.InMemoryContent;
 import net.raphimc.viabedrock.api.util.MathUtil;
 import net.raphimc.viabedrock.api.util.PacketFactory;
 import net.raphimc.viabedrock.protocol.BedrockProtocol;
@@ -61,6 +63,8 @@ import net.raphimc.viabedrock.protocol.packet.ClientPlayerPackets;
 import net.raphimc.viabedrock.protocol.packet.EntityPackets;
 import net.raphimc.viabedrock.protocol.packet.InventoryPackets;
 import net.raphimc.viabedrock.protocol.rewriter.EntityMetadataRewriter;
+import net.raphimc.viabedrock.protocol.rewriter.ResourcePackRewriter;
+import net.raphimc.viabedrock.protocol.rewriter.resourcepack.CustomEntityResourceRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BedBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.BrewingStandBlockEntityRewriter;
 import net.raphimc.viabedrock.protocol.rewriter.blockentity.ShulkerBoxBlockEntityRewriter;
@@ -71,6 +75,7 @@ import net.raphimc.viabedrock.protocol.storage.InventoryRequestTracker;
 import net.raphimc.viabedrock.protocol.storage.InventoryTracker;
 import net.raphimc.viabedrock.protocol.storage.MovementPredictionTracker;
 import net.raphimc.viabedrock.protocol.storage.PlayerChatDuplicateTracker;
+import net.raphimc.viabedrock.protocol.storage.ResourcePackStorage;
 import net.raphimc.viabedrock.protocol.types.BedrockTypes;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataType;
 import net.raphimc.viabedrock.protocol.types.entitydata.EntityDataTypesBedrock;
@@ -87,6 +92,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -720,6 +726,49 @@ public final class Bedrock12640WireTypesTest {
 
         assertEquals(new Position3f(0.7F, 64F, 0.7F), correction.position());
         assertTrue(correction.replayed());
+    }
+
+    @Test
+    public void legacyMobModelRequiresItsOwnAtlasAndAnActiveClientPack() throws Exception {
+        final var pack = new InMemoryContent();
+        pack.putString("manifest.json", """
+            {"format_version":1,"header":{"name":"Compatibility test",
+            "uuid":"4edbc40b-fecb-4ef9-970b-1268c6883e0e","version":[1,0,0]}}
+            """);
+        pack.putString("models/mobs.json", """
+            {"geometry.pigzombie":{"texturewidth":32,"textureheight":32,"bones":[
+            {"name":"body","pivot":[0,0,0],"cubes":[{"origin":[-4,0,-4],"size":[8,8,8],"uv":[0,0]}]}]}}
+            """);
+        final var storageWithoutAtlas = new ResourcePackStorage(List.of(new ResourcePack(pack)));
+        ResourcePackRewriter.bedrockToJava(storageWithoutAtlas);
+        storageWithoutAtlas.setLoadedOnJavaClient();
+        assertNull(CustomEntityResourceRewriter.legacyModel(storageWithoutAtlas, "minecraft:zombie_pigman"));
+
+        pack.putPngImage("textures/entity/pig/pigzombie.png", new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB));
+        final var storage = new ResourcePackStorage(List.of(new ResourcePack(pack)));
+        final var converted = ResourcePackRewriter.bedrockToJava(storage);
+        assertTrue(converted.contains("assets/viabedrock/items/entities/legacy_minecraft/zombie_pigman.json"));
+        assertNull(CustomEntityResourceRewriter.legacyModel(storage, "minecraft:zombie_pigman"));
+        storage.setLoadedOnJavaClient();
+        assertNotNull(CustomEntityResourceRewriter.legacyModel(storage, "minecraft:zombie_pigman"));
+        assertNull(CustomEntityResourceRewriter.legacyModel(storage, "minecraft:zombie"));
+    }
+
+    @Test
+    public void sprintJumpOffLowerTerrainKeepsTheNewerJumpHeight() {
+        final MovementPredictionTracker tracker = new MovementPredictionTracker();
+        tracker.record(10, new Position3f(0F, 66F, 0F), Position3f.ZERO, true, false, false, 20);
+        tracker.record(11, new Position3f(0F, 65.8F, 0.3F), new Position3f(0F, -0.2F, 0.3F), false, false, false, 20);
+        tracker.record(14, new Position3f(0F, 64F, 1.2F), new Position3f(0F, -0.3F, 0.3F), true, false, false, 20);
+        final var jumping = new Position3f(0F, 64.42F, 1.55F);
+        tracker.record(15, jumping, new Position3f(0F, 0.42F, 0.35F), false, false, false, 20);
+
+        final var correction = tracker.replay(11, new Position3f(0F, 65.6F, 0.35F),
+            new Position3f(0F, -0.2F, 0.3F), false, 15, jumping, false, false, false, false);
+
+        assertEquals(64.42F, correction.position().y(), 0.0001F);
+        assertEquals(1.6F, correction.position().z(), 0.0001F);
+        assertTrue(correction.preserveVertical());
     }
 
     @Test

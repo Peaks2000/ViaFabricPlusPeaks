@@ -15,5 +15,7 @@ source and history are available in the corresponding Peaks2000 GitHub repositor
   [Cloudburst Protocol](https://github.com/CloudburstMC/Protocol) (Apache-2.0) are protocol and
   behavioral references for the current fork patches; those changes do not copy their source files.
 
+- [CubeConverter 1.3.1](https://github.com/oryxel1/CubeConverter/tree/b30bbd7034c5d0f1e425e3525e34321e20653cfa) is bundled through its `vv-json` module under the GNU General Public License v3. The licence text is included in `META-INF/licenses/viafabricplus/LICENSE`.
+
 This file records fork-specific additions and references. Existing upstream dependencies remain
 subject to their respective licences and notices.
