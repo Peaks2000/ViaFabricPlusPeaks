@@ -21,16 +21,20 @@
 
 package com.viaversion.viafabricplus.injection.mixin.features.bedrock.movement;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator;
 import com.viaversion.viafabricplus.util.bedrock.BedrockRemotePlayerRespawn;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -53,6 +57,18 @@ public abstract class MixinLivingEntity {
                 ProtocolTranslator.isBedrock(), entity instanceof RemotePlayer, entity.getHealth(), entity.deathTime)) {
             entity.deathTime = 0;
         }
+    }
+
+    @WrapOperation(method = "travelInAir", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;setDeltaMovement(DDD)V"))
+    private void keepBedrockLadderAscentSpeed(final LivingEntity entity, final double x, double y, final double z,
+                                             final Operation<Void> original, @Local(ordinal = 1) final Vec3 movement) {
+        if (entity instanceof LocalPlayer player && ProtocolTranslator.isBedrock()
+            && (player.horizontalCollision || player.input.keyPresses.jump())
+            && player.getInBlockState().is(Blocks.LADDER) && this.getEffect(MobEffects.LEVITATION) == null) {
+            // Bedrock retains the ladder climb velocity between ticks.
+            y = movement.y;
+        }
+        original.call(entity, x, y, z);
     }
 
     @Redirect(method = "getFluidFallingAdjustedMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSprinting()Z"))
